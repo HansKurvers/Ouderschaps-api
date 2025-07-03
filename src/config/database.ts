@@ -1,31 +1,70 @@
-import mongoose from 'mongoose';
+import sql from 'mssql';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const connectDB = async (): Promise<void> => {
+const dbConfig: sql.config = {
+    server: process.env.DB_SERVER || '',
+    database: process.env.DB_DATABASE || '',
+    user: process.env.DB_USER || '',
+    password: process.env.DB_PASSWORD || '',
+    options: {
+        encrypt: true,
+        trustServerCertificate: false,
+        enableArithAbort: true,
+    },
+    connectionTimeout: 30000,
+    requestTimeout: 30000,
+    pool: {
+        max: 20,
+        min: 2,
+        idleTimeoutMillis: 30000,
+        acquireTimeoutMillis: 60000,
+        createTimeoutMillis: 30000,
+        destroyTimeoutMillis: 5000,
+        reapIntervalMillis: 1000,
+    },
+};
+
+let connectionPool: sql.ConnectionPool | null = null;
+
+export const initializeDatabase = async (): Promise<sql.ConnectionPool> => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ouderschaps-db';
+        if (!connectionPool) {
+            connectionPool = new sql.ConnectionPool(dbConfig);
+            
+            // Add connection event listeners
+            connectionPool.on('connect', () => {
+                console.log('SQL Server connected successfully');
+            });
+            
+            connectionPool.on('error', (err) => {
+                console.error('SQL Server connection error:', err);
+            });
+            
+            await connectionPool.connect();
+        }
         
-        await mongoose.connect(mongoUri, {
-            maxPoolSize: 10,
-            serverSelectionTimeoutMS: 5000,
-        });
-        
-        console.log('MongoDB connected successfully');
-        
-        mongoose.connection.on('error', (err) => {
-            console.error('MongoDB connection error:', err);
-        });
-        
-        mongoose.connection.on('disconnected', () => {
-            console.log('MongoDB disconnected');
-        });
-        
+        return connectionPool;
     } catch (error) {
-        console.error('MongoDB connection failed:', error);
+        console.error('Database connection failed:', error);
         throw error;
     }
 };
 
-export default connectDB;
+export const getPool = (): sql.ConnectionPool => {
+    if (!connectionPool) {
+        throw new Error('Database not initialized. Call initializeDatabase first.');
+    }
+    return connectionPool;
+};
+
+export const closeDatabase = async (): Promise<void> => {
+    if (connectionPool) {
+        await connectionPool.close();
+        connectionPool = null;
+        console.log('Database connection closed');
+    }
+};
+
+export default initializeDatabase;

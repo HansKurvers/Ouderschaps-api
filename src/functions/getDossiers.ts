@@ -1,29 +1,63 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import connectDB from "../config/database";
-import { Dossier } from "../models/Dossier";
+import { DossierDatabaseService } from "../services/dossier-database-service";
+import Joi from "joi";
+
+const querySchema = Joi.object({
+    userID: Joi.number().integer().positive().required(),
+    status: Joi.string().optional(),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    offset: Joi.number().integer().min(0).default(0)
+});
 
 export async function getDossiers(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
     context.log('GET Dossiers endpoint called');
     
+    const service = new DossierDatabaseService();
+    
     try {
-        await connectDB();
+        await service.initialize();
         
         const { searchParams } = new URL(request.url);
+        const userID = parseInt(searchParams.get('userID') || '0');
         const status = searchParams.get('status');
-        const priority = searchParams.get('priority');
         const limit = parseInt(searchParams.get('limit') || '10');
         const offset = parseInt(searchParams.get('offset') || '0');
         
-        const query: any = {};
-        if (status) query.status = status;
-        if (priority) query.priority = priority;
+        // Validate query parameters
+        const { error, value } = querySchema.validate({
+            userID,
+            status,
+            limit,
+            offset
+        });
         
-        const dossiers = await Dossier.find(query)
-            .sort({ createdAt: -1 })
-            .limit(limit)
-            .skip(offset);
-            
-        const total = await Dossier.countDocuments(query);
+        if (error) {
+            return {
+                status: 400,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: "Invalid query parameters",
+                    details: error.details.map(d => d.message)
+                })
+            };
+        }
+        
+        const { userID: validatedUserID, limit: validatedLimit, offset: validatedOffset } = value;
+        
+        // Get all dossiers for user
+        let dossiers = await service.getAllDossiers(validatedUserID);
+        
+        // Apply status filter if provided
+        if (status) {
+            dossiers = dossiers.filter(d => d.Status === status);
+        }
+        
+        // Apply pagination
+        const total = dossiers.length;
+        const paginatedDossiers = dossiers.slice(validatedOffset, validatedOffset + validatedLimit);
         
         return {
             status: 200,
@@ -32,12 +66,12 @@ export async function getDossiers(request: HttpRequest, context: InvocationConte
             },
             body: JSON.stringify({
                 success: true,
-                data: dossiers,
+                data: paginatedDossiers,
                 pagination: {
                     total,
-                    limit,
-                    offset,
-                    hasMore: offset + limit < total
+                    limit: validatedLimit,
+                    offset: validatedOffset,
+                    hasMore: validatedOffset + validatedLimit < total
                 }
             })
         };
@@ -56,6 +90,8 @@ export async function getDossiers(request: HttpRequest, context: InvocationConte
                 message: error instanceof Error ? error.message : "Unknown error"
             })
         };
+    } finally {
+        await service.close();
     }
 }
 

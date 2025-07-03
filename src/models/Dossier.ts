@@ -1,55 +1,54 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface IDossier extends Document {
-    dossierNumber: string;
-    title: string;
-    description?: string;
-    status: 'open' | 'in_progress' | 'closed';
-    createdBy: string;
-    assignedTo?: string;
-    priority: 'low' | 'medium' | 'high';
-    createdAt: Date;
-    updatedAt: Date;
+export interface IDossier {
+    DossierID: number;
+    DossierNummer: string;
+    GebruikerID: number;
+    Status: string;
+    LaatsteWijziging: Date;
+    CreatedAt?: Date;
+    UpdatedAt?: Date;
 }
 
-const dossierSchema = new Schema<IDossier>(
-    {
-        dossierNumber: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true
-        },
-        title: {
-            type: String,
-            required: true,
-            trim: true
-        },
-        description: {
-            type: String,
-            trim: true
-        },
-        status: {
-            type: String,
-            enum: ['open', 'in_progress', 'closed'],
-            default: 'open'
-        },
-        createdBy: {
-            type: String,
-            required: true
-        },
-        assignedTo: {
-            type: String
-        },
-        priority: {
-            type: String,
-            enum: ['low', 'medium', 'high'],
-            default: 'medium'
-        }
-    },
-    {
-        timestamps: true
-    }
-);
+export interface IPerson {
+    PersoonID: number;
+    DossierID: number;
+    PersoonType: 'Partij1' | 'Partij2';
+    Voornaam?: string;
+    Tussenvoegsel?: string;
+    Achternaam?: string;
+    Geboortedatum?: Date;
+    Adres?: string;
+    Postcode?: string;
+    Woonplaats?: string;
+    Telefoonnummer?: string;
+    Email?: string;
+    BSN?: string;
+}
 
-export const Dossier = model<IDossier>('Dossier', dossierSchema);
+export interface IChild {
+    KindID: number;
+    DossierID: number;
+    Volgorde: number;
+    Voornaam?: string;
+    Tussenvoegsel?: string;
+    Achternaam?: string;
+    Geboortedatum?: Date;
+    Geslacht?: string;
+    Bijzonderheden?: string;
+}
+
+export interface IOuderschapsplanGegevens {
+    GegevenID: number;
+    DossierID: number;
+    VeldCode: string;
+    VeldNaam: string;
+    VeldWaarde?: string;
+    CreatedAt?: Date;
+    UpdatedAt?: Date;
+}
+
+export interface ICompleteDossierData {
+    dossier: IDossier;
+    persons: IPerson[];
+    children: IChild[];
+    ouderschapsplanGegevens: IOuderschapsplanGegevens[];
+}
