@@ -2,7 +2,7 @@
   "name": "ouderschaps-api",
   "version": "1.0.0",
   "description": "Dit is een api die data ophaalt.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
