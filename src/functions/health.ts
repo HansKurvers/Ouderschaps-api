@@ -17,7 +17,8 @@ export async function health(_request: HttpRequest, context: InvocationContext):
     };
 }
 
-app.http('health', {
+app.http('health', {  
+    
     methods: ['GET'],
     authLevel: 'anonymous',
     handler: health
