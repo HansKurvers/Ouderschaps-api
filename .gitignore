@@ -137,3 +137,23 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Azure Functions
+local.settings.json
+.vscode/
+.funcignore
+.deployment
+
+# Build output
+*.js
+*.js.map
+!jest.config.js
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
