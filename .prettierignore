@@ -1,0 +1,42 @@
+# Build outputs
+dist/
+build/
+out/
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Azure Functions
+.vscode/
+local.settings.json
+bin/
+obj/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Generated files
+*.min.js
+*.min.css

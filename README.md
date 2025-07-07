@@ -1,4 +1,5 @@
 # Ouderschaps-Api
+
 Dit is een api die data ophaalt.
 
 ## Azure Functions v4 Setup
@@ -7,7 +8,7 @@ This project is built with Azure Functions v4, Node.js, and TypeScript for manag
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - Azure Functions Core Tools v4
 - MongoDB instance (local or cloud)
 - Azure Storage Emulator or Azurite (for local development)

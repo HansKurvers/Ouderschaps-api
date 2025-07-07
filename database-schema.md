@@ -1,6 +1,7 @@
 # Database Schema Documentation
 
 ## Overview
+
 This document contains the complete database schema for our SQL Server database on Azure. The database contains both old tables (suffixed with `_oud`) and new tables with improved naming conventions.
 
 ## Table Structure
@@ -8,6 +9,7 @@ This document contains the complete database schema for our SQL Server database 
 ### Tables (Current Schema)
 
 #### dbo.dossiers
+
 - **id** (int, PK, Identity) - Primary key
 - **dossier_nummer** (nvarchar(50), NOT NULL, UNIQUE)
 - **aangemaakt_op** (datetime, NOT NULL, default: getdate())
@@ -16,10 +18,12 @@ This document contains the complete database schema for our SQL Server database 
 - **gebruiker_id** (int, NOT NULL, FK → dbo.gebruikers.id)
 
 #### dbo.gebruikers
+
 - **id** (int, PK, Identity) - Primary key
 - Additional columns to be defined (currently only ID is shown)
 
 #### dbo.personen
+
 - **id** (int, PK, Identity) - Primary key
 - **voorletters** (nvarchar(10), nullable)
 - **voornamen** (nvarchar(100), nullable)
@@ -39,31 +43,36 @@ This document contains the complete database schema for our SQL Server database 
 - **beroep** (nvarchar(100), nullable)
 
 #### dbo.kinderen_ouders
+
 - **id** (int, PK, Identity) - Primary key
 - **kind_id** (int, NOT NULL, FK → dbo.personen.id)
 - **ouder_id** (int, NOT NULL, FK → dbo.personen.id)
 - **relatie_type_id** (int, NOT NULL, FK → dbo.relatie_types.id, default: 1)
 
 #### dbo.dossiers_kinderen
+
 - **id** (int, PK, Identity) - Primary key
 - **dossier_id** (int, NOT NULL, FK → dbo.dossiers.id)
 - **kind_id** (int, NOT NULL, FK → dbo.personen.id)
 
 #### dbo.dossiers_partijen
+
 - **id** (int, PK, Identity) - Primary key
 - **dossier_id** (int, NOT NULL, FK → dbo.dossiers.id)
 - **rol_id** (int, NOT NULL, FK → dbo.rollen.id)
 - **persoon_id** (int, NOT NULL, FK → dbo.personen.id)
 
 #### dbo.relatie_types
+
 - **id** (int, PK, Identity) - Primary key
 - **naam** (nvarchar(50), nullable)
 
 #### dbo.rollen
+
 - **id** (int, PK, Identity) - Primary key
 - **naam** (nvarchar(50), nullable)
 
-1. **Naming Convention**: 
+1. **Naming Convention**:
    - New: snake_case (e.g., `dossier_id`)
 
 2. **Table Structure**:
@@ -76,6 +85,7 @@ This document contains the complete database schema for our SQL Server database 
    - New: Prepared for Auth0 integration (no password field)
 
 ### Foreign Key Relationships
+
 - `dossiers.gebruiker_id` → `gebruikers.id`
 - `dossiers_kinderen.dossier_id` → `dossiers.id`
 - `dossiers_kinderen.kind_id` → `personen.id`

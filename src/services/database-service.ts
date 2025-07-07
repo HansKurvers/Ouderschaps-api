@@ -1,6 +1,13 @@
 import sql from 'mssql';
-import { initializeDatabase, closeDatabase } from '../config/database';
-import { IDossier, IPersoon, IOuderschapsplanGegevens, ICompleteDossierData, IDossierPartij, IDossierKind, IRol, IRelatieType } from '../models/Dossier';
+import { closeDatabase, initializeDatabase } from '../config/database';
+import {
+    ICompleteDossierData,
+    IDossier,
+    IOuderschapsplanGegevens,
+    IPersoon,
+    IRelatieType,
+    IRol,
+} from '../models/Dossier';
 import { DbMappers } from '../utils/db-mappers';
 
 export class DossierDatabaseService {
@@ -31,9 +38,9 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             request.input('UserID', sql.Int, userID);
-            
+
             const result = await request.query(`
                 SELECT 
                     id,
@@ -46,7 +53,7 @@ export class DossierDatabaseService {
                 WHERE gebruiker_id = @UserID
                 ORDER BY gewijzigd_op DESC
             `);
-            
+
             return result.recordset.map(DbMappers.toDossier);
         } catch (error) {
             console.error('Error getting all dossiers:', error);
@@ -58,9 +65,9 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             request.input('DossierID', sql.Int, dossierID);
-            
+
             const result = await request.query(`
                 SELECT 
                     id,
@@ -72,7 +79,7 @@ export class DossierDatabaseService {
                 FROM dbo.dossiers 
                 WHERE id = @DossierID
             `);
-            
+
             return result.recordset[0] ? DbMappers.toDossier(result.recordset[0]) : null;
         } catch (error) {
             console.error('Error getting dossier by ID:', error);
@@ -84,16 +91,16 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             request.input('DossierID', sql.Int, dossierID);
             request.input('UserID', sql.Int, userID);
-            
+
             const result = await request.query(`
                 SELECT COUNT(*) as count
                 FROM dbo.dossiers 
                 WHERE id = @DossierID AND gebruiker_id = @UserID
             `);
-            
+
             return result.recordset[0].count > 0;
         } catch (error) {
             console.error('Error checking dossier access:', error);
@@ -105,18 +112,18 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const dossierNumber = await this.generateNextDossierNumber();
-            
+
             const request = pool.request();
             request.input('DossierNummer', sql.NVarChar, dossierNumber);
             request.input('GebruikerID', sql.Int, userID);
             request.input('Status', sql.NVarChar, 'Nieuw');
-            
+
             const result = await request.query(`
                 INSERT INTO dbo.dossiers (dossier_nummer, gebruiker_id, status)
                 OUTPUT INSERTED.*
                 VALUES (@DossierNummer, @GebruikerID, @Status)
             `);
-            
+
             return DbMappers.toDossier(result.recordset[0]);
         } catch (error) {
             console.error('Error creating dossier:', error);
@@ -126,31 +133,35 @@ export class DossierDatabaseService {
 
     async deleteDossier(dossierID: number): Promise<boolean> {
         const transaction = new sql.Transaction(this.getPool());
-        
+
         try {
             await transaction.begin();
-            
+
             // Delete related data in correct order
             // First delete ouderschapsplan gegevens
-            await transaction.request()
+            await transaction
+                .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.ouderschapsplan_gegevens WHERE dossier_id = @DossierID');
-            
+
             // Delete dossier-child relationships
-            await transaction.request()
+            await transaction
+                .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers_kinderen WHERE dossier_id = @DossierID');
-            
+
             // Delete dossier-party relationships
-            await transaction.request()
+            await transaction
+                .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers_partijen WHERE dossier_id = @DossierID');
-            
+
             // Finally delete the dossier itself
-            const result = await transaction.request()
+            const result = await transaction
+                .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
-            
+
             await transaction.commit();
             return result.rowsAffected[0] > 0;
         } catch (error) {
@@ -164,16 +175,16 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             const result = await request.query(`
                 SELECT MAX(CAST(dossier_nummer AS INT)) as maxNumber
                 FROM dbo.dossiers
                 WHERE ISNUMERIC(dossier_nummer) = 1
             `);
-            
+
             const maxNumber = result.recordset[0].maxNumber || 999;
             const nextNumber = maxNumber + 1;
-            
+
             return nextNumber.toString();
         } catch (error) {
             console.error('Error generating dossier number:', error);
@@ -182,13 +193,13 @@ export class DossierDatabaseService {
         }
     }
 
-    async getPartijen(dossierID: number): Promise<Array<{persoon: IPersoon, rol: IRol}>> {
+    async getPartijen(dossierID: number): Promise<Array<{ persoon: IPersoon; rol: IRol }>> {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             request.input('DossierID', sql.Int, dossierID);
-            
+
             const result = await request.query(`
                 SELECT 
                     p.*,
@@ -200,13 +211,13 @@ export class DossierDatabaseService {
                 WHERE dp.dossier_id = @DossierID
                 ORDER BY r.id
             `);
-            
+
             return result.recordset.map(row => ({
                 persoon: DbMappers.toPersoon(row),
                 rol: {
                     id: row.rol_id,
-                    naam: row.rol_naam
-                }
+                    naam: row.rol_naam,
+                },
             }));
         } catch (error) {
             console.error('Error getting partijen:', error);
@@ -214,13 +225,17 @@ export class DossierDatabaseService {
         }
     }
 
-    async getKinderen(dossierID: number): Promise<Array<{kind: IPersoon, ouders: Array<{ouder: IPersoon, relatieType: IRelatieType}>}>> {
+    async getKinderen(
+        dossierID: number
+    ): Promise<
+        Array<{ kind: IPersoon; ouders: Array<{ ouder: IPersoon; relatieType: IRelatieType }> }>
+    > {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             request.input('DossierID', sql.Int, dossierID);
-            
+
             // Get children associated with this dossier
             const kinderenResult = await request.query(`
                 SELECT DISTINCT p.*
@@ -228,16 +243,16 @@ export class DossierDatabaseService {
                 JOIN dbo.personen p ON dk.kind_id = p.id
                 WHERE dk.dossier_id = @DossierID
             `);
-            
+
             const kinderen = [];
-            
+
             // For each child, get their parents
             for (const kindRow of kinderenResult.recordset) {
                 const kind = DbMappers.toPersoon(kindRow);
-                
+
                 const oudersRequest = pool.request();
                 oudersRequest.input('KindID', sql.Int, kind.id);
-                
+
                 const oudersResult = await oudersRequest.query(`
                     SELECT 
                         p.*,
@@ -248,18 +263,18 @@ export class DossierDatabaseService {
                     JOIN dbo.relatie_types rt ON ko.relatie_type_id = rt.id
                     WHERE ko.kind_id = @KindID
                 `);
-                
+
                 const ouders = oudersResult.recordset.map(row => ({
                     ouder: DbMappers.toPersoon(row),
                     relatieType: {
                         id: row.relatie_type_id,
-                        naam: row.relatie_type_naam
-                    }
+                        naam: row.relatie_type_naam,
+                    },
                 }));
-                
+
                 kinderen.push({ kind, ouders });
             }
-            
+
             return kinderen;
         } catch (error) {
             console.error('Error getting kinderen:', error);
@@ -271,9 +286,9 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             request.input('DossierID', sql.Int, dossierID);
-            
+
             const result = await request.query(`
                 SELECT 
                     id,
@@ -287,7 +302,7 @@ export class DossierDatabaseService {
                 WHERE dossier_id = @DossierID
                 ORDER BY veld_code
             `);
-            
+
             return result.recordset.map(DbMappers.toOuderschapsplanGegevens);
         } catch (error) {
             console.error('Error getting ouderschapsplan gegevens:', error);
@@ -301,18 +316,18 @@ export class DossierDatabaseService {
             if (!dossier) {
                 return null;
             }
-            
+
             const [partijen, kinderen, ouderschapsplanGegevens] = await Promise.all([
                 this.getPartijen(dossierID),
                 this.getKinderen(dossierID),
-                this.getOuderschapsplanGegevens(dossierID)
+                this.getOuderschapsplanGegevens(dossierID),
             ]);
-            
+
             return {
                 dossier,
                 partijen,
                 kinderen,
-                ouderschapsplanGegevens
+                ouderschapsplanGegevens,
             };
         } catch (error) {
             console.error('Error getting complete dossier data:', error);
@@ -324,7 +339,7 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const dto = DbMappers.toPersoonDto(persoonData as IPersoon);
-            
+
             if (persoonData.id) {
                 // Update existing person
                 const request = pool.request();
@@ -345,7 +360,7 @@ export class DossierDatabaseService {
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
                 request.input('Email', sql.NVarChar, dto.email);
                 request.input('Beroep', sql.NVarChar, dto.beroep);
-                
+
                 const result = await request.query(`
                     UPDATE dbo.personen SET
                         voorletters = @Voorletters,
@@ -367,7 +382,7 @@ export class DossierDatabaseService {
                     OUTPUT INSERTED.*
                     WHERE id = @Id
                 `);
-                
+
                 return DbMappers.toPersoon(result.recordset[0]);
             } else {
                 // Insert new person
@@ -388,7 +403,7 @@ export class DossierDatabaseService {
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
                 request.input('Email', sql.NVarChar, dto.email);
                 request.input('Beroep', sql.NVarChar, dto.beroep);
-                
+
                 const result = await request.query(`
                     INSERT INTO dbo.personen (
                         voorletters, voornamen, roepnaam, geslacht, tussenvoegsel, achternaam,
@@ -402,7 +417,7 @@ export class DossierDatabaseService {
                         @Nationaliteit1, @Nationaliteit2, @Telefoon, @Email, @Beroep
                     )
                 `);
-                
+
                 return DbMappers.toPersoon(result.recordset[0]);
             }
         } catch (error) {
@@ -415,11 +430,11 @@ export class DossierDatabaseService {
         try {
             const pool = this.getPool();
             const request = pool.request();
-            
+
             request.input('DossierID', sql.Int, dossierID);
             request.input('PersoonID', sql.Int, persoonID);
             request.input('RolID', sql.Int, rolID);
-            
+
             await request.query(`
                 INSERT INTO dbo.dossiers_partijen (dossier_id, persoon_id, rol_id)
                 VALUES (@DossierID, @PersoonID, @RolID)
@@ -430,28 +445,30 @@ export class DossierDatabaseService {
         }
     }
 
-    async saveOuderschapsplanGegevens(dossierID: number, formData: Record<string, any>): Promise<void> {
+    async saveOuderschapsplanGegevens(
+        dossierID: number,
+        formData: Record<string, any>
+    ): Promise<void> {
         try {
             const pool = this.getPool();
-            
+
             for (const [fieldCode, fieldValue] of Object.entries(formData)) {
                 const request = pool.request();
-                
+
                 // Check if field exists
                 const existingField = await request
                     .input('DossierID', sql.Int, dossierID)
-                    .input('VeldCode', sql.NVarChar, fieldCode)
-                    .query(`
+                    .input('VeldCode', sql.NVarChar, fieldCode).query(`
                         SELECT id FROM dbo.ouderschapsplan_gegevens 
                         WHERE dossier_id = @DossierID AND veld_code = @VeldCode
                     `);
-                
+
                 if (existingField.recordset.length > 0) {
                     // Update existing field
                     const updateRequest = pool.request();
                     updateRequest.input('Id', sql.Int, existingField.recordset[0].id);
                     updateRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
-                    
+
                     await updateRequest.query(`
                         UPDATE dbo.ouderschapsplan_gegevens 
                         SET veld_waarde = @VeldWaarde,
@@ -465,7 +482,7 @@ export class DossierDatabaseService {
                     insertRequest.input('VeldCode', sql.NVarChar, fieldCode);
                     insertRequest.input('VeldNaam', sql.NVarChar, fieldCode); // Use fieldCode as name for now
                     insertRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
-                    
+
                     await insertRequest.query(`
                         INSERT INTO dbo.ouderschapsplan_gegevens (dossier_id, veld_code, veld_naam, veld_waarde)
                         VALUES (@DossierID, @VeldCode, @VeldNaam, @VeldWaarde)

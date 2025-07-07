@@ -1,25 +1,27 @@
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
+import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 
-export async function health(_request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+export async function health(
+    _request: HttpRequest,
+    context: InvocationContext
+): Promise<HttpResponseInit> {
     context.log('Health check endpoint called');
-    
+
     return {
         status: 200,
         headers: {
-            "Content-Type": "application/json"
+            'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            status: "healthy",
+            status: 'healthy',
             timestamp: new Date().toISOString(),
-            version: process.env.npm_package_version || "1.0.0",
-            environment: process.env.AZURE_FUNCTIONS_ENVIRONMENT || "development"
-        })
+            version: process.env.npm_package_version || '1.0.0',
+            environment: process.env.AZURE_FUNCTIONS_ENVIRONMENT || 'development',
+        }),
     };
 }
 
-app.http('health', {  
-    
+app.http('health', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    handler: health
+    handler: health,
 });

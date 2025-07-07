@@ -32,19 +32,19 @@ export const initializeDatabase = async (): Promise<sql.ConnectionPool> => {
     try {
         if (!connectionPool) {
             connectionPool = new sql.ConnectionPool(dbConfig);
-            
+
             // Add connection event listeners
             connectionPool.on('connect', () => {
                 console.log('SQL Server connected successfully');
             });
-            
-            connectionPool.on('error', (err) => {
+
+            connectionPool.on('error', err => {
                 console.error('SQL Server connection error:', err);
             });
-            
+
             await connectionPool.connect();
         }
-        
+
         return connectionPool;
     } catch (error) {
         console.error('Database connection failed:', error);

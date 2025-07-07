@@ -99,14 +99,14 @@ export enum DossierStatus {
     NIEUW = 'Nieuw',
     IN_BEHANDELING = 'In behandeling',
     AFGEROND = 'Afgerond',
-    GEARCHIVEERD = 'Gearchiveerd'
+    GEARCHIVEERD = 'Gearchiveerd',
 }
 
 export enum Geslacht {
     MAN = 'Man',
     VROUW = 'Vrouw',
     ANDERS = 'Anders',
-    ONBEKEND = 'Onbekend'
+    ONBEKEND = 'Onbekend',
 }
 
 // DTOs for database operations (using snake_case to match DB schema)

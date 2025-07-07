@@ -1,9 +1,9 @@
-import { 
-    IDossier, 
-    IPersoon, 
-    IOuderschapsplanGegevens,
+import {
     DossierDbDto,
-    PersoonDbDto
+    IDossier,
+    IOuderschapsplanGegevens,
+    IPersoon,
+    PersoonDbDto,
 } from '../models/Dossier';
 
 export class DbMappers {
@@ -14,7 +14,7 @@ export class DbMappers {
             gebruikerId: dto.gebruiker_id,
             status: dto.status,
             aangemaaktOp: dto.aangemaakt_op!,
-            gewijzigdOp: dto.gewijzigd_op!
+            gewijzigdOp: dto.gewijzigd_op!,
         };
     }
 
@@ -25,7 +25,7 @@ export class DbMappers {
             gebruiker_id: dossier.gebruikerId,
             status: dossier.status,
             aangemaakt_op: dossier.aangemaaktOp,
-            gewijzigd_op: dossier.gewijzigdOp
+            gewijzigd_op: dossier.gewijzigdOp,
         };
     }
 
@@ -47,7 +47,7 @@ export class DbMappers {
             nationaliteit2: dto.nationaliteit_2,
             telefoon: dto.telefoon,
             email: dto.email,
-            beroep: dto.beroep
+            beroep: dto.beroep,
         };
     }
 
@@ -69,7 +69,7 @@ export class DbMappers {
             nationaliteit_2: persoon.nationaliteit2,
             telefoon: persoon.telefoon,
             email: persoon.email,
-            beroep: persoon.beroep
+            beroep: persoon.beroep,
         };
     }
 
@@ -81,7 +81,7 @@ export class DbMappers {
             veldNaam: dto.veld_naam,
             veldWaarde: dto.veld_waarde,
             aangemaaktOp: dto.aangemaakt_op,
-            gewijzigdOp: dto.gewijzigd_op
+            gewijzigdOp: dto.gewijzigd_op,
         };
     }
 }
