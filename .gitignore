@@ -140,7 +140,7 @@ vite.config.ts.timestamp-*
 
 # Azure Functions
 local.settings.json
-.vscode/
+
 .funcignore
 .deployment
 

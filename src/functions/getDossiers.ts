@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { DossierDatabaseService } from "../services/dossier-database-service";
+import { DossierDatabaseService } from "../services/database-service";
 import Joi from "joi";
 
 const querySchema = Joi.object({
