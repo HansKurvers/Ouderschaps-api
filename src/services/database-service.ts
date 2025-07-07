@@ -1,6 +1,7 @@
 import sql from 'mssql';
 import { initializeDatabase, closeDatabase } from '../config/database';
-import { IDossier, IPerson, IChild, IOuderschapsplanGegevens, ICompleteDossierData } from '../models/Dossier';
+import { IDossier, IPersoon, IOuderschapsplanGegevens, ICompleteDossierData, IDossierPartij, IDossierKind, IRol, IRelatieType } from '../models/Dossier';
+import { DbMappers } from '../utils/db-mappers';
 
 export class DossierDatabaseService {
     private pool: sql.ConnectionPool | null = null;
@@ -35,17 +36,18 @@ export class DossierDatabaseService {
             
             const result = await request.query(`
                 SELECT 
-                    DossierID,
-                    DossierNummer,
-                    GebruikerID,
-                    Status,
-                    LaatsteWijziging
-                FROM Dossiers 
-                WHERE GebruikerID = @UserID
-                ORDER BY LaatsteWijziging DESC
+                    id,
+                    dossier_nummer,
+                    gebruiker_id,
+                    status,
+                    aangemaakt_op,
+                    gewijzigd_op
+                FROM dbo.dossiers 
+                WHERE gebruiker_id = @UserID
+                ORDER BY gewijzigd_op DESC
             `);
             
-            return result.recordset;
+            return result.recordset.map(DbMappers.toDossier);
         } catch (error) {
             console.error('Error getting all dossiers:', error);
             throw error;
@@ -61,16 +63,17 @@ export class DossierDatabaseService {
             
             const result = await request.query(`
                 SELECT 
-                    DossierID,
-                    DossierNummer,
-                    GebruikerID,
-                    Status,
-                    LaatsteWijziging
-                FROM Dossiers 
-                WHERE DossierID = @DossierID
+                    id,
+                    dossier_nummer,
+                    gebruiker_id,
+                    status,
+                    aangemaakt_op,
+                    gewijzigd_op
+                FROM dbo.dossiers 
+                WHERE id = @DossierID
             `);
             
-            return result.recordset[0] || null;
+            return result.recordset[0] ? DbMappers.toDossier(result.recordset[0]) : null;
         } catch (error) {
             console.error('Error getting dossier by ID:', error);
             throw error;
@@ -87,8 +90,8 @@ export class DossierDatabaseService {
             
             const result = await request.query(`
                 SELECT COUNT(*) as count
-                FROM Dossiers 
-                WHERE DossierID = @DossierID AND GebruikerID = @UserID
+                FROM dbo.dossiers 
+                WHERE id = @DossierID AND gebruiker_id = @UserID
             `);
             
             return result.recordset[0].count > 0;
@@ -107,15 +110,14 @@ export class DossierDatabaseService {
             request.input('DossierNummer', sql.NVarChar, dossierNumber);
             request.input('GebruikerID', sql.Int, userID);
             request.input('Status', sql.NVarChar, 'Nieuw');
-            request.input('LaatsteWijziging', sql.DateTime, new Date());
             
             const result = await request.query(`
-                INSERT INTO Dossiers (DossierNummer, GebruikerID, Status, LaatsteWijziging)
+                INSERT INTO dbo.dossiers (dossier_nummer, gebruiker_id, status)
                 OUTPUT INSERTED.*
-                VALUES (@DossierNummer, @GebruikerID, @Status, @LaatsteWijziging)
+                VALUES (@DossierNummer, @GebruikerID, @Status)
             `);
             
-            return result.recordset[0];
+            return DbMappers.toDossier(result.recordset[0]);
         } catch (error) {
             console.error('Error creating dossier:', error);
             throw error;
@@ -129,21 +131,25 @@ export class DossierDatabaseService {
             await transaction.begin();
             
             // Delete related data in correct order
+            // First delete ouderschapsplan gegevens
             await transaction.request()
                 .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM OuderschapsplanGegevens WHERE DossierID = @DossierID');
+                .query('DELETE FROM dbo.ouderschapsplan_gegevens WHERE dossier_id = @DossierID');
             
+            // Delete dossier-child relationships
             await transaction.request()
                 .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM Kinderen WHERE DossierID = @DossierID');
+                .query('DELETE FROM dbo.dossiers_kinderen WHERE dossier_id = @DossierID');
             
+            // Delete dossier-party relationships
             await transaction.request()
                 .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM Personen WHERE DossierID = @DossierID');
+                .query('DELETE FROM dbo.dossiers_partijen WHERE dossier_id = @DossierID');
             
+            // Finally delete the dossier itself
             const result = await transaction.request()
                 .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM Dossiers WHERE DossierID = @DossierID');
+                .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
             
             await transaction.commit();
             return result.rowsAffected[0] > 0;
@@ -160,9 +166,9 @@ export class DossierDatabaseService {
             const request = pool.request();
             
             const result = await request.query(`
-                SELECT MAX(CAST(DossierNummer AS INT)) as maxNumber
-                FROM Dossiers
-                WHERE ISNUMERIC(DossierNummer) = 1
+                SELECT MAX(CAST(dossier_nummer AS INT)) as maxNumber
+                FROM dbo.dossiers
+                WHERE ISNUMERIC(dossier_nummer) = 1
             `);
             
             const maxNumber = result.recordset[0].maxNumber || 999;
@@ -176,7 +182,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getPersons(dossierID: number): Promise<IPerson[]> {
+    async getPartijen(dossierID: number): Promise<Array<{persoon: IPersoon, rol: IRol}>> {
         try {
             const pool = this.getPool();
             const request = pool.request();
@@ -184,34 +190,79 @@ export class DossierDatabaseService {
             request.input('DossierID', sql.Int, dossierID);
             
             const result = await request.query(`
-                SELECT * FROM Personen 
-                WHERE DossierID = @DossierID
-                ORDER BY PersoonType
+                SELECT 
+                    p.*,
+                    r.id as rol_id,
+                    r.naam as rol_naam
+                FROM dbo.dossiers_partijen dp
+                JOIN dbo.personen p ON dp.persoon_id = p.id
+                JOIN dbo.rollen r ON dp.rol_id = r.id
+                WHERE dp.dossier_id = @DossierID
+                ORDER BY r.id
             `);
             
-            return result.recordset;
+            return result.recordset.map(row => ({
+                persoon: DbMappers.toPersoon(row),
+                rol: {
+                    id: row.rol_id,
+                    naam: row.rol_naam
+                }
+            }));
         } catch (error) {
-            console.error('Error getting persons:', error);
+            console.error('Error getting partijen:', error);
             throw error;
         }
     }
 
-    async getChildren(dossierID: number): Promise<IChild[]> {
+    async getKinderen(dossierID: number): Promise<Array<{kind: IPersoon, ouders: Array<{ouder: IPersoon, relatieType: IRelatieType}>}>> {
         try {
             const pool = this.getPool();
             const request = pool.request();
             
             request.input('DossierID', sql.Int, dossierID);
             
-            const result = await request.query(`
-                SELECT * FROM Kinderen 
-                WHERE DossierID = @DossierID
-                ORDER BY Volgorde
+            // Get children associated with this dossier
+            const kinderenResult = await request.query(`
+                SELECT DISTINCT p.*
+                FROM dbo.dossiers_kinderen dk
+                JOIN dbo.personen p ON dk.kind_id = p.id
+                WHERE dk.dossier_id = @DossierID
             `);
             
-            return result.recordset;
+            const kinderen = [];
+            
+            // For each child, get their parents
+            for (const kindRow of kinderenResult.recordset) {
+                const kind = DbMappers.toPersoon(kindRow);
+                
+                const oudersRequest = pool.request();
+                oudersRequest.input('KindID', sql.Int, kind.id);
+                
+                const oudersResult = await oudersRequest.query(`
+                    SELECT 
+                        p.*,
+                        rt.id as relatie_type_id,
+                        rt.naam as relatie_type_naam
+                    FROM dbo.kinderen_ouders ko
+                    JOIN dbo.personen p ON ko.ouder_id = p.id
+                    JOIN dbo.relatie_types rt ON ko.relatie_type_id = rt.id
+                    WHERE ko.kind_id = @KindID
+                `);
+                
+                const ouders = oudersResult.recordset.map(row => ({
+                    ouder: DbMappers.toPersoon(row),
+                    relatieType: {
+                        id: row.relatie_type_id,
+                        naam: row.relatie_type_naam
+                    }
+                }));
+                
+                kinderen.push({ kind, ouders });
+            }
+            
+            return kinderen;
         } catch (error) {
-            console.error('Error getting children:', error);
+            console.error('Error getting kinderen:', error);
             throw error;
         }
     }
@@ -224,12 +275,20 @@ export class DossierDatabaseService {
             request.input('DossierID', sql.Int, dossierID);
             
             const result = await request.query(`
-                SELECT * FROM OuderschapsplanGegevens 
-                WHERE DossierID = @DossierID
-                ORDER BY VeldCode
+                SELECT 
+                    id,
+                    dossier_id,
+                    veld_code,
+                    veld_naam,
+                    veld_waarde,
+                    aangemaakt_op,
+                    gewijzigd_op
+                FROM dbo.ouderschapsplan_gegevens 
+                WHERE dossier_id = @DossierID
+                ORDER BY veld_code
             `);
             
-            return result.recordset;
+            return result.recordset.map(DbMappers.toOuderschapsplanGegevens);
         } catch (error) {
             console.error('Error getting ouderschapsplan gegevens:', error);
             throw error;
@@ -243,16 +302,16 @@ export class DossierDatabaseService {
                 return null;
             }
             
-            const [persons, children, ouderschapsplanGegevens] = await Promise.all([
-                this.getPersons(dossierID),
-                this.getChildren(dossierID),
+            const [partijen, kinderen, ouderschapsplanGegevens] = await Promise.all([
+                this.getPartijen(dossierID),
+                this.getKinderen(dossierID),
                 this.getOuderschapsplanGegevens(dossierID)
             ]);
             
             return {
                 dossier,
-                persons,
-                children,
+                partijen,
+                kinderen,
                 ouderschapsplanGegevens
             };
         } catch (error) {
@@ -261,84 +320,112 @@ export class DossierDatabaseService {
         }
     }
 
-    async savePerson(dossierID: number, personData: Partial<IPerson>): Promise<IPerson> {
+    async createOrUpdatePersoon(persoonData: Partial<IPersoon>): Promise<IPersoon> {
+        try {
+            const pool = this.getPool();
+            const dto = DbMappers.toPersoonDto(persoonData as IPersoon);
+            
+            if (persoonData.id) {
+                // Update existing person
+                const request = pool.request();
+                request.input('Id', sql.Int, persoonData.id);
+                request.input('Voorletters', sql.NVarChar, dto.voorletters);
+                request.input('Voornamen', sql.NVarChar, dto.voornamen);
+                request.input('Roepnaam', sql.NVarChar, dto.roepnaam);
+                request.input('Geslacht', sql.NVarChar, dto.geslacht);
+                request.input('Tussenvoegsel', sql.NVarChar, dto.tussenvoegsel);
+                request.input('Achternaam', sql.NVarChar, dto.achternaam);
+                request.input('Adres', sql.NVarChar, dto.adres);
+                request.input('Postcode', sql.NVarChar, dto.postcode);
+                request.input('Plaats', sql.NVarChar, dto.plaats);
+                request.input('GeboortePlaats', sql.NVarChar, dto.geboorte_plaats);
+                request.input('GeboorteDatum', sql.Date, dto.geboorte_datum);
+                request.input('Nationaliteit1', sql.NVarChar, dto.nationaliteit_1);
+                request.input('Nationaliteit2', sql.NVarChar, dto.nationaliteit_2);
+                request.input('Telefoon', sql.NVarChar, dto.telefoon);
+                request.input('Email', sql.NVarChar, dto.email);
+                request.input('Beroep', sql.NVarChar, dto.beroep);
+                
+                const result = await request.query(`
+                    UPDATE dbo.personen SET
+                        voorletters = @Voorletters,
+                        voornamen = @Voornamen,
+                        roepnaam = @Roepnaam,
+                        geslacht = @Geslacht,
+                        tussenvoegsel = @Tussenvoegsel,
+                        achternaam = @Achternaam,
+                        adres = @Adres,
+                        postcode = @Postcode,
+                        plaats = @Plaats,
+                        geboorte_plaats = @GeboortePlaats,
+                        geboorte_datum = @GeboorteDatum,
+                        nationaliteit_1 = @Nationaliteit1,
+                        nationaliteit_2 = @Nationaliteit2,
+                        telefoon = @Telefoon,
+                        email = @Email,
+                        beroep = @Beroep
+                    OUTPUT INSERTED.*
+                    WHERE id = @Id
+                `);
+                
+                return DbMappers.toPersoon(result.recordset[0]);
+            } else {
+                // Insert new person
+                const request = pool.request();
+                request.input('Voorletters', sql.NVarChar, dto.voorletters);
+                request.input('Voornamen', sql.NVarChar, dto.voornamen);
+                request.input('Roepnaam', sql.NVarChar, dto.roepnaam);
+                request.input('Geslacht', sql.NVarChar, dto.geslacht);
+                request.input('Tussenvoegsel', sql.NVarChar, dto.tussenvoegsel);
+                request.input('Achternaam', sql.NVarChar, dto.achternaam || '');
+                request.input('Adres', sql.NVarChar, dto.adres);
+                request.input('Postcode', sql.NVarChar, dto.postcode);
+                request.input('Plaats', sql.NVarChar, dto.plaats);
+                request.input('GeboortePlaats', sql.NVarChar, dto.geboorte_plaats);
+                request.input('GeboorteDatum', sql.Date, dto.geboorte_datum);
+                request.input('Nationaliteit1', sql.NVarChar, dto.nationaliteit_1);
+                request.input('Nationaliteit2', sql.NVarChar, dto.nationaliteit_2);
+                request.input('Telefoon', sql.NVarChar, dto.telefoon);
+                request.input('Email', sql.NVarChar, dto.email);
+                request.input('Beroep', sql.NVarChar, dto.beroep);
+                
+                const result = await request.query(`
+                    INSERT INTO dbo.personen (
+                        voorletters, voornamen, roepnaam, geslacht, tussenvoegsel, achternaam,
+                        adres, postcode, plaats, geboorte_plaats, geboorte_datum,
+                        nationaliteit_1, nationaliteit_2, telefoon, email, beroep
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @Voorletters, @Voornamen, @Roepnaam, @Geslacht, @Tussenvoegsel, @Achternaam,
+                        @Adres, @Postcode, @Plaats, @GeboortePlaats, @GeboorteDatum,
+                        @Nationaliteit1, @Nationaliteit2, @Telefoon, @Email, @Beroep
+                    )
+                `);
+                
+                return DbMappers.toPersoon(result.recordset[0]);
+            }
+        } catch (error) {
+            console.error('Error saving persoon:', error);
+            throw error;
+        }
+    }
+
+    async linkPersoonToDossier(dossierID: number, persoonID: number, rolID: number): Promise<void> {
         try {
             const pool = this.getPool();
             const request = pool.request();
             
-            // Check if person exists
-            const existingPerson = await request
-                .input('DossierID', sql.Int, dossierID)
-                .input('PersoonType', sql.NVarChar, personData.PersoonType)
-                .query(`
-                    SELECT PersoonID FROM Personen 
-                    WHERE DossierID = @DossierID AND PersoonType = @PersoonType
-                `);
+            request.input('DossierID', sql.Int, dossierID);
+            request.input('PersoonID', sql.Int, persoonID);
+            request.input('RolID', sql.Int, rolID);
             
-            if (existingPerson.recordset.length > 0) {
-                // Update existing person
-                const updateRequest = pool.request();
-                updateRequest.input('PersoonID', sql.Int, existingPerson.recordset[0].PersoonID);
-                updateRequest.input('Voornaam', sql.NVarChar, personData.Voornaam);
-                updateRequest.input('Tussenvoegsel', sql.NVarChar, personData.Tussenvoegsel);
-                updateRequest.input('Achternaam', sql.NVarChar, personData.Achternaam);
-                updateRequest.input('Geboortedatum', sql.Date, personData.Geboortedatum);
-                updateRequest.input('Adres', sql.NVarChar, personData.Adres);
-                updateRequest.input('Postcode', sql.NVarChar, personData.Postcode);
-                updateRequest.input('Woonplaats', sql.NVarChar, personData.Woonplaats);
-                updateRequest.input('Telefoonnummer', sql.NVarChar, personData.Telefoonnummer);
-                updateRequest.input('Email', sql.NVarChar, personData.Email);
-                updateRequest.input('BSN', sql.NVarChar, personData.BSN);
-                
-                const result = await updateRequest.query(`
-                    UPDATE Personen SET
-                        Voornaam = @Voornaam,
-                        Tussenvoegsel = @Tussenvoegsel,
-                        Achternaam = @Achternaam,
-                        Geboortedatum = @Geboortedatum,
-                        Adres = @Adres,
-                        Postcode = @Postcode,
-                        Woonplaats = @Woonplaats,
-                        Telefoonnummer = @Telefoonnummer,
-                        Email = @Email,
-                        BSN = @BSN
-                    OUTPUT INSERTED.*
-                    WHERE PersoonID = @PersoonID
-                `);
-                
-                return result.recordset[0];
-            } else {
-                // Insert new person
-                const insertRequest = pool.request();
-                insertRequest.input('DossierID', sql.Int, dossierID);
-                insertRequest.input('PersoonType', sql.NVarChar, personData.PersoonType);
-                insertRequest.input('Voornaam', sql.NVarChar, personData.Voornaam);
-                insertRequest.input('Tussenvoegsel', sql.NVarChar, personData.Tussenvoegsel);
-                insertRequest.input('Achternaam', sql.NVarChar, personData.Achternaam);
-                insertRequest.input('Geboortedatum', sql.Date, personData.Geboortedatum);
-                insertRequest.input('Adres', sql.NVarChar, personData.Adres);
-                insertRequest.input('Postcode', sql.NVarChar, personData.Postcode);
-                insertRequest.input('Woonplaats', sql.NVarChar, personData.Woonplaats);
-                insertRequest.input('Telefoonnummer', sql.NVarChar, personData.Telefoonnummer);
-                insertRequest.input('Email', sql.NVarChar, personData.Email);
-                insertRequest.input('BSN', sql.NVarChar, personData.BSN);
-                
-                const result = await insertRequest.query(`
-                    INSERT INTO Personen (
-                        DossierID, PersoonType, Voornaam, Tussenvoegsel, Achternaam,
-                        Geboortedatum, Adres, Postcode, Woonplaats, Telefoonnummer, Email, BSN
-                    )
-                    OUTPUT INSERTED.*
-                    VALUES (
-                        @DossierID, @PersoonType, @Voornaam, @Tussenvoegsel, @Achternaam,
-                        @Geboortedatum, @Adres, @Postcode, @Woonplaats, @Telefoonnummer, @Email, @BSN
-                    )
-                `);
-                
-                return result.recordset[0];
-            }
+            await request.query(`
+                INSERT INTO dbo.dossiers_partijen (dossier_id, persoon_id, rol_id)
+                VALUES (@DossierID, @PersoonID, @RolID)
+            `);
         } catch (error) {
-            console.error('Error saving person:', error);
+            console.error('Error linking persoon to dossier:', error);
             throw error;
         }
     }
@@ -355,20 +442,21 @@ export class DossierDatabaseService {
                     .input('DossierID', sql.Int, dossierID)
                     .input('VeldCode', sql.NVarChar, fieldCode)
                     .query(`
-                        SELECT GegevenID FROM OuderschapsplanGegevens 
-                        WHERE DossierID = @DossierID AND VeldCode = @VeldCode
+                        SELECT id FROM dbo.ouderschapsplan_gegevens 
+                        WHERE dossier_id = @DossierID AND veld_code = @VeldCode
                     `);
                 
                 if (existingField.recordset.length > 0) {
                     // Update existing field
                     const updateRequest = pool.request();
-                    updateRequest.input('GegevenID', sql.Int, existingField.recordset[0].GegevenID);
+                    updateRequest.input('Id', sql.Int, existingField.recordset[0].id);
                     updateRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
                     
                     await updateRequest.query(`
-                        UPDATE OuderschapsplanGegevens 
-                        SET VeldWaarde = @VeldWaarde
-                        WHERE GegevenID = @GegevenID
+                        UPDATE dbo.ouderschapsplan_gegevens 
+                        SET veld_waarde = @VeldWaarde,
+                            gewijzigd_op = GETDATE()
+                        WHERE id = @Id
                     `);
                 } else {
                     // Insert new field
@@ -379,7 +467,7 @@ export class DossierDatabaseService {
                     insertRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
                     
                     await insertRequest.query(`
-                        INSERT INTO OuderschapsplanGegevens (DossierID, VeldCode, VeldNaam, VeldWaarde)
+                        INSERT INTO dbo.ouderschapsplan_gegevens (dossier_id, veld_code, veld_naam, veld_waarde)
                         VALUES (@DossierID, @VeldCode, @VeldNaam, @VeldWaarde)
                     `);
                 }

@@ -52,7 +52,7 @@ export async function getDossiers(request: HttpRequest, context: InvocationConte
         
         // Apply status filter if provided
         if (status) {
-            dossiers = dossiers.filter(d => d.Status === status);
+            dossiers = dossiers.filter(d => d.status === status);
         }
         
         // Apply pagination
