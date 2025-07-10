@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { DossierDatabaseService } from '../services/database-service';
-import { requireAuthentication } from '../utils/auth-helper';
-import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse } from '../utils/response-helper';
+import { DossierDatabaseService } from '../../services/database-service';
+import { requireAuthentication } from '../../utils/auth-helper';
+import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse } from '../../utils/response-helper';
 
 export async function createDossier(
     request: HttpRequest,

@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { DossierDatabaseService } from '../services/database-service';
-import { createErrorResponse, createSuccessResponse } from '../utils/response-helper';
-import { getUserId } from '../utils/auth-helper';
+import { DossierDatabaseService } from '../../services/database-service';
+import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
+import { getUserId } from '../../utils/auth-helper';
 
 export async function getPersoonById(
     request: HttpRequest,

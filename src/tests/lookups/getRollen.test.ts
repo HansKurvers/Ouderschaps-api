@@ -1,7 +1,7 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
-import { DossierDatabaseService } from '../services/database-service';
+import { DossierDatabaseService } from '../../services/database-service';
 
-jest.mock('../services/database-service');
+jest.mock('../../services/database-service');
 
 describe('getRollen', () => {
     let mockRequest: HttpRequest;
@@ -35,7 +35,7 @@ describe('getRollen', () => {
     });
 
     it('should return roles successfully', async () => {
-        const { getRollen } = require('./getRollen');
+        const { getRollen } = require('../../functions/lookups/getRollen');
         const mockRollen = [
             { id: 1, naam: 'Moeder' },
             { id: 2, naam: 'Vader' },
@@ -55,7 +55,7 @@ describe('getRollen', () => {
     });
 
     it('should cache roles between calls', async () => {
-        const { getRollen } = require('./getRollen');
+        const { getRollen } = require('../../functions/lookups/getRollen');
         const mockRollen = [
             { id: 1, naam: 'Moeder' },
             { id: 2, naam: 'Vader' },
@@ -85,7 +85,7 @@ describe('getRollen', () => {
     });
 
     it('should handle database errors', async () => {
-        const { getRollen } = require('./getRollen');
+        const { getRollen } = require('../../functions/lookups/getRollen');
         mockDbService.getRollen.mockRejectedValue(new Error('Database error'));
 
         const result = await getRollen(mockRequest, mockContext);

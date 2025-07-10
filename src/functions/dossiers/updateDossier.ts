@@ -1,12 +1,12 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { DossierDatabaseService } from '../services/database-service';
-import { requireAuthentication } from '../utils/auth-helper';
+import { DossierDatabaseService } from '../../services/database-service';
+import { requireAuthentication } from '../../utils/auth-helper';
 import {
     createSuccessResponse,
     createErrorResponse,
     createUnauthorizedResponse,
     createForbiddenResponse
-} from '../utils/response-helper';
+} from '../../utils/response-helper';
 import Joi from 'joi';
 
 const paramsSchema = Joi.object({

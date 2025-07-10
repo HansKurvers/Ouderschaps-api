@@ -1,10 +1,10 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
-import { createPersoon } from './createPersoon';
-import { DossierDatabaseService } from '../services/database-service';
-import { getUserId } from '../utils/auth-helper';
+import { createPersoon } from '../../functions/personen/createPersoon';
+import { DossierDatabaseService } from '../../services/database-service';
+import { getUserId } from '../../utils/auth-helper';
 
-jest.mock('../services/database-service');
-jest.mock('../utils/auth-helper');
+jest.mock('../../services/database-service');
+jest.mock('../../utils/auth-helper');
 
 describe('createPersoon', () => {
     let mockRequest: HttpRequest;

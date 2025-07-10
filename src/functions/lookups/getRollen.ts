@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { DossierDatabaseService } from '../services/database-service';
-import { createErrorResponse, createSuccessResponse } from '../utils/response-helper';
-import { Rol } from '../models/Dossier';
+import { DossierDatabaseService } from '../../services/database-service';
+import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
+import { Rol } from '../../models/Dossier';
 
 // In-memory cache for roles
 let rollenCache: Rol[] | null = null;

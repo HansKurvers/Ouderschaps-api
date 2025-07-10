@@ -1,10 +1,10 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
-import { updateDossier } from './updateDossier';
-import { DossierDatabaseService } from '../services/database-service';
-import { Dossier } from '../models/Dossier';
+import { updateDossier } from '../../functions/dossiers/updateDossier';
+import { DossierDatabaseService } from '../../services/database-service';
+import { Dossier } from '../../models/Dossier';
 
 // Mock the database service
-jest.mock('../services/database-service');
+jest.mock('../../services/database-service');
 
 describe('updateDossier', () => {
     let mockContext: InvocationContext;

@@ -1,10 +1,10 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
-import { addPartijToDossier } from './addPartijToDossier';
-import { DossierDatabaseService } from '../services/database-service';
-import { getUserId } from '../utils/auth-helper';
+import { addPartijToDossier } from '../../functions/dossiers/addPartijToDossier';
+import { DossierDatabaseService } from '../../services/database-service';
+import { getUserId } from '../../utils/auth-helper';
 
-jest.mock('../services/database-service');
-jest.mock('../utils/auth-helper');
+jest.mock('../../services/database-service');
+jest.mock('../../utils/auth-helper');
 
 describe('addPartijToDossier', () => {
     let mockRequest: HttpRequest;
