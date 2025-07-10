@@ -1063,7 +1063,7 @@ export class DossierDatabaseService {
 
             const result = await request.query(`
                 SELECT 
-                    o.id,
+                    o.id as omgang_id,
                     o.wissel_tijd,
                     o.week_regeling_anders,
                     o.aangemaakt_op,
@@ -1072,7 +1072,23 @@ export class DossierDatabaseService {
                     d.naam as dag_naam,
                     dd.id as dagdeel_id,
                     dd.naam as dagdeel_naam,
-                    p.*,
+                    p.id as persoon_id,
+                    p.voorletters,
+                    p.voornamen,
+                    p.roepnaam,
+                    p.geslacht,
+                    p.tussenvoegsel,
+                    p.achternaam,
+                    p.adres,
+                    p.postcode,
+                    p.plaats,
+                    p.geboorte_plaats,
+                    p.geboorte_datum,
+                    p.nationaliteit_1,
+                    p.nationaliteit_2,
+                    p.telefoon,
+                    p.email,
+                    p.beroep,
                     wr.id as week_regeling_id,
                     wr.omschrijving as week_regeling_omschrijving
                 FROM dbo.omgang o
@@ -1084,8 +1100,9 @@ export class DossierDatabaseService {
                 ORDER BY d.id, dd.id
             `);
 
+            
             return result.recordset.map(row => ({
-                id: row.id,
+                id: row.omgang_id,
                 dag: {
                     id: row.dag_id,
                     naam: row.dag_naam
@@ -1094,7 +1111,25 @@ export class DossierDatabaseService {
                     id: row.dagdeel_id,
                     naam: row.dagdeel_naam
                 },
-                verzorger: DbMappers.toPersoon(row),
+                verzorger: DbMappers.toPersoon({
+                    id: row.persoon_id,
+                    voorletters: row.voorletters,
+                    voornamen: row.voornamen,
+                    roepnaam: row.roepnaam,
+                    geslacht: row.geslacht,
+                    tussenvoegsel: row.tussenvoegsel,
+                    achternaam: row.achternaam,
+                    adres: row.adres,
+                    postcode: row.postcode,
+                    plaats: row.plaats,
+                    geboorte_plaats: row.geboorte_plaats,
+                    geboorte_datum: row.geboorte_datum,
+                    nationaliteit_1: row.nationaliteit_1,
+                    nationaliteit_2: row.nationaliteit_2,
+                    telefoon: row.telefoon,
+                    email: row.email,
+                    beroep: row.beroep
+                }),
                 wisselTijd: row.wissel_tijd,
                 weekRegeling: {
                     id: row.week_regeling_id,
@@ -1106,6 +1141,9 @@ export class DossierDatabaseService {
             }));
         } catch (error) {
             console.error('Error getting omgang by dossier:', error);
+            if (error instanceof Error) {
+                console.error('SQL Error details:', error.message);
+            }
             throw error;
         }
     }
@@ -1139,9 +1177,11 @@ export class DossierDatabaseService {
 
             // Get complete omgang data
             const omgangList = await this.getOmgangByDossier(data.dossierId);
+           
             const newOmgang = omgangList.find(o => o.id === omgangId);
 
             if (!newOmgang) {
+                console.error(`Failed to find omgang with ID ${omgangId} in list of ${omgangList.length} entries`);
                 throw new Error('Failed to retrieve created omgang');
             }
 
@@ -1206,7 +1246,9 @@ export class DossierDatabaseService {
             `;
 
             const result = await request.query(query);
+            
             if (result.recordset.length === 0) {
+                console.error(`No omgang found with ID: ${omgangId}`);
                 throw new Error('Omgang not found');
             }
 

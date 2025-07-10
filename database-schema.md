@@ -66,27 +66,27 @@ Defines parent-child relationships with relationship types.
 ### dbo.omgang
 Visitation/contact arrangements.
 - **id** (int, PK, Identity) - Primary key
-- **dag_id** (int, NOT NULL, FK → dbo.dag.id) - Day of week
-- **dagdeel_id** (int, NOT NULL, FK → dbo.dagdeel.id) - Part of day
+- **dag_id** (int, NOT NULL, FK → dbo.dagen.id) - Day of week
+- **dagdeel_id** (int, NOT NULL, FK → dbo.dagdelen.id) - Part of day
 - **verzorger_id** (int, NOT NULL, FK → dbo.personen.id) - Caregiver
 - **wissel_tijd** (nvarchar(50), nullable) - Exchange time (e.g., "09:00")
-- **week_regeling_id** (int, NOT NULL, FK → dbo.week_regeling.id) - Week arrangement type
+- **week_regeling_id** (int, NOT NULL, FK → dbo.week_regelingen.id) - Week arrangement type
 - **week_regeling_anders** (nvarchar(255), nullable) - Custom week arrangement override
 - **dossier_id** (int, NOT NULL, FK → dbo.dossiers.id) - Related dossier
 - **aangemaakt_op** (datetime, NOT NULL, default: getdate()) - Creation date
 - **gewijzigd_op** (datetime, NOT NULL, default: getdate()) - Last modified date
 
-### dbo.dag
+### dbo.dagen
 Days of the week lookup table.
 - **id** (int, PK, Identity) - Primary key
 - **naam** (nvarchar(20), NOT NULL, UNIQUE) - Day name (Maandag, Dinsdag, etc.)
 
-### dbo.dagdeel
+### dbo.dagdelen
 Parts of day lookup table.
 - **id** (int, PK, Identity) - Primary key
 - **naam** (nvarchar(20), NOT NULL, UNIQUE) - Part name (Ochtend, Middag, Avond, Nacht)
 
-### dbo.week_regeling
+### dbo.week_regelingen
 Week arrangement types.
 - **id** (int, PK, Identity) - Primary key
 - **omschrijving** (nvarchar(200), NOT NULL) - Description (Elke week, Even weken, etc.)
