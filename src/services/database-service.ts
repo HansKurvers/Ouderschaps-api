@@ -2,10 +2,21 @@ import sql from 'mssql';
 import { closeDatabase, initializeDatabase } from '../config/database';
 import {
     CompleteDossierData,
+    CreateOmgangDto,
+    CreateZorgDto,
+    Dag,
+    Dagdeel,
     Dossier,
+    Omgang,
     Persoon,
     RelatieType,
     Rol,
+    UpdateOmgangDto,
+    UpdateZorgDto,
+    WeekRegeling,
+    Zorg,
+    ZorgCategorie,
+    ZorgSituatie,
 } from '../models/Dossier';
 import { DbMappers } from '../utils/db-mappers';
 
@@ -921,6 +932,540 @@ export class DossierDatabaseService {
             };
         } catch (error) {
             console.error('Error getting kind with ouders by ID:', error);
+            throw error;
+        }
+    }
+
+    // FASE 4: Omgang & Zorg methods
+
+    // Lookup methods (with caching)
+    async getDagen(): Promise<Dag[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            const result = await request.query(`
+                SELECT id, naam 
+                FROM dbo.dagen 
+                ORDER BY id
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam
+            }));
+        } catch (error) {
+            console.error('Error getting dagen:', error);
+            throw error;
+        }
+    }
+
+    async getDagdelen(): Promise<Dagdeel[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            const result = await request.query(`
+                SELECT id, naam 
+                FROM dbo.dagdelen 
+                ORDER BY id
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam
+            }));
+        } catch (error) {
+            console.error('Error getting dagdelen:', error);
+            throw error;
+        }
+    }
+
+    async getWeekRegelingen(): Promise<WeekRegeling[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            const result = await request.query(`
+                SELECT id, omschrijving 
+                FROM dbo.week_regelingen 
+                ORDER BY id
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                omschrijving: row.omschrijving
+            }));
+        } catch (error) {
+            console.error('Error getting week regelingen:', error);
+            throw error;
+        }
+    }
+
+    async getZorgCategorieen(): Promise<ZorgCategorie[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            const result = await request.query(`
+                SELECT id, naam 
+                FROM dbo.zorg_categorieen 
+                ORDER BY naam
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam
+            }));
+        } catch (error) {
+            console.error('Error getting zorg categorieën:', error);
+            throw error;
+        }
+    }
+
+    async getZorgSituaties(categorieId?: number): Promise<ZorgSituatie[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            let query = `
+                SELECT id, naam, zorg_categorie_id 
+                FROM dbo.zorg_situaties 
+            `;
+
+            if (categorieId) {
+                query += ' WHERE zorg_categorie_id = @CategorieId ';
+                request.input('CategorieId', sql.Int, categorieId);
+            }
+
+            query += ' ORDER BY naam';
+
+            const result = await request.query(query);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam,
+                zorgCategorieId: row.zorg_categorie_id
+            }));
+        } catch (error) {
+            console.error('Error getting zorg situaties:', error);
+            throw error;
+        }
+    }
+
+    // Omgang CRUD methods
+    async getOmgangByDossier(dossierId: number): Promise<Omgang[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+
+            const result = await request.query(`
+                SELECT 
+                    o.id,
+                    o.wissel_tijd,
+                    o.week_regeling_anders,
+                    o.aangemaakt_op,
+                    o.gewijzigd_op,
+                    d.id as dag_id,
+                    d.naam as dag_naam,
+                    dd.id as dagdeel_id,
+                    dd.naam as dagdeel_naam,
+                    p.*,
+                    wr.id as week_regeling_id,
+                    wr.omschrijving as week_regeling_omschrijving
+                FROM dbo.omgang o
+                JOIN dbo.dagen d ON o.dag_id = d.id
+                JOIN dbo.dagdelen dd ON o.dagdeel_id = dd.id
+                JOIN dbo.personen p ON o.verzorger_id = p.id
+                JOIN dbo.week_regelingen wr ON o.week_regeling_id = wr.id
+                WHERE o.dossier_id = @DossierId
+                ORDER BY d.id, dd.id
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                dag: {
+                    id: row.dag_id,
+                    naam: row.dag_naam
+                },
+                dagdeel: {
+                    id: row.dagdeel_id,
+                    naam: row.dagdeel_naam
+                },
+                verzorger: DbMappers.toPersoon(row),
+                wisselTijd: row.wissel_tijd,
+                weekRegeling: {
+                    id: row.week_regeling_id,
+                    omschrijving: row.week_regeling_omschrijving
+                },
+                weekRegelingAnders: row.week_regeling_anders,
+                aangemaaktOp: row.aangemaakt_op,
+                gewijzigdOp: row.gewijzigd_op
+            }));
+        } catch (error) {
+            console.error('Error getting omgang by dossier:', error);
+            throw error;
+        }
+    }
+
+    async createOmgang(data: CreateOmgangDto): Promise<Omgang> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, data.dossierId);
+            request.input('DagId', sql.Int, data.dagId);
+            request.input('DagdeelId', sql.Int, data.dagdeelId);
+            request.input('VerzorgerId', sql.Int, data.verzorgerId);
+            request.input('WisselTijd', sql.NVarChar, data.wisselTijd);
+            request.input('WeekRegelingId', sql.Int, data.weekRegelingId);
+            request.input('WeekRegelingAnders', sql.NVarChar, data.weekRegelingAnders);
+
+            const result = await request.query(`
+                INSERT INTO dbo.omgang (
+                    dossier_id, dag_id, dagdeel_id, verzorger_id, 
+                    wissel_tijd, week_regeling_id, week_regeling_anders
+                )
+                OUTPUT INSERTED.id
+                VALUES (
+                    @DossierId, @DagId, @DagdeelId, @VerzorgerId,
+                    @WisselTijd, @WeekRegelingId, @WeekRegelingAnders
+                )
+            `);
+
+            const omgangId = result.recordset[0].id;
+
+            // Get complete omgang data
+            const omgangList = await this.getOmgangByDossier(data.dossierId);
+            const newOmgang = omgangList.find(o => o.id === omgangId);
+
+            if (!newOmgang) {
+                throw new Error('Failed to retrieve created omgang');
+            }
+
+            return newOmgang;
+        } catch (error) {
+            console.error('Error creating omgang:', error);
+            throw error;
+        }
+    }
+
+    async updateOmgang(omgangId: number, data: UpdateOmgangDto): Promise<Omgang> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            // Build dynamic update query
+            const updateFields = [];
+            const params: any = { id: omgangId };
+
+            if (data.dagId !== undefined) {
+                updateFields.push('dag_id = @DagId');
+                params.DagId = data.dagId;
+            }
+            if (data.dagdeelId !== undefined) {
+                updateFields.push('dagdeel_id = @DagdeelId');
+                params.DagdeelId = data.dagdeelId;
+            }
+            if (data.verzorgerId !== undefined) {
+                updateFields.push('verzorger_id = @VerzorgerId');
+                params.VerzorgerId = data.verzorgerId;
+            }
+            if (data.wisselTijd !== undefined) {
+                updateFields.push('wissel_tijd = @WisselTijd');
+                params.WisselTijd = data.wisselTijd;
+            }
+            if (data.weekRegelingId !== undefined) {
+                updateFields.push('week_regeling_id = @WeekRegelingId');
+                params.WeekRegelingId = data.weekRegelingId;
+            }
+            if (data.weekRegelingAnders !== undefined) {
+                updateFields.push('week_regeling_anders = @WeekRegelingAnders');
+                params.WeekRegelingAnders = data.weekRegelingAnders;
+            }
+
+            if (updateFields.length === 0) {
+                throw new Error('No fields to update');
+            }
+
+            // Add gewijzigd_op
+            updateFields.push('gewijzigd_op = GETDATE()');
+
+            // Set parameters
+            Object.keys(params).forEach(key => {
+                request.input(key, params[key]);
+            });
+
+            const query = `
+                UPDATE dbo.omgang 
+                SET ${updateFields.join(', ')}
+                OUTPUT INSERTED.dossier_id
+                WHERE id = @id
+            `;
+
+            const result = await request.query(query);
+            if (result.recordset.length === 0) {
+                throw new Error('Omgang not found');
+            }
+
+            const dossierId = result.recordset[0].dossier_id;
+
+            // Get updated omgang data
+            const omgangList = await this.getOmgangByDossier(dossierId);
+            const updatedOmgang = omgangList.find(o => o.id === omgangId);
+
+            if (!updatedOmgang) {
+                throw new Error('Failed to retrieve updated omgang');
+            }
+
+            return updatedOmgang;
+        } catch (error) {
+            console.error('Error updating omgang:', error);
+            throw error;
+        }
+    }
+
+    async deleteOmgang(omgangId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('OmgangId', sql.Int, omgangId);
+
+            const result = await request.query(`
+                DELETE FROM dbo.omgang 
+                WHERE id = @OmgangId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error deleting omgang:', error);
+            throw error;
+        }
+    }
+
+    async checkOmgangAccess(omgangId: number, userId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('OmgangId', sql.Int, omgangId);
+            request.input('UserId', sql.Int, userId);
+
+            const result = await request.query(`
+                SELECT COUNT(*) as count
+                FROM dbo.omgang o
+                JOIN dbo.dossiers d ON o.dossier_id = d.id
+                WHERE o.id = @OmgangId AND d.gebruiker_id = @UserId
+            `);
+
+            return result.recordset[0].count > 0;
+        } catch (error) {
+            console.error('Error checking omgang access:', error);
+            throw error;
+        }
+    }
+
+    // Zorg CRUD methods
+    async getZorgByDossier(dossierId: number): Promise<Zorg[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+
+            const result = await request.query(`
+                SELECT 
+                    z.id,
+                    z.situatie_anders,
+                    z.overeenkomst,
+                    z.aangemaakt_op,
+                    z.aangemaakt_door,
+                    z.gewijzigd_op,
+                    z.gewijzigd_door,
+                    zc.id as zorg_categorie_id,
+                    zc.naam as zorg_categorie_naam,
+                    zs.id as zorg_situatie_id,
+                    zs.naam as zorg_situatie_naam
+                FROM dbo.zorg z
+                JOIN dbo.zorg_categorieen zc ON z.zorg_categorie_id = zc.id
+                JOIN dbo.zorg_situaties zs ON z.zorg_situatie_id = zs.id
+                WHERE z.dossier_id = @DossierId
+                ORDER BY z.aangemaakt_op DESC
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                zorgCategorie: {
+                    id: row.zorg_categorie_id,
+                    naam: row.zorg_categorie_naam
+                },
+                zorgSituatie: {
+                    id: row.zorg_situatie_id,
+                    naam: row.zorg_situatie_naam,
+                    zorgCategorieId: row.zorg_categorie_id
+                },
+                situatieAnders: row.situatie_anders,
+                overeenkomst: row.overeenkomst,
+                aangemaaktOp: row.aangemaakt_op,
+                aangemaaktDoor: row.aangemaakt_door,
+                gewijzigdOp: row.gewijzigd_op,
+                gewijzigdDoor: row.gewijzigd_door
+            }));
+        } catch (error) {
+            console.error('Error getting zorg by dossier:', error);
+            throw error;
+        }
+    }
+
+    async createZorg(data: CreateZorgDto & {aangemaaktDoor: number}): Promise<Zorg> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, data.dossierId);
+            request.input('ZorgCategorieId', sql.Int, data.zorgCategorieId);
+            request.input('ZorgSituatieId', sql.Int, data.zorgSituatieId);
+            request.input('SituatieAnders', sql.NVarChar, data.situatieAnders);
+            request.input('Overeenkomst', sql.NVarChar, data.overeenkomst);
+            request.input('AangemaaktDoor', sql.Int, data.aangemaaktDoor);
+
+            const result = await request.query(`
+                INSERT INTO dbo.zorg (
+                    dossier_id, zorg_categorie_id, zorg_situatie_id,
+                    situatie_anders, overeenkomst, aangemaakt_door
+                )
+                OUTPUT INSERTED.id
+                VALUES (
+                    @DossierId, @ZorgCategorieId, @ZorgSituatieId,
+                    @SituatieAnders, @Overeenkomst, @AangemaaktDoor
+                )
+            `);
+
+            const zorgId = result.recordset[0].id;
+
+            // Get complete zorg data
+            const zorgList = await this.getZorgByDossier(data.dossierId);
+            const newZorg = zorgList.find(z => z.id === zorgId);
+
+            if (!newZorg) {
+                throw new Error('Failed to retrieve created zorg');
+            }
+
+            return newZorg;
+        } catch (error) {
+            console.error('Error creating zorg:', error);
+            throw error;
+        }
+    }
+
+    async updateZorg(zorgId: number, data: UpdateZorgDto & {gewijzigdDoor: number}): Promise<Zorg> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            // Build dynamic update query
+            const updateFields = [];
+            const params: any = { id: zorgId, gewijzigdDoor: data.gewijzigdDoor };
+
+            if (data.zorgCategorieId !== undefined) {
+                updateFields.push('zorg_categorie_id = @ZorgCategorieId');
+                params.ZorgCategorieId = data.zorgCategorieId;
+            }
+            if (data.zorgSituatieId !== undefined) {
+                updateFields.push('zorg_situatie_id = @ZorgSituatieId');
+                params.ZorgSituatieId = data.zorgSituatieId;
+            }
+            if (data.situatieAnders !== undefined) {
+                updateFields.push('situatie_anders = @SituatieAnders');
+                params.SituatieAnders = data.situatieAnders;
+            }
+            if (data.overeenkomst !== undefined) {
+                updateFields.push('overeenkomst = @Overeenkomst');
+                params.Overeenkomst = data.overeenkomst;
+            }
+
+            if (updateFields.length === 0) {
+                throw new Error('No fields to update');
+            }
+
+            // Add gewijzigd fields
+            updateFields.push('gewijzigd_op = GETDATE()');
+            updateFields.push('gewijzigd_door = @gewijzigdDoor');
+
+            // Set parameters
+            Object.keys(params).forEach(key => {
+                request.input(key, params[key]);
+            });
+
+            const query = `
+                UPDATE dbo.zorg 
+                SET ${updateFields.join(', ')}
+                OUTPUT INSERTED.dossier_id
+                WHERE id = @id
+            `;
+
+            const result = await request.query(query);
+            if (result.recordset.length === 0) {
+                throw new Error('Zorg not found');
+            }
+
+            const dossierId = result.recordset[0].dossier_id;
+
+            // Get updated zorg data
+            const zorgList = await this.getZorgByDossier(dossierId);
+            const updatedZorg = zorgList.find(z => z.id === zorgId);
+
+            if (!updatedZorg) {
+                throw new Error('Failed to retrieve updated zorg');
+            }
+
+            return updatedZorg;
+        } catch (error) {
+            console.error('Error updating zorg:', error);
+            throw error;
+        }
+    }
+
+    async deleteZorg(zorgId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('ZorgId', sql.Int, zorgId);
+
+            const result = await request.query(`
+                DELETE FROM dbo.zorg 
+                WHERE id = @ZorgId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error deleting zorg:', error);
+            throw error;
+        }
+    }
+
+    async checkZorgAccess(zorgId: number, userId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('ZorgId', sql.Int, zorgId);
+            request.input('UserId', sql.Int, userId);
+
+            const result = await request.query(`
+                SELECT COUNT(*) as count
+                FROM dbo.zorg z
+                JOIN dbo.dossiers d ON z.dossier_id = d.id
+                WHERE z.id = @ZorgId AND d.gebruiker_id = @UserId
+            `);
+
+            return result.recordset[0].count > 0;
+        } catch (error) {
+            console.error('Error checking zorg access:', error);
             throw error;
         }
     }

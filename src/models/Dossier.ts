@@ -61,6 +61,93 @@ export interface Rol {
     naam?: string;
 }
 
+// FASE 4: Omgang & Zorg interfaces
+
+export interface Dag {
+    id: number;
+    naam: string;
+}
+
+export interface Dagdeel {
+    id: number;
+    naam: string;
+}
+
+export interface WeekRegeling {
+    id: number;
+    omschrijving: string;
+}
+
+export interface ZorgCategorie {
+    id: number;
+    naam: string;
+}
+
+export interface ZorgSituatie {
+    id: number;
+    naam: string;
+    zorgCategorieId: number;
+}
+
+export interface Omgang {
+    id: number;
+    dag: Dag;
+    dagdeel: Dagdeel;
+    verzorger: Persoon;
+    wisselTijd?: string;
+    weekRegeling: WeekRegeling;
+    weekRegelingAnders?: string;
+    aangemaaktOp: Date;
+    gewijzigdOp: Date;
+}
+
+export interface Zorg {
+    id: number;
+    zorgCategorie: ZorgCategorie;
+    zorgSituatie: ZorgSituatie;
+    situatieAnders?: string;
+    overeenkomst: string;
+    aangemaaktOp: Date;
+    aangemaaktDoor: number;
+    gewijzigdOp: Date;
+    gewijzigdDoor?: number;
+}
+
+// DTOs for creating/updating
+export interface CreateOmgangDto {
+    dossierId: number;
+    dagId: number;
+    dagdeelId: number;
+    verzorgerId: number;
+    wisselTijd?: string;
+    weekRegelingId: number;
+    weekRegelingAnders?: string;
+}
+
+export interface UpdateOmgangDto {
+    dagId?: number;
+    dagdeelId?: number;
+    verzorgerId?: number;
+    wisselTijd?: string;
+    weekRegelingId?: number;
+    weekRegelingAnders?: string;
+}
+
+export interface CreateZorgDto {
+    dossierId: number;
+    zorgCategorieId: number;
+    zorgSituatieId: number;
+    situatieAnders?: string;
+    overeenkomst: string;
+}
+
+export interface UpdateZorgDto {
+    zorgCategorieId?: number;
+    zorgSituatieId?: number;
+    situatieAnders?: string;
+    overeenkomst?: string;
+}
+
 
 export interface CompleteDossierData {
     dossier: Dossier;

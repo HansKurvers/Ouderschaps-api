@@ -31,6 +31,23 @@ import './functions/kinderen/removeOuderFromKind';
 // Lookup functions
 import './functions/lookups/getRollen';
 import './functions/lookups/getRelatieTypes';
+import './functions/lookups/getDagen';
+import './functions/lookups/getDagdelen';
+import './functions/lookups/getWeekRegelingen';
+import './functions/lookups/getZorgCategorieen';
+import './functions/lookups/getZorgSituaties';
+
+// Omgang functions (FASE 4)
+import './functions/dossiers/getDossierOmgang';
+import './functions/dossiers/createOmgang';
+import './functions/dossiers/updateOmgang';
+import './functions/dossiers/deleteOmgang';
+
+// Zorg functions (FASE 4)
+import './functions/dossiers/getDossierZorg';
+import './functions/dossiers/createZorg';
+import './functions/dossiers/updateZorg';
+import './functions/dossiers/deleteZorg';
 
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
