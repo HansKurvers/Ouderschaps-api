@@ -142,7 +142,7 @@ export class DossierDatabaseService {
             await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.dossiers WHERE dossier_id = @DossierID');
+                .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
 
             // Delete dossier-child relationships
             await transaction
@@ -334,7 +334,7 @@ export class DossierDatabaseService {
                     aangemaakt_op,
                     gewijzigd_op
                 FROM dbo.dossiers
-                WHERE dossier_id = @DossierID
+                WHERE id = @DossierID
                 ORDER BY veld_code
             `);
 
@@ -351,7 +351,7 @@ export class DossierDatabaseService {
             if (!dossier) {
                 return null;
             }
-
+                // TODO ouderschapsplan gegevens 
             const [partijen, kinderen, ouderschapsplanGegevens] = await Promise.all([
                 this.getPartijen(dossierID),
                 this.getKinderen(dossierID),

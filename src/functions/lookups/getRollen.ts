@@ -8,20 +8,26 @@ let rollenCache: Rol[] | null = null;
 let cacheTimestamp: number | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+// Function to clear cache (for testing purposes)
+export function clearRollenCache(): void {
+    rollenCache = null;
+    cacheTimestamp = null;
+}
+
 export async function getRollen(
     _request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
+    // Check if we have valid cached data
+    const now = Date.now();
+    if (rollenCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
+        context.log('Returning cached roles data');
+        return createSuccessResponse(rollenCache);
+    }
+
     const dbService = new DossierDatabaseService();
 
     try {
-        // Check if we have valid cached data
-        const now = Date.now();
-        if (rollenCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
-            context.log('Returning cached roles data');
-            return createSuccessResponse(rollenCache);
-        }
-
         // Initialize database connection
         await dbService.initialize();
 

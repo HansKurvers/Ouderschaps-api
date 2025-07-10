@@ -1,5 +1,6 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { getRollen, clearRollenCache } from '../../functions/lookups/getRollen';
 
 jest.mock('../../services/database-service');
 
@@ -9,6 +10,9 @@ describe('getRollen', () => {
     let mockDbService: jest.Mocked<DossierDatabaseService>;
 
     beforeEach(() => {
+        // Clear cache before each test
+        clearRollenCache();
+        
         mockRequest = {
             headers: new Map(),
             params: {},
@@ -30,12 +34,10 @@ describe('getRollen', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
-        // Clear cache by importing and resetting the module
-        jest.resetModules();
+        clearRollenCache();
     });
 
     it('should return roles successfully', async () => {
-        const { getRollen } = require('../../functions/lookups/getRollen');
         const mockRollen = [
             { id: 1, naam: 'Moeder' },
             { id: 2, naam: 'Vader' },
@@ -54,8 +56,7 @@ describe('getRollen', () => {
         expect(mockDbService.close).toHaveBeenCalled();
     });
 
-    it('should cache roles between calls', async () => {
-        const { getRollen } = require('../../functions/lookups/getRollen');
+    it('should cache roles between calls within same module instance', async () => {
         const mockRollen = [
             { id: 1, naam: 'Moeder' },
             { id: 2, naam: 'Vader' },
@@ -67,11 +68,7 @@ describe('getRollen', () => {
         const result1 = await getRollen(mockRequest, mockContext);
         expect(result1.status).toBe(200);
         
-        // Reset mocks to test cache
-        jest.clearAllMocks();
-        (DossierDatabaseService as jest.Mock).mockImplementation(() => mockDbService);
-        
-        // Second call should use cache (no database call)
+        // Second call should use cache since we're using the same module instance
         const result2 = await getRollen(mockRequest, mockContext);
 
         expect(result2.status).toBe(200);
@@ -80,12 +77,17 @@ describe('getRollen', () => {
             data: mockRollen,
         });
         
-        // Should NOT call database for cached result
-        expect(mockDbService.getRollen).not.toHaveBeenCalled();
+        // Should only call database once due to caching
+        expect(mockDbService.getRollen).toHaveBeenCalledTimes(1);
+        // Initialize and close should only be called once (first call), not for cached response
+        expect(mockDbService.initialize).toHaveBeenCalledTimes(1);
+        expect(mockDbService.close).toHaveBeenCalledTimes(1);
+        
+        // Verify that the context.log was called to indicate cache hit
+        expect(mockContext.log).toHaveBeenCalledWith('Returning cached roles data');
     });
 
     it('should handle database errors', async () => {
-        const { getRollen } = require('../../functions/lookups/getRollen');
         mockDbService.getRollen.mockRejectedValue(new Error('Database error'));
 
         const result = await getRollen(mockRequest, mockContext);
