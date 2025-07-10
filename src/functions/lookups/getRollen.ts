@@ -52,6 +52,6 @@ export async function getRollen(
 app.http('getRollen', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    route: 'lookups/rollen',
+    route: 'rollen',
     handler: getRollen,
 });

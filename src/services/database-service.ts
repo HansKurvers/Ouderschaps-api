@@ -662,4 +662,23 @@ export class DossierDatabaseService {
             throw error;
         }
     }
+
+    async deletePersoon(persoonId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('PersoonId', sql.Int, persoonId);
+
+            const result = await request.query(`
+                DELETE FROM dbo.personen 
+                WHERE id = @PersoonId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error deleting persoon:', error);
+            throw error;
+        }
+    }
 }

@@ -17,6 +17,7 @@ import './functions/dossiers/getDossierPartijen';
 import './functions/personen/createPersoon';
 import './functions/personen/getPersoonById';
 import './functions/personen/updatePersoon';
+import './functions/personen/deletePersoon';
 
 // Lookup functions
 import './functions/lookups/getRollen';
