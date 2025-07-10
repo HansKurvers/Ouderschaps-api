@@ -44,7 +44,10 @@ export async function updateZorg(
             return createErrorResponse('Access denied to this dossier', 403);
         }
 
-        const updateData: UpdateZorgDto = value;
+        const updateData: UpdateZorgDto & { gewijzigdDoor: number } = {
+            gewijzigdDoor: userId,
+            ...value
+        };
         const updatedZorg = await dbService.updateZorg(zorgId, updateData);
 
         context.log(`Updated zorg with ID ${zorgId} for dossier ${dossierId}`);

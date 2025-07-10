@@ -38,8 +38,9 @@ export async function createZorg(
             return createErrorResponse('Access denied to this dossier', 403);
         }
 
-        const createData: CreateZorgDto = {
+        const createData: CreateZorgDto & { aangemaaktDoor: number } = {
             dossierId,
+            aangemaaktDoor: userId,
             ...value
         };
 
