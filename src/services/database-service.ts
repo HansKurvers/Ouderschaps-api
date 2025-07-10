@@ -1,12 +1,12 @@
 import sql from 'mssql';
 import { closeDatabase, initializeDatabase } from '../config/database';
 import {
-    ICompleteDossierData,
-    IDossier,
-    IOuderschapsplanGegevens,
-    IPersoon,
-    IRelatieType,
-    IRol,
+    CompleteDossierData,
+    Dossier,
+    OuderschapsplanGegevens,
+    Persoon,
+    RelatieType,
+    Rol,
 } from '../models/Dossier';
 import { DbMappers } from '../utils/db-mappers';
 
@@ -34,7 +34,7 @@ export class DossierDatabaseService {
         return this.pool;
     }
 
-    async getAllDossiers(userID: number): Promise<IDossier[]> {
+    async getAllDossiers(userID: number): Promise<Dossier[]> {
         try {
             const pool = this.getPool();
             const request = pool.request();
@@ -61,7 +61,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getDossierById(dossierID: number): Promise<IDossier | null> {
+    async getDossierById(dossierID: number): Promise<Dossier | null> {
         try {
             const pool = this.getPool();
             const request = pool.request();
@@ -108,7 +108,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async createDossier(userID: number): Promise<IDossier> {
+    async createDossier(userID: number): Promise<Dossier> {
         try {
             const pool = this.getPool();
             const dossierNumber = await this.generateNextDossierNumber();
@@ -171,6 +171,41 @@ export class DossierDatabaseService {
         }
     }
 
+    async updateDossierStatus(dossierID: number, status: string): Promise<Dossier> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierID', sql.Int, dossierID);
+            request.input('Status', sql.NVarChar(50), status);
+
+            const result = await request.query(`
+                UPDATE dbo.dossiers 
+                SET status = @Status, gewijzigd_op = GETDATE()
+                WHERE id = @DossierID;
+                
+                SELECT 
+                    id,
+                    dossier_nummer,
+                    gebruiker_id,
+                    status,
+                    aangemaakt_op,
+                    gewijzigd_op
+                FROM dbo.dossiers 
+                WHERE id = @DossierID;
+            `);
+
+            if (result.recordset.length === 0) {
+                throw new Error('Dossier not found');
+            }
+
+            return DbMappers.toDossier(result.recordset[0]);
+        } catch (error) {
+            console.error('Error updating dossier status:', error);
+            throw error;
+        }
+    }
+
     async generateNextDossierNumber(): Promise<string> {
         try {
             const pool = this.getPool();
@@ -193,7 +228,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getPartijen(dossierID: number): Promise<Array<{ persoon: IPersoon; rol: IRol }>> {
+    async getPartijen(dossierID: number): Promise<Array<{ persoon: Persoon; rol: Rol }>> {
         try {
             const pool = this.getPool();
             const request = pool.request();
@@ -228,7 +263,7 @@ export class DossierDatabaseService {
     async getKinderen(
         dossierID: number
     ): Promise<
-        Array<{ kind: IPersoon; ouders: Array<{ ouder: IPersoon; relatieType: IRelatieType }> }>
+        Array<{ kind: Persoon; ouders: Array<{ ouder: Persoon; relatieType: RelatieType }> }>
     > {
         try {
             const pool = this.getPool();
@@ -282,7 +317,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getOuderschapsplanGegevens(dossierID: number): Promise<IOuderschapsplanGegevens[]> {
+    async getOuderschapsplanGegevens(dossierID: number): Promise<OuderschapsplanGegevens[]> {
         try {
             const pool = this.getPool();
             const request = pool.request();
@@ -310,7 +345,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getCompleteDossierData(dossierID: number): Promise<ICompleteDossierData | null> {
+    async getCompleteDossierData(dossierID: number): Promise<CompleteDossierData | null> {
         try {
             const dossier = await this.getDossierById(dossierID);
             if (!dossier) {
@@ -335,10 +370,10 @@ export class DossierDatabaseService {
         }
     }
 
-    async createOrUpdatePersoon(persoonData: Partial<IPersoon>): Promise<IPersoon> {
+    async createOrUpdatePersoon(persoonData: Partial<Persoon>): Promise<Persoon> {
         try {
             const pool = this.getPool();
-            const dto = DbMappers.toPersoonDto(persoonData as IPersoon);
+            const dto = DbMappers.toPersoonDto(persoonData as Persoon);
 
             if (persoonData.id) {
                 // Update existing person

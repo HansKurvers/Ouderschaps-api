@@ -1,13 +1,13 @@
 import {
     DossierDbDto,
-    IDossier,
-    IOuderschapsplanGegevens,
-    IPersoon,
+    Dossier,
+    OuderschapsplanGegevens,
+    Persoon,
     PersoonDbDto,
 } from '../models/Dossier';
 
 export class DbMappers {
-    static toDossier(dto: DossierDbDto): IDossier {
+    static toDossier(dto: DossierDbDto): Dossier {
         return {
             id: dto.id!,
             dossierNummer: dto.dossier_nummer,
@@ -18,7 +18,7 @@ export class DbMappers {
         };
     }
 
-    static toDossierDto(dossier: IDossier): DossierDbDto {
+    static toDossierDto(dossier: Dossier): DossierDbDto {
         return {
             id: dossier.id,
             dossier_nummer: dossier.dossierNummer,
@@ -29,7 +29,7 @@ export class DbMappers {
         };
     }
 
-    static toPersoon(dto: PersoonDbDto): IPersoon {
+    static toPersoon(dto: PersoonDbDto): Persoon {
         return {
             id: dto.id!,
             voorletters: dto.voorletters,
@@ -51,7 +51,7 @@ export class DbMappers {
         };
     }
 
-    static toPersoonDto(persoon: IPersoon): PersoonDbDto {
+    static toPersoonDto(persoon: Persoon): PersoonDbDto {
         return {
             id: persoon.id,
             voorletters: persoon.voorletters,
@@ -73,7 +73,7 @@ export class DbMappers {
         };
     }
 
-    static toOuderschapsplanGegevens(dto: any): IOuderschapsplanGegevens {
+    static toOuderschapsplanGegevens(dto: any): OuderschapsplanGegevens {
         return {
             id: dto.id,
             dossierId: dto.dossier_id,

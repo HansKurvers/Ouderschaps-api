@@ -1,4 +1,4 @@
-export interface IDossier {
+export interface Dossier {
     id: number;
     dossierNummer: string;
     gebruikerId: number;
@@ -7,11 +7,11 @@ export interface IDossier {
     gewijzigdOp: Date;
 }
 
-export interface IGebruiker {
+export interface Gebruiker {
     id: number;
 }
 
-export interface IPersoon {
+export interface Persoon {
     id: number;
     voorletters?: string;
     voornamen?: string;
@@ -31,37 +31,37 @@ export interface IPersoon {
     beroep?: string;
 }
 
-export interface IKindOuder {
+export interface KindOuder {
     id: number;
     kindId: number;
     ouderId: number;
     relatieTypeId: number;
 }
 
-export interface IDossierKind {
+export interface DossierKind {
     id: number;
     dossierId: number;
     kindId: number;
 }
 
-export interface IDossierPartij {
+export interface DossierPartij {
     id: number;
     dossierId: number;
     rolId: number;
     persoonId: number;
 }
 
-export interface IRelatieType {
+export interface RelatieType {
     id: number;
     naam?: string;
 }
 
-export interface IRol {
+export interface Rol {
     id: number;
     naam?: string;
 }
 
-export interface IOuderschapsplanGegevens {
+export interface OuderschapsplanGegevens {
     id: number;
     dossierId: number;
     veldCode: string;
@@ -71,20 +71,20 @@ export interface IOuderschapsplanGegevens {
     gewijzigdOp?: Date;
 }
 
-export interface ICompleteDossierData {
-    dossier: IDossier;
+export interface CompleteDossierData {
+    dossier: Dossier;
     partijen: Array<{
-        persoon: IPersoon;
-        rol: IRol;
+        persoon: Persoon;
+        rol: Rol;
     }>;
     kinderen: Array<{
-        kind: IPersoon;
+        kind: Persoon;
         ouders: Array<{
-            ouder: IPersoon;
-            relatieType: IRelatieType;
+            ouder: Persoon;
+            relatieType: RelatieType;
         }>;
     }>;
-    ouderschapsplanGegevens: IOuderschapsplanGegevens[];
+    ouderschapsplanGegevens: OuderschapsplanGegevens[];
 }
 
 // Type aliases for better readability
@@ -140,7 +140,7 @@ export interface PersoonDbDto {
 }
 
 // Utility types for creating/updating entities
-export type CreateDossierDto = Omit<IDossier, 'id' | 'aangemaaktOp' | 'gewijzigdOp'>;
-export type UpdateDossierDto = Partial<Omit<IDossier, 'id' | 'aangemaaktOp'>>;
-export type CreatePersoonDto = Omit<IPersoon, 'id'>;
-export type UpdatePersoonDto = Partial<Omit<IPersoon, 'id'>>;
+export type CreateDossierDto = Omit<Dossier, 'id' | 'aangemaaktOp' | 'gewijzigdOp'>;
+export type UpdateDossierDto = Partial<Omit<Dossier, 'id' | 'aangemaaktOp'>>;
+export type CreatePersoonDto = Omit<Persoon, 'id'>;
+export type UpdatePersoonDto = Partial<Omit<Persoon, 'id'>>;

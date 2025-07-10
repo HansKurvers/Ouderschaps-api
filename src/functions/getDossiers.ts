@@ -1,9 +1,10 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../services/database-service';
 import Joi from 'joi';
+import { requireAuthentication } from '../utils/auth-helper';
+import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse } from '../utils/response-helper';
 
 const querySchema = Joi.object({
-    userID: Joi.number().integer().positive().required(),
     status: Joi.string().optional(),
     limit: Joi.number().integer().min(1).max(100).default(10),
     offset: Joi.number().integer().min(0).default(0),
@@ -18,40 +19,37 @@ export async function getDossiers(
     const service = new DossierDatabaseService();
 
     try {
+        // Check authentication
+        let userID: string;
+        try {
+            userID = requireAuthentication(request);
+        } catch (authError) {
+            return createUnauthorizedResponse();
+        }
+
         await service.initialize();
 
         const { searchParams } = new URL(request.url);
-        const userID = parseInt(searchParams.get('userID') || '0');
         const status = searchParams.get('status');
         const limit = parseInt(searchParams.get('limit') || '10');
         const offset = parseInt(searchParams.get('offset') || '0');
 
         // Validate query parameters
         const { error, value } = querySchema.validate({
-            userID,
             status,
             limit,
             offset,
         });
 
         if (error) {
-            return {
-                status: 400,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    success: false,
-                    error: 'Invalid query parameters',
-                    details: error.details.map(d => d.message),
-                }),
-            };
+            return createErrorResponse('Invalid query parameters: ' + error.details.map(d => d.message).join(', '), 400);
         }
 
-        const { userID: validatedUserID, limit: validatedLimit, offset: validatedOffset } = value;
+        const { limit: validatedLimit, offset: validatedOffset } = value;
+        const userIDNumber = parseInt(userID);
 
         // Get all dossiers for user
-        let dossiers = await service.getAllDossiers(validatedUserID);
+        let dossiers = await service.getAllDossiers(userIDNumber);
 
         // Apply status filter if provided
         if (status) {
@@ -62,36 +60,22 @@ export async function getDossiers(
         const total = dossiers.length;
         const paginatedDossiers = dossiers.slice(validatedOffset, validatedOffset + validatedLimit);
 
-        return {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/json',
+        return createSuccessResponse({
+            data: paginatedDossiers,
+            pagination: {
+                total,
+                limit: validatedLimit,
+                offset: validatedOffset,
+                hasMore: validatedOffset + validatedLimit < total,
             },
-            body: JSON.stringify({
-                success: true,
-                data: paginatedDossiers,
-                pagination: {
-                    total,
-                    limit: validatedLimit,
-                    offset: validatedOffset,
-                    hasMore: validatedOffset + validatedLimit < total,
-                },
-            }),
-        };
+        });
     } catch (error) {
         context.error('Error fetching dossiers:', error);
 
-        return {
-            status: 500,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                success: false,
-                error: 'Failed to fetch dossiers',
-                message: error instanceof Error ? error.message : 'Unknown error',
-            }),
-        };
+        return createErrorResponse(
+            error instanceof Error ? error.message : 'Failed to fetch dossiers',
+            500
+        );
     } finally {
         await service.close();
     }
