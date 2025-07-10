@@ -681,4 +681,247 @@ export class DossierDatabaseService {
             throw error;
         }
     }
+
+    // FASE 3: Kinderen & Ouder-Kind Relaties methods
+
+    async getRelatieTypes(): Promise<RelatieType[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            const result = await request.query(`
+                SELECT id, naam 
+                FROM dbo.relatie_types 
+                ORDER BY naam
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam
+            }));
+        } catch (error) {
+            console.error('Error getting relatie types:', error);
+            throw error;
+        }
+    }
+
+    async checkKindInDossier(dossierId: number, kindId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('KindId', sql.Int, kindId);
+
+            const result = await request.query(`
+                SELECT COUNT(*) as count 
+                FROM dbo.dossiers_kinderen 
+                WHERE dossier_id = @DossierId AND kind_id = @KindId
+            `);
+
+            return result.recordset[0].count > 0;
+        } catch (error) {
+            console.error('Error checking kind in dossier:', error);
+            throw error;
+        }
+    }
+
+    async addKindToDossier(dossierId: number, kindId: number): Promise<number> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('KindId', sql.Int, kindId);
+
+            const result = await request.query(`
+                INSERT INTO dbo.dossiers_kinderen (dossier_id, kind_id)
+                OUTPUT INSERTED.id
+                VALUES (@DossierId, @KindId)
+            `);
+
+            return result.recordset[0].id;
+        } catch (error) {
+            console.error('Error adding kind to dossier:', error);
+            throw error;
+        }
+    }
+
+    async removeKindFromDossier(dossierId: number, dossierKindId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('DossierKindId', sql.Int, dossierKindId);
+
+            const result = await request.query(`
+                DELETE FROM dbo.dossiers_kinderen 
+                WHERE dossier_id = @DossierId AND id = @DossierKindId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error removing kind from dossier:', error);
+            throw error;
+        }
+    }
+
+    async getOudersByKind(kindId: number): Promise<Array<{id: number, ouder: Persoon, relatieType: RelatieType}>> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('KindId', sql.Int, kindId);
+
+            const result = await request.query(`
+                SELECT 
+                    ko.id as relatie_id,
+                    p.*,
+                    rt.id as relatie_type_id,
+                    rt.naam as relatie_type_naam
+                FROM dbo.kinderen_ouders ko
+                JOIN dbo.personen p ON ko.ouder_id = p.id
+                JOIN dbo.relatie_types rt ON ko.relatie_type_id = rt.id
+                WHERE ko.kind_id = @KindId
+                ORDER BY rt.naam, p.achternaam
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.relatie_id,
+                ouder: DbMappers.toPersoon(row),
+                relatieType: {
+                    id: row.relatie_type_id,
+                    naam: row.relatie_type_naam
+                }
+            }));
+        } catch (error) {
+            console.error('Error getting ouders by kind:', error);
+            throw error;
+        }
+    }
+
+    async checkOuderKindRelatie(kindId: number, ouderId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('KindId', sql.Int, kindId);
+            request.input('OuderId', sql.Int, ouderId);
+
+            const result = await request.query(`
+                SELECT COUNT(*) as count 
+                FROM dbo.kinderen_ouders 
+                WHERE kind_id = @KindId AND ouder_id = @OuderId
+            `);
+
+            return result.recordset[0].count > 0;
+        } catch (error) {
+            console.error('Error checking ouder-kind relatie:', error);
+            throw error;
+        }
+    }
+
+    async addOuderToKind(kindId: number, ouderId: number, relatieTypeId: number): Promise<number> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('KindId', sql.Int, kindId);
+            request.input('OuderId', sql.Int, ouderId);
+            request.input('RelatieTypeId', sql.Int, relatieTypeId);
+
+            const result = await request.query(`
+                INSERT INTO dbo.kinderen_ouders (kind_id, ouder_id, relatie_type_id)
+                OUTPUT INSERTED.id
+                VALUES (@KindId, @OuderId, @RelatieTypeId)
+            `);
+
+            return result.recordset[0].id;
+        } catch (error) {
+            console.error('Error adding ouder to kind:', error);
+            throw error;
+        }
+    }
+
+    async updateOuderKindRelatie(kindId: number, ouderId: number, relatieTypeId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('KindId', sql.Int, kindId);
+            request.input('OuderId', sql.Int, ouderId);
+            request.input('RelatieTypeId', sql.Int, relatieTypeId);
+
+            const result = await request.query(`
+                UPDATE dbo.kinderen_ouders 
+                SET relatie_type_id = @RelatieTypeId
+                WHERE kind_id = @KindId AND ouder_id = @OuderId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error updating ouder-kind relatie:', error);
+            throw error;
+        }
+    }
+
+    async removeOuderFromKind(kindId: number, ouderId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('KindId', sql.Int, kindId);
+            request.input('OuderId', sql.Int, ouderId);
+
+            const result = await request.query(`
+                DELETE FROM dbo.kinderen_ouders 
+                WHERE kind_id = @KindId AND ouder_id = @OuderId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error removing ouder from kind:', error);
+            throw error;
+        }
+    }
+
+    async getKindWithOudersById(dossierKindId: number): Promise<{id: number, kind: Persoon, ouders: Array<{ouder: Persoon, relatieType: RelatieType}>} | null> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierKindId', sql.Int, dossierKindId);
+
+            // First get the kind from dossiers_kinderen
+            const kindResult = await request.query(`
+                SELECT dk.id as dossier_kind_id, p.*
+                FROM dbo.dossiers_kinderen dk
+                JOIN dbo.personen p ON dk.kind_id = p.id
+                WHERE dk.id = @DossierKindId
+            `);
+
+            if (kindResult.recordset.length === 0) {
+                return null;
+            }
+
+            const kindRow = kindResult.recordset[0];
+            const kind = DbMappers.toPersoon(kindRow);
+
+            // Get ouders for this kind
+            const ouders = await this.getOudersByKind(kind.id);
+
+            return {
+                id: kindRow.dossier_kind_id,
+                kind,
+                ouders: ouders.map(o => ({
+                    ouder: o.ouder,
+                    relatieType: o.relatieType
+                }))
+            };
+        } catch (error) {
+            console.error('Error getting kind with ouders by ID:', error);
+            throw error;
+        }
+    }
 }
