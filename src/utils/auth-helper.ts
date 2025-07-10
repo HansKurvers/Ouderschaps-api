@@ -5,6 +5,15 @@ export function getUserIdFromRequest(request: HttpRequest): string | null {
     return userId || null;
 }
 
+export function getUserId(request: HttpRequest): number | null {
+    const userId = getUserIdFromRequest(request);
+    if (!userId) {
+        return null;
+    }
+    const numericUserId = parseInt(userId, 10);
+    return isNaN(numericUserId) ? null : numericUserId;
+}
+
 export function requireAuthentication(request: HttpRequest): string {
     // Skip authentication in development mode
     if (process.env.NODE_ENV === 'development' || process.env.SKIP_AUTH === 'true') {

@@ -142,7 +142,7 @@ export class DossierDatabaseService {
             await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.ouderschapsplan_gegevens WHERE dossier_id = @DossierID');
+                .query('DELETE FROM dbo.dossiers WHERE dossier_id = @DossierID');
 
             // Delete dossier-child relationships
             await transaction
@@ -333,7 +333,7 @@ export class DossierDatabaseService {
                     veld_waarde,
                     aangemaakt_op,
                     gewijzigd_op
-                FROM dbo.ouderschapsplan_gegevens 
+                FROM dbo.dossiers
                 WHERE dossier_id = @DossierID
                 ORDER BY veld_code
             `);
@@ -494,7 +494,7 @@ export class DossierDatabaseService {
                 const existingField = await request
                     .input('DossierID', sql.Int, dossierID)
                     .input('VeldCode', sql.NVarChar, fieldCode).query(`
-                        SELECT id FROM dbo.ouderschapsplan_gegevens 
+                        SELECT id FROM dbo.dossiers
                         WHERE dossier_id = @DossierID AND veld_code = @VeldCode
                     `);
 
@@ -505,7 +505,7 @@ export class DossierDatabaseService {
                     updateRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
 
                     await updateRequest.query(`
-                        UPDATE dbo.ouderschapsplan_gegevens 
+                        UPDATE dbo.dossiers
                         SET veld_waarde = @VeldWaarde,
                             gewijzigd_op = GETDATE()
                         WHERE id = @Id
@@ -519,13 +519,226 @@ export class DossierDatabaseService {
                     insertRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
 
                     await insertRequest.query(`
-                        INSERT INTO dbo.ouderschapsplan_gegevens (dossier_id, veld_code, veld_naam, veld_waarde)
+                        INSERT INTO dbo.dossiers (dossier_id, veld_code, veld_naam, veld_waarde)
                         VALUES (@DossierID, @VeldCode, @VeldNaam, @VeldWaarde)
                     `);
                 }
             }
         } catch (error) {
             console.error('Error saving ouderschapsplan gegevens:', error);
+            throw error;
+        }
+    }
+
+    async getRollen(): Promise<Rol[]> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            const result = await request.query(`
+                SELECT id, naam 
+                FROM dbo.rollen 
+                ORDER BY naam
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam
+            }));
+        } catch (error) {
+            console.error('Error getting rollen:', error);
+            throw error;
+        }
+    }
+
+    async getPersoonById(persoonId: number): Promise<Persoon | null> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('PersoonId', sql.Int, persoonId);
+
+            const result = await request.query(`
+                SELECT * FROM dbo.personen 
+                WHERE id = @PersoonId
+            `);
+
+            return result.recordset[0] ? DbMappers.toPersoon(result.recordset[0]) : null;
+        } catch (error) {
+            console.error('Error getting persoon by ID:', error);
+            throw error;
+        }
+    }
+
+    async checkEmailUnique(email: string, excludePersonId?: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('Email', sql.NVarChar, email);
+            
+            let query = `
+                SELECT COUNT(*) as count 
+                FROM dbo.personen 
+                WHERE email = @Email
+            `;
+
+            if (excludePersonId) {
+                request.input('ExcludePersonId', sql.Int, excludePersonId);
+                query += ' AND id != @ExcludePersonId';
+            }
+
+            const result = await request.query(query);
+            return result.recordset[0].count === 0;
+        } catch (error) {
+            console.error('Error checking email uniqueness:', error);
+            throw error;
+        }
+    }
+
+    async checkPartijExists(dossierId: number, persoonId: number, rolId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('PersoonId', sql.Int, persoonId);
+            request.input('RolId', sql.Int, rolId);
+
+            const result = await request.query(`
+                SELECT COUNT(*) as count 
+                FROM dbo.dossiers_partijen 
+                WHERE dossier_id = @DossierId AND persoon_id = @PersoonId AND rol_id = @RolId
+            `);
+
+            return result.recordset[0].count > 0;
+        } catch (error) {
+            console.error('Error checking if partij exists:', error);
+            throw error;
+        }
+    }
+
+    async removePartijFromDossier(dossierId: number, partijId: number): Promise<boolean> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('PartijId', sql.Int, partijId);
+
+            const result = await request.query(`
+                DELETE FROM dbo.dossiers_partijen 
+                WHERE dossier_id = @DossierId AND id = @PartijId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error removing partij from dossier:', error);
+            throw error;
+        }
+    }
+
+    async getPartijById(dossierId: number, partijId: number): Promise<{persoon: Persoon, rol: Rol} | null> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('PartijId', sql.Int, partijId);
+
+            const result = await request.query(`
+                SELECT 
+                    p.*,
+                    r.id as rol_id,
+                    r.naam as rol_naam
+                FROM dbo.dossiers_partijen dp
+                JOIN dbo.personen p ON dp.persoon_id = p.id
+                JOIN dbo.rollen r ON dp.rol_id = r.id
+                WHERE dp.dossier_id = @DossierId AND dp.id = @PartijId
+            `);
+
+            if (result.recordset.length === 0) {
+                return null;
+            }
+
+            const row = result.recordset[0];
+            return {
+                persoon: DbMappers.toPersoon(row),
+                rol: {
+                    id: row.rol_id,
+                    naam: row.rol_naam
+                }
+            };
+        } catch (error) {
+            console.error('Error getting partij by ID:', error);
+            throw error;
+        }
+    }
+
+    async linkPersoonToDossierWithReturn(dossierID: number, persoonID: number, rolID: number): Promise<{id: number, persoon: Persoon, rol: Rol}> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierID', sql.Int, dossierID);
+            request.input('PersoonID', sql.Int, persoonID);
+            request.input('RolID', sql.Int, rolID);
+
+            const result = await request.query(`
+                INSERT INTO dbo.dossiers_partijen (dossier_id, persoon_id, rol_id)
+                OUTPUT INSERTED.id
+                VALUES (@DossierID, @PersoonID, @RolID)
+            `);
+
+            const partijId = result.recordset[0].id;
+
+            // Get the complete partij data
+            const partijData = await this.getPartijById(dossierID, partijId);
+            if (!partijData) {
+                throw new Error('Failed to retrieve created partij');
+            }
+
+            return {
+                id: partijId,
+                persoon: partijData.persoon,
+                rol: partijData.rol
+            };
+        } catch (error) {
+            console.error('Error linking persoon to dossier:', error);
+            throw error;
+        }
+    }
+
+    async getPartijListWithId(dossierID: number): Promise<Array<{ id: number; persoon: Persoon; rol: Rol }>> {
+        try {
+            const pool = this.getPool();
+            const request = pool.request();
+
+            request.input('DossierID', sql.Int, dossierID);
+
+            const result = await request.query(`
+                SELECT 
+                    dp.id as partij_id,
+                    p.*,
+                    r.id as rol_id,
+                    r.naam as rol_naam
+                FROM dbo.dossiers_partijen dp
+                JOIN dbo.personen p ON dp.persoon_id = p.id
+                JOIN dbo.rollen r ON dp.rol_id = r.id
+                WHERE dp.dossier_id = @DossierID
+                ORDER BY r.id
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.partij_id,
+                persoon: DbMappers.toPersoon(row),
+                rol: {
+                    id: row.rol_id,
+                    naam: row.rol_naam,
+                },
+            }));
+        } catch (error) {
+            console.error('Error getting partijen with ID:', error);
             throw error;
         }
     }
