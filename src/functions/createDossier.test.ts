@@ -63,8 +63,11 @@ describe('createDossier', () => {
         expect(body.data).toEqual(mockDossier);
     });
 
-    it('should return 401 when x-user-id header is missing', async () => {
+    it('should return 401 when x-user-id header is missing in production mode', async () => {
         // Arrange
+        const originalEnv = process.env.SKIP_AUTH;
+        process.env.SKIP_AUTH = 'false';
+        
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers',
             method: 'POST',
@@ -83,6 +86,49 @@ describe('createDossier', () => {
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
         expect(body.error).toBe('Unauthorized: Missing x-user-id header');
+        
+        // Cleanup
+        process.env.SKIP_AUTH = originalEnv;
+    });
+
+    it('should work without x-user-id header in development mode', async () => {
+        // Arrange
+        const originalEnv = process.env.SKIP_AUTH;
+        process.env.SKIP_AUTH = 'true';
+        
+        const mockDossier: Dossier = {
+            id: 1,
+            dossierNummer: 'DOS-2024-0001',
+            gebruikerId: 1,
+            status: 'nieuw',
+            aangemaaktOp: '2024-01-01T00:00:00.000Z' as any,
+            gewijzigdOp: '2024-01-01T00:00:00.000Z' as any
+        };
+
+        mockService.createDossier = jest.fn().mockResolvedValue(mockDossier);
+
+        const request = new HttpRequest({
+            url: 'http://localhost/api/dossiers',
+            method: 'POST',
+            headers: {},
+            body: {}
+        });
+
+        // Act
+        const response = await createDossier(request, mockContext);
+
+        // Assert
+        expect(mockService.initialize).toHaveBeenCalled();
+        expect(mockService.createDossier).toHaveBeenCalledWith(1);
+        expect(mockService.close).toHaveBeenCalled();
+        
+        expect(response.status).toBe(201);
+        const body = JSON.parse(response.body as string);
+        expect(body.success).toBe(true);
+        expect(body.data).toEqual(mockDossier);
+        
+        // Cleanup
+        process.env.SKIP_AUTH = originalEnv;
     });
 
     it('should handle database errors', async () => {

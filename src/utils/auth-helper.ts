@@ -6,6 +6,12 @@ export function getUserIdFromRequest(request: HttpRequest): string | null {
 }
 
 export function requireAuthentication(request: HttpRequest): string {
+    // Skip authentication in development mode
+    if (process.env.NODE_ENV === 'development' || process.env.SKIP_AUTH === 'true') {
+        // Return a default user ID for development
+        return process.env.DEV_USER_ID || '1';
+    }
+    
     const userId = getUserIdFromRequest(request);
     if (!userId) {
         throw new Error('Unauthorized: Missing x-user-id header');
