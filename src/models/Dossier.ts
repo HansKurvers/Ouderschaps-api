@@ -61,15 +61,6 @@ export interface Rol {
     naam?: string;
 }
 
-export interface OuderschapsplanGegevens {
-    id: number;
-    dossierId: number;
-    veldCode: string;
-    veldNaam: string;
-    veldWaarde?: string;
-    aangemaaktOp?: Date;
-    gewijzigdOp?: Date;
-}
 
 export interface CompleteDossierData {
     dossier: Dossier;
@@ -84,7 +75,6 @@ export interface CompleteDossierData {
             relatieType: RelatieType;
         }>;
     }>;
-    ouderschapsplanGegevens: OuderschapsplanGegevens[];
 }
 
 // Type aliases for better readability

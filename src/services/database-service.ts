@@ -3,7 +3,6 @@ import { closeDatabase, initializeDatabase } from '../config/database';
 import {
     CompleteDossierData,
     Dossier,
-    OuderschapsplanGegevens,
     Persoon,
     RelatieType,
     Rol,
@@ -317,33 +316,6 @@ export class DossierDatabaseService {
         }
     }
 
-    async getOuderschapsplanGegevens(dossierID: number): Promise<OuderschapsplanGegevens[]> {
-        try {
-            const pool = this.getPool();
-            const request = pool.request();
-
-            request.input('DossierID', sql.Int, dossierID);
-
-            const result = await request.query(`
-                SELECT 
-                    id,
-                    dossier_id,
-                    veld_code,
-                    veld_naam,
-                    veld_waarde,
-                    aangemaakt_op,
-                    gewijzigd_op
-                FROM dbo.dossiers
-                WHERE id = @DossierID
-                ORDER BY veld_code
-            `);
-
-            return result.recordset.map(DbMappers.toOuderschapsplanGegevens);
-        } catch (error) {
-            console.error('Error getting ouderschapsplan gegevens:', error);
-            throw error;
-        }
-    }
 
     async getCompleteDossierData(dossierID: number): Promise<CompleteDossierData | null> {
         try {
@@ -351,18 +323,15 @@ export class DossierDatabaseService {
             if (!dossier) {
                 return null;
             }
-                // TODO ouderschapsplan gegevens 
-            const [partijen, kinderen, ouderschapsplanGegevens] = await Promise.all([
+            const [partijen, kinderen] = await Promise.all([
                 this.getPartijen(dossierID),
                 this.getKinderen(dossierID),
-                this.getOuderschapsplanGegevens(dossierID),
             ]);
 
             return {
                 dossier,
                 partijen,
                 kinderen,
-                ouderschapsplanGegevens,
             };
         } catch (error) {
             console.error('Error getting complete dossier data:', error);
@@ -480,55 +449,6 @@ export class DossierDatabaseService {
         }
     }
 
-    async saveOuderschapsplanGegevens(
-        dossierID: number,
-        formData: Record<string, any>
-    ): Promise<void> {
-        try {
-            const pool = this.getPool();
-
-            for (const [fieldCode, fieldValue] of Object.entries(formData)) {
-                const request = pool.request();
-
-                // Check if field exists
-                const existingField = await request
-                    .input('DossierID', sql.Int, dossierID)
-                    .input('VeldCode', sql.NVarChar, fieldCode).query(`
-                        SELECT id FROM dbo.dossiers
-                        WHERE dossier_id = @DossierID AND veld_code = @VeldCode
-                    `);
-
-                if (existingField.recordset.length > 0) {
-                    // Update existing field
-                    const updateRequest = pool.request();
-                    updateRequest.input('Id', sql.Int, existingField.recordset[0].id);
-                    updateRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
-
-                    await updateRequest.query(`
-                        UPDATE dbo.dossiers
-                        SET veld_waarde = @VeldWaarde,
-                            gewijzigd_op = GETDATE()
-                        WHERE id = @Id
-                    `);
-                } else {
-                    // Insert new field
-                    const insertRequest = pool.request();
-                    insertRequest.input('DossierID', sql.Int, dossierID);
-                    insertRequest.input('VeldCode', sql.NVarChar, fieldCode);
-                    insertRequest.input('VeldNaam', sql.NVarChar, fieldCode); // Use fieldCode as name for now
-                    insertRequest.input('VeldWaarde', sql.NVarChar, String(fieldValue));
-
-                    await insertRequest.query(`
-                        INSERT INTO dbo.dossiers (dossier_id, veld_code, veld_naam, veld_waarde)
-                        VALUES (@DossierID, @VeldCode, @VeldNaam, @VeldWaarde)
-                    `);
-                }
-            }
-        } catch (error) {
-            console.error('Error saving ouderschapsplan gegevens:', error);
-            throw error;
-        }
-    }
 
     async getRollen(): Promise<Rol[]> {
         try {

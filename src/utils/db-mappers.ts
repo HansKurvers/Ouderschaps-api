@@ -1,7 +1,6 @@
 import {
     DossierDbDto,
     Dossier,
-    OuderschapsplanGegevens,
     Persoon,
     PersoonDbDto,
 } from '../models/Dossier';
@@ -73,15 +72,4 @@ export class DbMappers {
         };
     }
 
-    static toOuderschapsplanGegevens(dto: any): OuderschapsplanGegevens {
-        return {
-            id: dto.id,
-            dossierId: dto.dossier_id,
-            veldCode: dto.veld_code,
-            veldNaam: dto.veld_naam,
-            veldWaarde: dto.veld_waarde,
-            aangemaaktOp: dto.aangemaakt_op,
-            gewijzigdOp: dto.gewijzigd_op,
-        };
-    }
 }
