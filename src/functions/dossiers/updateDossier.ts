@@ -14,7 +14,7 @@ const paramsSchema = Joi.object({
 });
 
 const bodySchema = Joi.object({
-    status: Joi.boolean().required(),
+    status: Joi.boolean().optional(),
 });
 
 export async function updateDossier(
@@ -66,10 +66,15 @@ export async function updateDossier(
             return createForbiddenResponse();
         }
 
-        // Update dossier status
-        const updatedDossier = await service.updateDossierStatus(dossierId, value.status);
-
-        return createSuccessResponse(updatedDossier);
+        // Update dossier if status is provided
+        if (value.status !== undefined) {
+            const updatedDossier = await service.updateDossierStatus(dossierId, value.status);
+            return createSuccessResponse(updatedDossier);
+        } else {
+            // If no status provided, just return the current dossier
+            const dossier = await service.getDossierById(dossierId);
+            return createSuccessResponse(dossier);
+        }
     } catch (error) {
         context.error('Error updating dossier:', error);
 

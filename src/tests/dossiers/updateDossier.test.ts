@@ -130,8 +130,20 @@ describe('updateDossier', () => {
         expect(body.error).toBe('Forbidden: You do not have access to this resource');
     });
 
-    it('should return 400 when status is missing in body', async () => {
+    it('should handle empty body and return current dossier', async () => {
         // Arrange
+        const currentDossier = {
+            id: 1,
+            dossierNummer: 'DOS-2024-0001',
+            gebruikerId: 123,
+            status: false,
+            aangemaaktOp: '2024-01-01T00:00:00.000Z' as any,
+            gewijzigdOp: '2024-01-01T00:00:00.000Z' as any
+        };
+        
+        mockService.checkDossierAccess = jest.fn().mockResolvedValue(true);
+        mockService.getDossierById = jest.fn().mockResolvedValue(currentDossier);
+        
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/1',
             method: 'PUT',
@@ -150,12 +162,15 @@ describe('updateDossier', () => {
         const response = await updateDossier(request, mockContext);
 
         // Assert
-        expect(mockService.initialize).not.toHaveBeenCalled();
+        expect(mockService.initialize).toHaveBeenCalled();
+        expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
+        expect(mockService.getDossierById).toHaveBeenCalledWith(1);
+        expect(mockService.updateDossierStatus).not.toHaveBeenCalled();
         
-        expect(response.status).toBe(400);
+        expect(response.status).toBe(200);
         const body = JSON.parse(response.body as string);
-        expect(body.success).toBe(false);
-        expect(body.error).toContain('Invalid body');
+        expect(body.success).toBe(true);
+        expect(body.data).toEqual(currentDossier);
     });
 
     it('should return 400 when dossierId is invalid', async () => {
