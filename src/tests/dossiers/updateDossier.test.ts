@@ -33,7 +33,7 @@ describe('updateDossier', () => {
             id: 1,
             dossierNummer: 'DOS-2024-0001',
             gebruikerId: 123,
-            status: 'in_behandeling',
+            status: false,
             aangemaaktOp: '2024-01-01T00:00:00.000Z' as any,
             gewijzigdOp: '2024-01-02T00:00:00.000Z' as any
         };
@@ -51,7 +51,7 @@ describe('updateDossier', () => {
                 dossierId: '1'
             },
             body: {
-                string: JSON.stringify({ status: 'in_behandeling' })
+                string: JSON.stringify({ status: false })
             }
         });
 
@@ -61,7 +61,7 @@ describe('updateDossier', () => {
         // Assert
         expect(mockService.initialize).toHaveBeenCalled();
         expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
-        expect(mockService.updateDossierStatus).toHaveBeenCalledWith(1, 'in_behandeling');
+        expect(mockService.updateDossierStatus).toHaveBeenCalledWith(1, false);
         expect(mockService.close).toHaveBeenCalled();
         
         expect(response.status).toBe(200);
@@ -80,7 +80,7 @@ describe('updateDossier', () => {
                 dossierId: '1'
             },
             body: {
-                string: JSON.stringify({ status: 'in_behandeling' })
+                string: JSON.stringify({ status: false })
             }
         });
 
@@ -111,7 +111,7 @@ describe('updateDossier', () => {
                 dossierId: '1'
             },
             body: {
-                string: JSON.stringify({ status: 'in_behandeling' })
+                string: JSON.stringify({ status: false })
             }
         });
 
@@ -170,7 +170,7 @@ describe('updateDossier', () => {
                 dossierId: 'abc'
             },
             body: {
-                string: JSON.stringify({ status: 'in_behandeling' })
+                string: JSON.stringify({ status: false })
             }
         });
 
@@ -201,7 +201,7 @@ describe('updateDossier', () => {
                 dossierId: '1'
             },
             body: {
-                string: JSON.stringify({ status: 'in_behandeling' })
+                string: JSON.stringify({ status: false })
             }
         });
 
@@ -211,7 +211,7 @@ describe('updateDossier', () => {
         // Assert
         expect(mockService.initialize).toHaveBeenCalled();
         expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
-        expect(mockService.updateDossierStatus).toHaveBeenCalledWith(1, 'in_behandeling');
+        expect(mockService.updateDossierStatus).toHaveBeenCalledWith(1, false);
         expect(mockService.close).toHaveBeenCalled();
         
         expect(response.status).toBe(500);

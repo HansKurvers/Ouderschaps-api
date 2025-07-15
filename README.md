@@ -96,6 +96,13 @@ Most endpoints require authentication via the `x-user-id` header. Only health ch
 
 #### Person Management
 
+- **GET** `/api/personen` - Get all personen with pagination
+  - **Authentication**: Required (`x-user-id` header)
+  - **Query Parameters**:
+    - `limit` (optional): Number of results (1-100, default 50)
+    - `offset` (optional): Pagination offset (default 0)
+  - **Response**: Array of personen with pagination metadata
+
 - **POST** `/api/personen` - Create new person
   - **Authentication**: Required (`x-user-id` header)
   - **Request Body**: Person data with email validation

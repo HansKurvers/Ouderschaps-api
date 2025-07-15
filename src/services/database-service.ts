@@ -1511,4 +1511,58 @@ export class DossierDatabaseService {
             throw error;
         }
     }
+
+    // Personen methods
+    async getAllPersonen(limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
+        try {
+            const pool = this.getPool();
+            
+            // Get total count
+            const countRequest = pool.request();
+            const countResult = await countRequest.query(`
+                SELECT COUNT(*) as total FROM dbo.personen
+            `);
+            const total = countResult.recordset[0].total;
+
+            // Get paginated data
+            const dataRequest = pool.request();
+            dataRequest.input('Limit', sql.Int, limit);
+            dataRequest.input('Offset', sql.Int, offset);
+
+            const result = await dataRequest.query(`
+                SELECT 
+                    id,
+                    voorletters,
+                    voornamen,
+                    roepnaam,
+                    geslacht,
+                    tussenvoegsel,
+                    achternaam,
+                    adres,
+                    postcode,
+                    plaats,
+                    geboorte_plaats,
+                    geboorte_datum,
+                    nationaliteit_1,
+                    nationaliteit_2,
+                    telefoon,
+                    email,
+                    beroep
+                FROM dbo.personen
+                ORDER BY achternaam, voornamen
+                OFFSET @Offset ROWS
+                FETCH NEXT @Limit ROWS ONLY
+            `);
+
+            const personen = result.recordset.map(row => DbMappers.toPersoon(row));
+
+            return {
+                data: personen,
+                total: total
+            };
+        } catch (error) {
+            console.error('Error getting all personen:', error);
+            throw error;
+        }
+    }
 }

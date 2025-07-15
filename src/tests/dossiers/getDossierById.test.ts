@@ -33,7 +33,7 @@ describe('getDossierById', () => {
             id: 1,
             dossierNummer: 'DOS-2024-0001',
             gebruikerId: 123,
-            status: 'nieuw',
+            status: false,
             aangemaaktOp: '2024-01-01T00:00:00.000Z' as any,
             gewijzigdOp: '2024-01-01T00:00:00.000Z' as any
         };
