@@ -1,5 +1,5 @@
 import sql from 'mssql';
-import { closeDatabase, initializeDatabase } from '../config/database';
+import { initializeDatabase, getPool } from '../config/database';
 import {
     CompleteDossierData,
     CreateOmgangDto,
@@ -21,11 +21,9 @@ import {
 import { DbMappers } from '../utils/db-mappers';
 
 export class DossierDatabaseService {
-    private pool: sql.ConnectionPool | null = null;
-
     async initialize(): Promise<void> {
         try {
-            this.pool = await initializeDatabase();
+            await initializeDatabase();
         } catch (error) {
             console.error('Failed to initialize database service:', error);
             throw error;
@@ -33,20 +31,17 @@ export class DossierDatabaseService {
     }
 
     async close(): Promise<void> {
-        await closeDatabase();
-        this.pool = null;
+        // Don't close the shared pool in Azure Functions
+        // The pool will be reused across function invocations
     }
 
-    private getPool(): sql.ConnectionPool {
-        if (!this.pool) {
-            throw new Error('Database service not initialized. Call initialize() first.');
-        }
-        return this.pool;
+    private async getPool(): Promise<sql.ConnectionPool> {
+        return await getPool();
     }
 
     async getAllDossiers(userID: number): Promise<Dossier[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('UserID', sql.Int, userID);
@@ -73,7 +68,7 @@ export class DossierDatabaseService {
 
     async getDossierById(dossierID: number): Promise<Dossier | null> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -99,7 +94,7 @@ export class DossierDatabaseService {
 
     async checkDossierAccess(dossierID: number, userID: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -120,7 +115,7 @@ export class DossierDatabaseService {
 
     async createDossier(userID: number): Promise<Dossier> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const dossierNumber = await this.generateNextDossierNumber();
 
             const request = pool.request();
@@ -142,7 +137,8 @@ export class DossierDatabaseService {
     }
 
     async deleteDossier(dossierID: number): Promise<boolean> {
-        const transaction = new sql.Transaction(this.getPool());
+        const pool = await this.getPool();
+        const transaction = new sql.Transaction(pool);
 
         try {
             await transaction.begin();
@@ -183,7 +179,7 @@ export class DossierDatabaseService {
 
     async updateDossierStatus(dossierID: number, status: boolean): Promise<Dossier> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -218,7 +214,7 @@ export class DossierDatabaseService {
 
     async generateNextDossierNumber(): Promise<string> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             const result = await request.query(`
@@ -240,7 +236,7 @@ export class DossierDatabaseService {
 
     async getPartijen(dossierID: number): Promise<Array<{ persoon: Persoon; rol: Rol }>> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -276,7 +272,7 @@ export class DossierDatabaseService {
         Array<{ kind: Persoon; ouders: Array<{ ouder: Persoon; relatieType: RelatieType }> }>
     > {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -352,7 +348,7 @@ export class DossierDatabaseService {
 
     async createOrUpdatePersoon(persoonData: Partial<Persoon>): Promise<Persoon> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const dto = DbMappers.toPersoonDto(persoonData as Persoon);
 
             if (persoonData.id) {
@@ -443,7 +439,7 @@ export class DossierDatabaseService {
 
     async linkPersoonToDossier(dossierID: number, persoonID: number, rolID: number): Promise<void> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -463,7 +459,7 @@ export class DossierDatabaseService {
 
     async getRollen(): Promise<Rol[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             const result = await request.query(`
@@ -484,7 +480,7 @@ export class DossierDatabaseService {
 
     async getPersoonById(persoonId: number): Promise<Persoon | null> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('PersoonId', sql.Int, persoonId);
@@ -503,7 +499,7 @@ export class DossierDatabaseService {
 
     async checkEmailUnique(email: string, excludePersonId?: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('Email', sql.NVarChar, email);
@@ -529,7 +525,7 @@ export class DossierDatabaseService {
 
     async checkPartijExists(dossierId: number, persoonId: number, rolId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -551,7 +547,7 @@ export class DossierDatabaseService {
 
     async removePartijFromDossier(dossierId: number, partijId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -571,7 +567,7 @@ export class DossierDatabaseService {
 
     async getPartijById(dossierId: number, partijId: number): Promise<{persoon: Persoon, rol: Rol} | null> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -608,7 +604,7 @@ export class DossierDatabaseService {
 
     async linkPersoonToDossierWithReturn(dossierID: number, persoonID: number, rolID: number): Promise<{id: number, persoon: Persoon, rol: Rol}> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -642,7 +638,7 @@ export class DossierDatabaseService {
 
     async getPartijListWithId(dossierID: number): Promise<Array<{ id: number; persoon: Persoon; rol: Rol }>> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
@@ -676,7 +672,7 @@ export class DossierDatabaseService {
 
     async deletePersoon(persoonId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('PersoonId', sql.Int, persoonId);
@@ -697,7 +693,7 @@ export class DossierDatabaseService {
 
     async getRelatieTypes(): Promise<RelatieType[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             const result = await request.query(`
@@ -718,7 +714,7 @@ export class DossierDatabaseService {
 
     async checkKindInDossier(dossierId: number, kindId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -739,7 +735,7 @@ export class DossierDatabaseService {
 
     async addKindToDossier(dossierId: number, kindId: number): Promise<number> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -760,7 +756,7 @@ export class DossierDatabaseService {
 
     async removeKindFromDossier(dossierId: number, dossierKindId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -780,7 +776,7 @@ export class DossierDatabaseService {
 
     async getOudersByKind(kindId: number): Promise<Array<{id: number, ouder: Persoon, relatieType: RelatieType}>> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('KindId', sql.Int, kindId);
@@ -814,7 +810,7 @@ export class DossierDatabaseService {
 
     async checkOuderKindRelatie(kindId: number, ouderId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('KindId', sql.Int, kindId);
@@ -835,7 +831,7 @@ export class DossierDatabaseService {
 
     async addOuderToKind(kindId: number, ouderId: number, relatieTypeId: number): Promise<number> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('KindId', sql.Int, kindId);
@@ -857,7 +853,7 @@ export class DossierDatabaseService {
 
     async updateOuderKindRelatie(kindId: number, ouderId: number, relatieTypeId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('KindId', sql.Int, kindId);
@@ -879,7 +875,7 @@ export class DossierDatabaseService {
 
     async removeOuderFromKind(kindId: number, ouderId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('KindId', sql.Int, kindId);
@@ -899,7 +895,7 @@ export class DossierDatabaseService {
 
     async getKindWithOudersById(dossierKindId: number): Promise<{id: number, kind: Persoon, ouders: Array<{ouder: Persoon, relatieType: RelatieType}>} | null> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierKindId', sql.Int, dossierKindId);
@@ -941,7 +937,7 @@ export class DossierDatabaseService {
     // Lookup methods (with caching)
     async getDagen(): Promise<Dag[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             const result = await request.query(`
@@ -962,7 +958,7 @@ export class DossierDatabaseService {
 
     async getDagdelen(): Promise<Dagdeel[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             const result = await request.query(`
@@ -983,7 +979,7 @@ export class DossierDatabaseService {
 
     async getWeekRegelingen(): Promise<WeekRegeling[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             const result = await request.query(`
@@ -1004,7 +1000,7 @@ export class DossierDatabaseService {
 
     async getZorgCategorieen(): Promise<ZorgCategorie[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             const result = await request.query(`
@@ -1025,7 +1021,7 @@ export class DossierDatabaseService {
 
     async getZorgSituaties(categorieId?: number): Promise<ZorgSituatie[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             let query = `
@@ -1056,7 +1052,7 @@ export class DossierDatabaseService {
     // Omgang CRUD methods
     async getOmgangByDossier(dossierId: number): Promise<Omgang[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -1100,7 +1096,7 @@ export class DossierDatabaseService {
                 ORDER BY d.id, dd.id
             `);
 
-            
+            //TODO Pooling verbeteren
             return result.recordset.map(row => ({
                 id: row.omgang_id,
                 dag: {
@@ -1150,7 +1146,7 @@ export class DossierDatabaseService {
 
     async createOmgang(data: CreateOmgangDto): Promise<Omgang> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, data.dossierId);
@@ -1194,7 +1190,7 @@ export class DossierDatabaseService {
 
     async updateOmgang(omgangId: number, data: UpdateOmgangDto): Promise<Omgang> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             // Build dynamic update query
@@ -1271,7 +1267,7 @@ export class DossierDatabaseService {
 
     async deleteOmgang(omgangId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('OmgangId', sql.Int, omgangId);
@@ -1290,7 +1286,7 @@ export class DossierDatabaseService {
 
     async checkOmgangAccess(omgangId: number, userId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('OmgangId', sql.Int, omgangId);
@@ -1313,7 +1309,7 @@ export class DossierDatabaseService {
     // Zorg CRUD methods
     async getZorgByDossier(dossierId: number): Promise<Zorg[]> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, dossierId);
@@ -1364,7 +1360,7 @@ export class DossierDatabaseService {
 
     async createZorg(data: CreateZorgDto & {aangemaaktDoor: number}): Promise<Zorg> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierId', sql.Int, data.dossierId);
@@ -1405,7 +1401,7 @@ export class DossierDatabaseService {
 
     async updateZorg(zorgId: number, data: UpdateZorgDto & {gewijzigdDoor: number}): Promise<Zorg> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             // Build dynamic update query
@@ -1473,7 +1469,7 @@ export class DossierDatabaseService {
 
     async deleteZorg(zorgId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('ZorgId', sql.Int, zorgId);
@@ -1492,7 +1488,7 @@ export class DossierDatabaseService {
 
     async checkZorgAccess(zorgId: number, userId: number): Promise<boolean> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             const request = pool.request();
 
             request.input('ZorgId', sql.Int, zorgId);
@@ -1515,7 +1511,7 @@ export class DossierDatabaseService {
     // Personen methods
     async getAllPersonen(limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
         try {
-            const pool = this.getPool();
+            const pool = await this.getPool();
             
             // Get total count
             const countRequest = pool.request();
