@@ -54,10 +54,12 @@ Most endpoints require authentication via the `x-user-id` header. Only health ch
 - **GET** `/api/dossiers` - Get dossiers with optional filters
   - **Authentication**: Required (`x-user-id` header)
   - **Query Parameters**:
-    - `status` (optional): Filter by dossier status
+    - `includeInactive` (optional): Include both active and inactive dossiers - boolean (default: false)
+    - `onlyInactive` (optional): Show only inactive/completed dossiers - boolean (default: false)
     - `limit` (optional): Number of results (1-100, default 10)
     - `offset` (optional): Pagination offset (default 0)
   - **Response**: Array of dossiers for authenticated user
+  - **Default behavior**: Returns only active dossiers (status = false)
 
 - **POST** `/api/dossiers` - Create new dossier
   - **Authentication**: Required (`x-user-id` header)
@@ -70,7 +72,7 @@ Most endpoints require authentication via the `x-user-id` header. Only health ch
 
 - **PUT** `/api/dossiers/{dossierId}` - Update dossier status
   - **Authentication**: Required (`x-user-id` header)
-  - **Request Body**: `{ "status": "string" }`
+  - **Request Body**: `{ "status": boolean }` (false = active/in progress, true = completed)
   - **Response**: Updated dossier object
 
 - **DELETE** `/api/dossiers/{dossierId}` - Delete dossier
@@ -108,11 +110,121 @@ Most endpoints require authentication via the `x-user-id` header. Only health ch
   - **Request Body**: Updated person data
   - **Response**: Updated person object
 
+- **DELETE** `/api/personen/{persoonId}` - Delete person
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Deletion confirmation
+
+#### FASE 3: Children & Parent-Child Relationships
+
+- **GET** `/api/dossiers/{dossierId}/kinderen` - Get children in dossier
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Array of children with their parent relationships
+
+- **POST** `/api/dossiers/{dossierId}/kinderen` - Add child to dossier
+  - **Authentication**: Required (`x-user-id` header)
+  - **Request Body**: Either `{ "kindId": "id", "ouderRelaties": [...] }` or `{ "kindData": {...}, "ouderRelaties": [...] }`
+  - **Response**: Created child association with parent relationships
+
+- **DELETE** `/api/dossiers/{dossierId}/kinderen/{dossierKindId}` - Remove child from dossier
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Removal confirmation
+
+- **GET** `/api/kinderen/{kindId}/ouders` - Get parents of a child
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Array of parent relationships for the child
+
+- **POST** `/api/kinderen/{kindId}/ouders` - Add parent to child
+  - **Authentication**: Required (`x-user-id` header)
+  - **Request Body**: `{ "ouderId": "id", "relatieTypeId": "id" }`
+  - **Response**: Created parent-child relationship
+
+- **PUT** `/api/kinderen/{kindId}/ouders/{ouderId}` - Update parent-child relationship
+  - **Authentication**: Required (`x-user-id` header)
+  - **Request Body**: `{ "relatieTypeId": "id" }`
+  - **Response**: Updated relationship
+
+- **DELETE** `/api/kinderen/{kindId}/ouders/{ouderId}` - Remove parent from child
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Removal confirmation
+
+#### FASE 4: Visitation & Care (Omgang & Zorg)
+
+##### Visitation Schedules (Omgang)
+
+- **GET** `/api/dossiers/{dossierId}/omgang` - Get visitation schedules for dossier
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Array of visitation schedules with details
+
+- **POST** `/api/dossiers/{dossierId}/omgang` - Create visitation schedule
+  - **Authentication**: Required (`x-user-id` header)
+  - **Request Body**: `{ "dagId": 1-7, "dagdeelId": "id", "verzorgerId": "id", "wisselTijd": "HH:MM", "weekRegelingId": "id", "weekRegelingAnders": "string" }`
+  - **Response**: Created visitation schedule
+
+- **PUT** `/api/dossiers/{dossierId}/omgang/{omgangId}` - Update visitation schedule
+  - **Authentication**: Required (`x-user-id` header)
+  - **Request Body**: Partial visitation schedule data
+  - **Response**: Updated visitation schedule
+
+- **DELETE** `/api/dossiers/{dossierId}/omgang/{omgangId}` - Delete visitation schedule
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Deletion confirmation
+
+##### Care Arrangements (Zorg)
+
+- **GET** `/api/dossiers/{dossierId}/zorg` - Get care arrangements for dossier
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Array of care arrangements with details
+
+- **POST** `/api/dossiers/{dossierId}/zorg` - Create care arrangement
+  - **Authentication**: Required (`x-user-id` header)
+  - **Request Body**: `{ "zorgCategorieId": "id", "zorgSituatieId": "id", "situatieAnders": "string", "overeenkomst": "string" }`
+  - **Response**: Created care arrangement
+
+- **PUT** `/api/dossiers/{dossierId}/zorg/{zorgId}` - Update care arrangement
+  - **Authentication**: Required (`x-user-id` header)
+  - **Request Body**: Partial care arrangement data
+  - **Response**: Updated care arrangement
+
+- **DELETE** `/api/dossiers/{dossierId}/zorg/{zorgId}` - Delete care arrangement
+  - **Authentication**: Required (`x-user-id` header)
+  - **Response**: Deletion confirmation
+
 #### Lookup Data
 
-- **GET** `/api/lookups/rollen` - Get available roles
+- **GET** `/api/rollen` - Get available roles
   - **Authentication**: None
   - **Response**: Array of available roles for dossier parties
+  - **Note**: Response is cached for 5 minutes for performance
+
+- **GET** `/api/relatie-types` - Get relationship types
+  - **Authentication**: None
+  - **Response**: Array of parent-child relationship types
+  - **Note**: Response is cached for 5 minutes for performance
+
+- **GET** `/api/dagen` - Get days of the week
+  - **Authentication**: None
+  - **Response**: Array of days (1-7 for Monday-Sunday)
+  - **Note**: Response is cached for 5 minutes for performance
+
+- **GET** `/api/dagdelen` - Get parts of day
+  - **Authentication**: None
+  - **Response**: Array of day parts (morning, afternoon, evening, etc.)
+  - **Note**: Response is cached for 5 minutes for performance
+
+- **GET** `/api/week-regelingen` - Get week arrangements
+  - **Authentication**: None
+  - **Response**: Array of weekly visitation arrangements
+  - **Note**: Response is cached for 5 minutes for performance
+
+- **GET** `/api/zorg-categorieen` - Get care categories
+  - **Authentication**: None
+  - **Response**: Array of care categories
+  - **Note**: Response is cached for 5 minutes for performance
+
+- **GET** `/api/zorg-situaties` - Get care situations
+  - **Authentication**: None
+  - **Query Parameters**: `categorieId` (optional) - Filter by care category
+  - **Response**: Array of care situations
   - **Note**: Response is cached for 5 minutes for performance
 
 ### Error Handling

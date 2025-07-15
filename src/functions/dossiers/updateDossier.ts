@@ -14,7 +14,7 @@ const paramsSchema = Joi.object({
 });
 
 const bodySchema = Joi.object({
-    status: Joi.string().required(),
+    status: Joi.boolean().required(),
 });
 
 export async function updateDossier(

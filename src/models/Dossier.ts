@@ -2,7 +2,7 @@ export interface Dossier {
     id: number;
     dossierNummer: string;
     gebruikerId: number;
-    status: string;
+    status: boolean;
     aangemaaktOp: Date;
     gewijzigdOp: Date;
 }
@@ -172,12 +172,6 @@ export type RolId = number;
 export type RelatieTypeId = number;
 
 // Enums for common values
-export enum DossierStatus {
-    NIEUW = 'Nieuw',
-    IN_BEHANDELING = 'In behandeling',
-    AFGEROND = 'Afgerond',
-    GEARCHIVEERD = 'Gearchiveerd',
-}
 
 export enum Geslacht {
     MAN = 'Man',
@@ -191,7 +185,7 @@ export interface DossierDbDto {
     id?: number;
     dossier_nummer: string;
     gebruiker_id: number;
-    status: string;
+    status: boolean;
     aangemaakt_op?: Date;
     gewijzigd_op?: Date;
 }

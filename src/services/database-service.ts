@@ -126,7 +126,7 @@ export class DossierDatabaseService {
             const request = pool.request();
             request.input('DossierNummer', sql.NVarChar, dossierNumber);
             request.input('GebruikerID', sql.Int, userID);
-            request.input('Status', sql.NVarChar, 'Nieuw');
+            request.input('Status', sql.Bit, false);
 
             const result = await request.query(`
                 INSERT INTO dbo.dossiers (dossier_nummer, gebruiker_id, status)
@@ -181,13 +181,13 @@ export class DossierDatabaseService {
         }
     }
 
-    async updateDossierStatus(dossierID: number, status: string): Promise<Dossier> {
+    async updateDossierStatus(dossierID: number, status: boolean): Promise<Dossier> {
         try {
             const pool = this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
-            request.input('Status', sql.NVarChar(50), status);
+            request.input('Status', sql.Bit, status);
 
             const result = await request.query(`
                 UPDATE dbo.dossiers 
