@@ -18,6 +18,7 @@ import './functions/dossiers/removeKindFromDossier';
 
 // Persoon functions
 import './functions/personen/createPersoon';
+import './functions/personen/getPersonen';
 import './functions/personen/getPersoonById';
 import './functions/personen/updatePersoon';
 import './functions/personen/deletePersoon';
