@@ -143,37 +143,52 @@ export class DossierDatabaseService {
         try {
             await transaction.begin();
 
-            // Delete related data in correct order
-            // First delete ouderschapsplan gegevens
-            await transaction
+            console.log(`Starting cascade delete for dossier ID: ${dossierID}`);
+
+            // Delete related data in correct order (from most dependent to least)
+            // 1. Delete omgang records
+            const omgangResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
+                .query('DELETE FROM dbo.omgang WHERE dossier_id = @DossierID');
+            console.log(`Deleted ${omgangResult.rowsAffected[0]} omgang records`);
 
-            // Delete dossier-child relationships
-            await transaction
+            // 2. Delete zorg records
+            const zorgResult = await transaction
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query('DELETE FROM dbo.zorg WHERE dossier_id = @DossierID');
+            console.log(`Deleted ${zorgResult.rowsAffected[0]} zorg records`);
+
+            // 3. Delete dossier-child relationships
+            const kinderenResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers_kinderen WHERE dossier_id = @DossierID');
+            console.log(`Deleted ${kinderenResult.rowsAffected[0]} dossiers_kinderen records`);
 
-            // Delete dossier-party relationships
-            await transaction
+            // 4. Delete dossier-party relationships
+            const partijenResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers_partijen WHERE dossier_id = @DossierID');
+            console.log(`Deleted ${partijenResult.rowsAffected[0]} dossiers_partijen records`);
 
-            // Finally delete the dossier itself
-            const result = await transaction
+            // 5. Finally delete the dossier itself
+            const dossierResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
+            console.log(`Deleted ${dossierResult.rowsAffected[0]} dossier records`);
 
             await transaction.commit();
-            return result.rowsAffected[0] > 0;
+            console.log(`Successfully completed cascade delete for dossier ID: ${dossierID}`);
+            
+            return dossierResult.rowsAffected[0] > 0;
         } catch (error) {
             await transaction.rollback();
-            console.error('Error deleting dossier:', error);
-            throw error;
+            console.error('Error during cascade delete of dossier:', error);
+            throw new Error(`Failed to delete dossier: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
