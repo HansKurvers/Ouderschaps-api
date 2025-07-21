@@ -156,6 +156,7 @@ export interface CompleteDossierData {
         rol: Rol;
     }>;
     kinderen: Array<{
+        id: number;
         kind: Persoon;
         ouders: Array<{
             ouder: Persoon;
