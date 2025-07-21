@@ -284,7 +284,7 @@ export class DossierDatabaseService {
     async getKinderen(
         dossierID: number
     ): Promise<
-        Array<{ kind: Persoon; ouders: Array<{ ouder: Persoon; relatieType: RelatieType }> }>
+        Array<{ id: number; kind: Persoon; ouders: Array<{ ouder: Persoon; relatieType: RelatieType }> }>
     > {
         try {
             const pool = await this.getPool();
@@ -294,7 +294,7 @@ export class DossierDatabaseService {
 
             // Get children associated with this dossier
             const kinderenResult = await request.query(`
-                SELECT DISTINCT p.*
+                SELECT dk.id as dossier_kind_id, p.*
                 FROM dbo.dossiers_kinderen dk
                 JOIN dbo.personen p ON dk.kind_id = p.id
                 WHERE dk.dossier_id = @DossierID
@@ -305,6 +305,7 @@ export class DossierDatabaseService {
             // For each child, get their parents
             for (const kindRow of kinderenResult.recordset) {
                 const kind = DbMappers.toPersoon(kindRow);
+                const dossierKindId = kindRow.dossier_kind_id;
 
                 const oudersRequest = pool.request();
                 oudersRequest.input('KindID', sql.Int, kind.id);
@@ -328,7 +329,7 @@ export class DossierDatabaseService {
                     },
                 }));
 
-                kinderen.push({ kind, ouders });
+                kinderen.push({ id: dossierKindId, kind, ouders });
             }
 
             return kinderen;
