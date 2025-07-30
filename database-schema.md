@@ -129,6 +129,19 @@ Types of parent-child relationships.
 - **id** (int, PK, Identity) - Primary key
 - **naam** (nvarchar(50), nullable) - Relationship type name
 
+### dbo.schoolvakanties
+School vacation periods lookup table.
+- **id** (int, PK, Identity) - Primary key
+- **naam** (nvarchar(100), NOT NULL) - Vacation name (e.g., Kerstvakantie, Zomervakantie)
+
+### dbo.regelingen_templates
+Templates for custody and visitation arrangements.
+- **id** (int, PK, Identity) - Primary key
+- **template_naam** (nvarchar(50), NOT NULL) - Template identifier (e.g., partij1, partij2, partij1_even)
+- **template_tekst** (nvarchar(500), NOT NULL) - Template text with placeholders (e.g., {KIND}, {PARTIJ1}, {FEESTDAG})
+- **meervoud_kinderen** (bit, NOT NULL) - Whether the template is for multiple children (singular vs plural)
+- **type** (nvarchar(50), NOT NULL) - Template type (Feestdag, Vakantie)
+
 ## Foreign Key Relationships
 
 ### Dossier Relationships

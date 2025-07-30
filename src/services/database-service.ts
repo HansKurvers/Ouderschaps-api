@@ -1086,15 +1086,35 @@ export class DossierDatabaseService {
         }
     }
 
-    async getRegelingenTemplates(): Promise<RegelingTemplate[]> {
+    async getRegelingenTemplates(filters?: { meervoudKinderen?: boolean; type?: string }): Promise<RegelingTemplate[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
-            const result = await request.query(`
+            
+            let query = `
                 SELECT id, template_naam, template_tekst, meervoud_kinderen, type 
                 FROM dbo.regelingen_templates 
-                ORDER BY type, template_naam
-            `);
+            `;
+            
+            const whereClauses = [];
+            
+            if (filters?.meervoudKinderen !== undefined) {
+                whereClauses.push('meervoud_kinderen = @MeervoudKinderen');
+                request.input('MeervoudKinderen', sql.Bit, filters.meervoudKinderen);
+            }
+            
+            if (filters?.type) {
+                whereClauses.push('type = @Type');
+                request.input('Type', sql.NVarChar, filters.type);
+            }
+            
+            if (whereClauses.length > 0) {
+                query += ' WHERE ' + whereClauses.join(' AND ');
+            }
+            
+            query += ' ORDER BY type, template_naam';
+            
+            const result = await request.query(query);
             return result.recordset.map(row => ({
                 id: row.id,
                 templateNaam: row.template_naam,
