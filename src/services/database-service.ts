@@ -11,6 +11,7 @@ import {
     Persoon,
     RelatieType,
     Rol,
+    Schoolvakantie,
     UpdateOmgangDto,
     UpdateZorgDto,
     WeekRegeling,
@@ -1061,6 +1062,25 @@ export class DossierDatabaseService {
             }));
         } catch (error) {
             console.error('Error getting zorg situaties:', error);
+            throw error;
+        }
+    }
+
+    async getSchoolvakanties(): Promise<Schoolvakantie[]> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+            const result = await request.query(`
+                SELECT id, naam 
+                FROM dbo.schoolvakanties 
+                ORDER BY naam
+            `);
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam
+            }));
+        } catch (error) {
+            console.error('Error getting schoolvakanties:', error);
             throw error;
         }
     }

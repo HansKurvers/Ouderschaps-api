@@ -68,6 +68,11 @@ export interface Dag {
     naam: string;
 }
 
+export interface Schoolvakantie {
+    id: number;
+    naam: string;
+}
+
 export interface Dagdeel {
     id: number;
     naam: string;
