@@ -73,6 +73,14 @@ export interface Schoolvakantie {
     naam: string;
 }
 
+export interface RegelingTemplate {
+    id: number;
+    templateNaam: string;
+    templateTekst: string;
+    meervoudKinderen: boolean;
+    type: string;
+}
+
 export interface Dagdeel {
     id: number;
     naam: string;

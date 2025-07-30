@@ -9,6 +9,7 @@ import {
     Dossier,
     Omgang,
     Persoon,
+    RegelingTemplate,
     RelatieType,
     Rol,
     Schoolvakantie,
@@ -1081,6 +1082,28 @@ export class DossierDatabaseService {
             }));
         } catch (error) {
             console.error('Error getting schoolvakanties:', error);
+            throw error;
+        }
+    }
+
+    async getRegelingenTemplates(): Promise<RegelingTemplate[]> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+            const result = await request.query(`
+                SELECT id, template_naam, template_tekst, meervoud_kinderen, type 
+                FROM dbo.regelingen_templates 
+                ORDER BY type, template_naam
+            `);
+            return result.recordset.map(row => ({
+                id: row.id,
+                templateNaam: row.template_naam,
+                templateTekst: row.template_tekst,
+                meervoudKinderen: row.meervoud_kinderen,
+                type: row.type
+            }));
+        } catch (error) {
+            console.error('Error getting regelingen templates:', error);
             throw error;
         }
     }
