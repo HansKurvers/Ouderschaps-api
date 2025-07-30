@@ -37,6 +37,10 @@ import './functions/lookups/getDagdelen';
 import './functions/lookups/getWeekRegelingen';
 import './functions/lookups/getZorgCategorieen';
 import './functions/lookups/getZorgSituaties';
+import './functions/lookups/getSchoolvakanties';
+import './functions/lookups/getRegelingenTemplates';
+
+
 
 // Omgang functions (FASE 4)
 import './functions/dossiers/getDossierOmgang';
