@@ -27,9 +27,21 @@ export async function getDossierZorg(
             return createErrorResponse('Access denied to this dossier', 403);
         }
 
-        const zorg = await dbService.getZorgByDossier(dossierId);
-
-        context.log(`Retrieved ${zorg.length} zorg entries for dossier ${dossierId}`);
+        const zorgCategorieId = request.query.get('zorgCategoryId');
+        
+        let zorg;
+        if (zorgCategorieId) {
+            const categorieId = Number(zorgCategorieId);
+            if (isNaN(categorieId)) {
+                return createErrorResponse('Invalid zorg_categorie_id', 400);
+            }
+            zorg = await dbService.getZorgByDossierAndCategorie(dossierId, categorieId);
+            context.log(`Retrieved ${zorg.length} zorg entries for dossier ${dossierId} with categorie ${categorieId}`);
+        } else {
+            zorg = await dbService.getZorgByDossier(dossierId);
+            context.log(`Retrieved ${zorg.length} zorg entries for dossier ${dossierId}`);
+        }
+        
         return createSuccessResponse(zorg);
 
     } catch (error) {

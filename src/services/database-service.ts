@@ -1437,6 +1437,58 @@ export class DossierDatabaseService {
         }
     }
 
+    async getZorgByDossierAndCategorie(dossierId: number, zorgCategorieId: number): Promise<Zorg[]> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('ZorgCategorieId', sql.Int, zorgCategorieId);
+
+            const result = await request.query(`
+                SELECT 
+                    z.id,
+                    z.situatie_anders,
+                    z.overeenkomst,
+                    z.aangemaakt_op,
+                    z.aangemaakt_door,
+                    z.gewijzigd_op,
+                    z.gewijzigd_door,
+                    zc.id as zorg_categorie_id,
+                    zc.naam as zorg_categorie_naam,
+                    zs.id as zorg_situatie_id,
+                    zs.naam as zorg_situatie_naam
+                FROM dbo.zorg z
+                JOIN dbo.zorg_categorieen zc ON z.zorg_categorie_id = zc.id
+                JOIN dbo.zorg_situaties zs ON z.zorg_situatie_id = zs.id
+                WHERE z.dossier_id = @DossierId AND z.zorg_categorie_id = @ZorgCategorieId
+                ORDER BY z.aangemaakt_op DESC
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                zorgCategorie: {
+                    id: row.zorg_categorie_id,
+                    naam: row.zorg_categorie_naam
+                },
+                zorgSituatie: {
+                    id: row.zorg_situatie_id,
+                    naam: row.zorg_situatie_naam,
+                    zorgCategorieId: row.zorg_categorie_id
+                },
+                situatieAnders: row.situatie_anders,
+                overeenkomst: row.overeenkomst,
+                aangemaaktOp: row.aangemaakt_op,
+                aangemaaktDoor: row.aangemaakt_door,
+                gewijzigdOp: row.gewijzigd_op,
+                gewijzigdDoor: row.gewijzigd_door
+            }));
+        } catch (error) {
+            console.error('Error getting zorg by dossier and categorie:', error);
+            throw error;
+        }
+    }
+
     async createZorg(data: CreateZorgDto & {aangemaaktDoor: number}): Promise<Zorg> {
         try {
             const pool = await this.getPool();
