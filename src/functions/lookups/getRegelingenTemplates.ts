@@ -34,7 +34,7 @@ export async function getRegelingenTemplates(
     
     if (typeParam) {
         // Validate type parameter
-        const validTypes = ['Feestdag', 'Vakantie'];
+        const validTypes = ['Feestdag', 'Vakantie', 'Algemeen'];
         if (validTypes.includes(typeParam)) {
             filters.type = typeParam;
         } else {
