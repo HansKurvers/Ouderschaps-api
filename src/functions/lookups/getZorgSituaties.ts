@@ -20,13 +20,32 @@ export async function getZorgSituaties(
             }
         }
 
+        // Get optional excludeCategories filter from query params
+        const excludeCategoriesParam = request.query.get('excludeCategories');
+        let excludeCategories: number[] | undefined;
+        
+        if (excludeCategoriesParam) {
+            // Parse comma-separated list of category IDs
+            try {
+                excludeCategories = excludeCategoriesParam.split(',').map(id => {
+                    const num = Number(id.trim());
+                    if (isNaN(num)) {
+                        throw new Error(`Invalid category ID: ${id}`);
+                    }
+                    return num;
+                });
+            } catch (parseError) {
+                return createErrorResponse('Invalid excludeCategories parameter. Must be comma-separated numbers', 400);
+            }
+        }
+
         // Initialize database connection
         await dbService.initialize();
 
-        // Get zorg situaties from database (with optional filter)
-        const zorgSituaties = await dbService.getZorgSituaties(categorieId);
+        // Get zorg situaties from database (with optional filters)
+        const zorgSituaties = await dbService.getZorgSituaties(categorieId, excludeCategories);
 
-        context.log(`Retrieved ${zorgSituaties.length} zorg situaties from database${categorieId ? ` for categorie ${categorieId}` : ''}`);
+        context.log(`Retrieved ${zorgSituaties.length} zorg situaties from database${categorieId ? ` for categorie ${categorieId}` : ''}${excludeCategories ? ` excluding categories ${excludeCategories.join(',')}` : ''}`);
         return createSuccessResponse(zorgSituaties);
 
     } catch (error) {

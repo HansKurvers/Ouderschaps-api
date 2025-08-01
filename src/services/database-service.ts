@@ -1037,7 +1037,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getZorgSituaties(categorieId?: number): Promise<ZorgSituatie[]> {
+    async getZorgSituaties(categorieId?: number, excludeCategories?: number[]): Promise<ZorgSituatie[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
@@ -1047,9 +1047,26 @@ export class DossierDatabaseService {
                 FROM dbo.zorg_situaties 
             `;
 
+            const conditions = [];
+
             if (categorieId) {
-                query += ' WHERE zorg_categorie_id = @CategorieId ';
+                conditions.push('zorg_categorie_id = @CategorieId');
                 request.input('CategorieId', sql.Int, categorieId);
+            }
+
+            if (excludeCategories && excludeCategories.length > 0) {
+                // Create parameterized placeholders for each excluded category
+                const excludePlaceholders = excludeCategories.map((_, index) => `@ExcludeCategory${index}`).join(', ');
+                conditions.push(`zorg_categorie_id NOT IN (${excludePlaceholders})`);
+                
+                // Add each excluded category as a parameter
+                excludeCategories.forEach((categoryId, index) => {
+                    request.input(`ExcludeCategory${index}`, sql.Int, categoryId);
+                });
+            }
+
+            if (conditions.length > 0) {
+                query += ' WHERE ' + conditions.join(' AND ');
             }
 
             query += ' ORDER BY naam';
