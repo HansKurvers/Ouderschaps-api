@@ -10,7 +10,7 @@ export async function getZorgSituaties(
 
     try {
         // Get optional categorieId filter from query params
-        const categorieIdParam = request.query.get('categorieId');
+        const categorieIdParam = request.query.get('categoryId');
         let categorieId: number | undefined;
         
         if (categorieIdParam) {
