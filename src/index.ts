@@ -47,6 +47,9 @@ import './functions/dossiers/getDossierOmgang';
 import './functions/dossiers/createOmgang';
 import './functions/dossiers/updateOmgang';
 import './functions/dossiers/deleteOmgang';
+import './functions/dossiers/createOmgangBatch';
+import './functions/dossiers/upsertOmgangWeek';
+import './functions/dossiers/getOmgangWeek';
 
 // Zorg functions (FASE 4)
 import './functions/dossiers/getDossierZorg';

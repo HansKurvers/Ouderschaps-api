@@ -146,6 +146,40 @@ export interface UpdateOmgangDto {
     weekRegelingAnders?: string;
 }
 
+export interface CreateOmgangBatchDto {
+    dossierId: number;
+    entries: Array<{
+        dagId: number;
+        dagdeelId: number;
+        verzorgerId: number;
+        wisselTijd?: string;
+        weekRegelingId: number;
+        weekRegelingAnders?: string;
+    }>;
+}
+
+export interface OmgangWeekDto {
+    dossierId: number;
+    weekRegelingId: number;
+    days: Array<{
+        dagId: number;
+        wisselTijd?: string;
+        dagdelen: Array<{
+            dagdeelId: number;
+            verzorgerId: number;
+        }>;
+    }>;
+    weekRegelingAnders?: string;
+}
+
+export interface OmgangBatchResult {
+    created: Omgang[];
+    failed: Array<{
+        entry: any;
+        error: string;
+    }>;
+}
+
 export interface CreateZorgDto {
     dossierId: number;
     zorgCategorieId: number;

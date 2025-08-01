@@ -1402,6 +1402,209 @@ export class DossierDatabaseService {
         }
     }
 
+    async createOmgangBatch(dossierId: number, entries: any[]): Promise<Omgang[]> {
+        const pool = await this.getPool();
+        const transaction = pool.transaction();
+        
+        try {
+            await transaction.begin();
+            
+            const createdIds: number[] = [];
+            
+            for (const entry of entries) {
+                const request = transaction.request();
+                
+                request.input('DossierId', sql.Int, dossierId);
+                request.input('DagId', sql.Int, entry.dagId);
+                request.input('DagdeelId', sql.Int, entry.dagdeelId);
+                request.input('VerzorgerId', sql.Int, entry.verzorgerId);
+                request.input('WisselTijd', sql.NVarChar, entry.wisselTijd);
+                request.input('WeekRegelingId', sql.Int, entry.weekRegelingId);
+                request.input('WeekRegelingAnders', sql.NVarChar, entry.weekRegelingAnders);
+                
+                const result = await request.query(`
+                    INSERT INTO dbo.omgang (
+                        dossier_id, dag_id, dagdeel_id, verzorger_id, 
+                        wissel_tijd, week_regeling_id, week_regeling_anders
+                    )
+                    OUTPUT INSERTED.id
+                    VALUES (
+                        @DossierId, @DagId, @DagdeelId, @VerzorgerId,
+                        @WisselTijd, @WeekRegelingId, @WeekRegelingAnders
+                    )
+                `);
+                
+                createdIds.push(result.recordset[0].id);
+            }
+            
+            await transaction.commit();
+            
+            // Get all created omgang records
+            const omgangList = await this.getOmgangByDossier(dossierId);
+            return omgangList.filter(o => createdIds.includes(o.id));
+            
+        } catch (error) {
+            await transaction.rollback();
+            console.error('Error creating omgang batch:', error);
+            throw error;
+        }
+    }
+
+    async upsertOmgangWeek(dossierId: number, weekRegelingId: number, days: any[], weekRegelingAnders?: string): Promise<Omgang[]> {
+        const pool = await this.getPool();
+        const transaction = pool.transaction();
+        
+        try {
+            await transaction.begin();
+            
+            // First, delete existing entries for this week
+            const deleteRequest = transaction.request();
+            deleteRequest.input('DossierId', sql.Int, dossierId);
+            deleteRequest.input('WeekRegelingId', sql.Int, weekRegelingId);
+            
+            await deleteRequest.query(`
+                DELETE FROM dbo.omgang 
+                WHERE dossier_id = @DossierId 
+                AND week_regeling_id = @WeekRegelingId
+            `);
+            
+            // Then insert new entries
+            const createdIds: number[] = [];
+            
+            for (const day of days) {
+                // Each day can have multiple dagdelen (parts of day)
+                for (const dagdeel of day.dagdelen) {
+                    const request = transaction.request();
+                    
+                    request.input('DossierId', sql.Int, dossierId);
+                    request.input('DagId', sql.Int, day.dagId);
+                    request.input('DagdeelId', sql.Int, dagdeel.dagdeelId);
+                    request.input('VerzorgerId', sql.Int, dagdeel.verzorgerId);
+                    request.input('WisselTijd', sql.NVarChar, day.wisselTijd || null);
+                    request.input('WeekRegelingId', sql.Int, weekRegelingId);
+                    request.input('WeekRegelingAnders', sql.NVarChar, weekRegelingAnders || null);
+                    
+                    const result = await request.query(`
+                        INSERT INTO dbo.omgang (
+                            dossier_id, dag_id, dagdeel_id, verzorger_id, 
+                            wissel_tijd, week_regeling_id, week_regeling_anders
+                        )
+                        OUTPUT INSERTED.id
+                        VALUES (
+                            @DossierId, @DagId, @DagdeelId, @VerzorgerId,
+                            @WisselTijd, @WeekRegelingId, @WeekRegelingAnders
+                        )
+                    `);
+                    
+                    createdIds.push(result.recordset[0].id);
+                }
+            }
+            
+            await transaction.commit();
+            
+            // Get all created omgang records
+            const omgangList = await this.getOmgangByDossier(dossierId);
+            return omgangList.filter(o => createdIds.includes(o.id));
+            
+        } catch (error) {
+            await transaction.rollback();
+            console.error('Error upserting omgang week:', error);
+            throw error;
+        }
+    }
+
+    async getOmgangByWeek(dossierId: number, weekRegelingId: number): Promise<Omgang[]> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('WeekRegelingId', sql.Int, weekRegelingId);
+
+            const result = await request.query(`
+                SELECT 
+                    o.id as omgang_id,
+                    o.wissel_tijd,
+                    o.week_regeling_anders,
+                    o.aangemaakt_op,
+                    o.gewijzigd_op,
+                    d.id as dag_id,
+                    d.naam as dag_naam,
+                    dd.id as dagdeel_id,
+                    dd.naam as dagdeel_naam,
+                    p.id as verzorger_id,
+                    p.voorletters as verzorger_voorletters,
+                    p.voornamen as verzorger_voornamen,
+                    p.roepnaam as verzorger_roepnaam,
+                    p.geslacht as verzorger_geslacht,
+                    p.tussenvoegsel as verzorger_tussenvoegsel,
+                    p.achternaam as verzorger_achternaam,
+                    p.adres as verzorger_adres,
+                    p.postcode as verzorger_postcode,
+                    p.plaats as verzorger_plaats,
+                    p.geboorte_plaats as verzorger_geboorte_plaats,
+                    p.geboorte_datum as verzorger_geboorte_datum,
+                    p.nationaliteit_1 as verzorger_nationaliteit_1,
+                    p.nationaliteit_2 as verzorger_nationaliteit_2,
+                    p.telefoon as verzorger_telefoon,
+                    p.email as verzorger_email,
+                    p.beroep as verzorger_beroep,
+                    wr.id as week_regeling_id,
+                    wr.omschrijving as week_regeling_omschrijving
+                FROM dbo.omgang o
+                JOIN dbo.dagen d ON o.dag_id = d.id
+                JOIN dbo.dagdelen dd ON o.dagdeel_id = dd.id
+                JOIN dbo.personen p ON o.verzorger_id = p.id
+                JOIN dbo.week_regelingen wr ON o.week_regeling_id = wr.id
+                WHERE o.dossier_id = @DossierId
+                AND o.week_regeling_id = @WeekRegelingId
+                ORDER BY d.id, dd.id
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.omgang_id,
+                dag: {
+                    id: row.dag_id,
+                    naam: row.dag_naam
+                },
+                dagdeel: {
+                    id: row.dagdeel_id,
+                    naam: row.dagdeel_naam
+                },
+                verzorger: {
+                    id: row.verzorger_id,
+                    voorletters: row.verzorger_voorletters,
+                    voornamen: row.verzorger_voornamen,
+                    roepnaam: row.verzorger_roepnaam,
+                    geslacht: row.verzorger_geslacht,
+                    tussenvoegsel: row.verzorger_tussenvoegsel,
+                    achternaam: row.verzorger_achternaam,
+                    adres: row.verzorger_adres,
+                    postcode: row.verzorger_postcode,
+                    plaats: row.verzorger_plaats,
+                    geboortePlaats: row.verzorger_geboorte_plaats,
+                    geboorteDatum: row.verzorger_geboorte_datum,
+                    nationaliteit1: row.verzorger_nationaliteit_1,
+                    nationaliteit2: row.verzorger_nationaliteit_2,
+                    telefoon: row.verzorger_telefoon,
+                    email: row.verzorger_email,
+                    beroep: row.verzorger_beroep
+                },
+                wisselTijd: row.wissel_tijd,
+                weekRegeling: {
+                    id: row.week_regeling_id,
+                    omschrijving: row.week_regeling_omschrijving
+                },
+                weekRegelingAnders: row.week_regeling_anders,
+                aangemaaktOp: row.aangemaakt_op,
+                gewijzigdOp: row.gewijzigd_op
+            }));
+        } catch (error) {
+            console.error('Error getting omgang by week:', error);
+            throw error;
+        }
+    }
+
     // Zorg CRUD methods
     async getZorgByDossier(dossierId: number): Promise<Zorg[]> {
         try {
