@@ -3,7 +3,6 @@ import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { getUserId } from '../../utils/auth-helper';
 import { validateCreateOmgangBatch } from '../../validators/omgang-validator';
-import { CreateOmgangBatchDto } from '../../models/Dossier';
 
 export async function createOmgangBatch(
     request: HttpRequest,

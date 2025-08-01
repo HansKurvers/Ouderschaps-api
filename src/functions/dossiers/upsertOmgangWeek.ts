@@ -3,7 +3,6 @@ import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { getUserId } from '../../utils/auth-helper';
 import { validateOmgangWeek } from '../../validators/omgang-validator';
-import { OmgangWeekDto } from '../../models/Dossier';
 
 export async function upsertOmgangWeek(
     request: HttpRequest,
