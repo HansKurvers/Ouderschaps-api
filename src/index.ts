@@ -1,7 +1,7 @@
 import { app } from '@azure/functions';
 
 // Import all function handlers to register them
-import './functions/health';
+import './functions/health/auth-check';
 
 // Dossier functions
 import './functions/dossiers/getDossiers';
