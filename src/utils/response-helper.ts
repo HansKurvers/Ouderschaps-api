@@ -39,7 +39,7 @@ export function createErrorResponse(error: string | Error, statusCode: number = 
 }
 
 export function createUnauthorizedResponse(): HttpResponseInit {
-    return createErrorResponse('Unauthorized: Missing x-user-id header', 401);
+    return createErrorResponse('Unauthorized', 401);
 }
 
 export function createNotFoundResponse(resource: string): HttpResponseInit {

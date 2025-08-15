@@ -10,7 +10,7 @@ export const auth0Config = {
     jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
     
     // Development settings
-    skipAuth: process.env.SKIP_AUTH === 'true' || process.env.NODE_ENV === 'development',
+    skipAuth: process.env.SKIP_AUTH === 'true',
     devUserId: parseInt(process.env.DEV_USER_ID || '1', 10)
 };
 
