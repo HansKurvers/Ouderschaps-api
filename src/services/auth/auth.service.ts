@@ -13,7 +13,6 @@ export interface AuthResult {
     auth0Id?: string;
     user?: User;
     error?: string;
-    legacy?: boolean;
     development?: boolean;
 }
 
@@ -32,11 +31,6 @@ export class AuthService {
         const authHeader = request.headers.get('authorization');
         if (authHeader) {
             return this.handleBearerAuth(authHeader);
-        }
-
-        const userIdHeader = request.headers.get('x-user-id');
-        if (userIdHeader) {
-            return this.handleLegacyAuth(userIdHeader);
         }
 
         return {
@@ -87,35 +81,6 @@ export class AuthService {
         };
     }
 
-    private async handleLegacyAuth(userIdHeader: string): Promise<AuthResult> {
-        const userId = parseInt(userIdHeader, 10);
-        
-        if (isNaN(userId)) {
-            return {
-                authenticated: false,
-                error: 'Invalid user ID format'
-            };
-        }
-
-        const user = await this.userService.getUserById(userId);
-        
-        if (!user) {
-            return {
-                authenticated: false,
-                error: 'User not found'
-            };
-        }
-
-        console.warn(`Legacy authentication used for user ${userId}. Please migrate to Auth0.`);
-
-        return {
-            authenticated: true,
-            userId: user.id,
-            auth0Id: user.auth0Id,
-            user,
-            legacy: true
-        };
-    }
 
     private async handleDevelopmentAuth(): Promise<AuthResult> {
         const user = await this.userService.getUserById(this.config.devUserId);

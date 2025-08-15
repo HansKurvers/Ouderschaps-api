@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
-import { getUserId } from '../../utils/auth-helper';
+import { requireAuthentication } from '../../utils/auth-helper';
 import { validateAddKind } from '../../validators/kind-validator';
 
 export async function addKindToDossier(
@@ -12,8 +12,8 @@ export async function addKindToDossier(
 
     try {
         // Get user ID from headers
-        const userId = getUserId(request);
-        if (!userId) {
+        const userId = await requireAuthentication(request);
+        if (userId === null) {
             return createErrorResponse('User ID is required', 401);
         }
 

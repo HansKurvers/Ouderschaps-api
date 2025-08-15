@@ -13,19 +13,17 @@ export async function createDossier(
 
     try {
         // Check authentication
-        let userID: string;
+        let userID: number;
         try {
-            userID = requireAuthentication(request);
+            userID = await requireAuthentication(request);
         } catch (authError) {
             return createUnauthorizedResponse();
         }
 
         await service.initialize();
 
-        const userIDNumber = parseInt(userID);
-
         // Create new dossier
-        const newDossier = await service.createDossier(userIDNumber);
+        const newDossier = await service.createDossier(userID);
 
         return createSuccessResponse(newDossier, 201);
     } catch (error) {

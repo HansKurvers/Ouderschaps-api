@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
-import { getUserId } from '../../utils/auth-helper';
+import { requireAuthentication } from '../../utils/auth-helper';
 import { validateOmgangWeek } from '../../validators/omgang-validator';
 
 export async function upsertOmgangWeek(
@@ -11,8 +11,8 @@ export async function upsertOmgangWeek(
     const dbService = new DossierDatabaseService();
 
     try {
-        const userId = getUserId(request);
-        if (!userId) {
+        const userId = await requireAuthentication(request);
+        if (userId === null) {
             return createErrorResponse('User ID is required', 401);
         }
 

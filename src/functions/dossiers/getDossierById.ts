@@ -32,19 +32,17 @@ export async function getDossierById(
 
     try {
         // Check authentication
-        let userID: string;
+        let userID: number;
         try {
-            userID = requireAuthentication(request);
+            userID = await requireAuthentication(request);
         } catch (authError) {
             return createUnauthorizedResponse();
         }
 
         await service.initialize();
 
-        const userIDNumber = parseInt(userID);
-
         // Check access
-        const hasAccess = await service.checkDossierAccess(dossierId, userIDNumber);
+        const hasAccess = await service.checkDossierAccess(dossierId, userID);
 
         // Get complete dossier data
         const dossier = await service.getCompleteDossierData(dossierId);

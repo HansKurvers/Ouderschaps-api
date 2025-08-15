@@ -107,35 +107,6 @@ describe('AuthService', () => {
             });
         });
 
-        it('should support backward compatibility with x-user-id header', async () => {
-            const requestWithUserId = {
-                headers: {
-                    get: jest.fn((key: string) => key === 'x-user-id' ? '42' : null)
-                }
-            } as unknown as HttpRequest;
-
-            mockUserService.getUserById.mockResolvedValue({
-                id: 42,
-                auth0Id: 'auth0|legacy',
-                email: 'legacy@example.com',
-                naam: 'Legacy User'
-            });
-
-            const result = await authService.authenticateRequest(requestWithUserId);
-
-            expect(result).toEqual({
-                authenticated: true,
-                userId: 42,
-                auth0Id: 'auth0|legacy',
-                user: {
-                    id: 42,
-                    auth0Id: 'auth0|legacy',
-                    email: 'legacy@example.com',
-                    naam: 'Legacy User'
-                },
-                legacy: true
-            });
-        });
 
         it('should skip auth in development mode', async () => {
             const devConfig = { skipAuth: true, devUserId: 99 };

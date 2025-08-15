@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
-import { getUserId } from '../../utils/auth-helper';
+import { requireAuthentication } from '../../utils/auth-helper';
 
 export async function removePartijFromDossier(
     request: HttpRequest,
@@ -11,8 +11,8 @@ export async function removePartijFromDossier(
 
     try {
         // Get user ID from auth
-        const userId = getUserId(request);
-        if (!userId) {
+        const userId = await requireAuthentication(request);
+        if (userId === null) {
             return createErrorResponse('Unauthorized', 401);
         }
 

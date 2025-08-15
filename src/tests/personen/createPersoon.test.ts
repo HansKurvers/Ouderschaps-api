@@ -1,7 +1,7 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
 import { createPersoon } from '../../functions/personen/createPersoon';
 import { DossierDatabaseService } from '../../services/database-service';
-import { getUserId } from '../../utils/auth-helper';
+import { requireAuthentication } from '../../utils/auth-helper';
 
 jest.mock('../../services/database-service');
 jest.mock('../../utils/auth-helper');
@@ -10,7 +10,7 @@ describe('createPersoon', () => {
     let mockRequest: HttpRequest;
     let mockContext: InvocationContext;
     let mockDbService: jest.Mocked<DossierDatabaseService>;
-    let mockGetUserId: jest.MockedFunction<typeof getUserId>;
+    let mockRequireAuthentication: jest.MockedFunction<typeof requireAuthentication>;
 
     beforeEach(() => {
         mockRequest = {
@@ -31,7 +31,7 @@ describe('createPersoon', () => {
             createOrUpdatePersoon: jest.fn(),
         } as unknown as jest.Mocked<DossierDatabaseService>;
 
-        mockGetUserId = getUserId as jest.MockedFunction<typeof getUserId>;
+        mockRequireAuthentication = requireAuthentication as jest.MockedFunction<typeof requireAuthentication>;
 
         (DossierDatabaseService as jest.Mock).mockImplementation(() => mockDbService);
     });
@@ -54,7 +54,7 @@ describe('createPersoon', () => {
             email: 'john@example.com',
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
         mockDbService.checkEmailUnique.mockResolvedValue(true);
         mockDbService.createOrUpdatePersoon.mockResolvedValue(mockPersoon);
@@ -72,7 +72,7 @@ describe('createPersoon', () => {
     });
 
     it('should return 401 when user is not authenticated', async () => {
-        mockGetUserId.mockReturnValue(null);
+        mockRequireAuthentication.mockRejectedValue(new Error("Unauthorized"));
 
         const result = await createPersoon(mockRequest, mockContext);
 
@@ -84,7 +84,7 @@ describe('createPersoon', () => {
     });
 
     it('should return 400 when request body is missing', async () => {
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue('');
 
         const result = await createPersoon(mockRequest, mockContext);
@@ -102,7 +102,7 @@ describe('createPersoon', () => {
             voornamen: 'John',
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
 
         const result = await createPersoon(mockRequest, mockContext);
@@ -117,7 +117,7 @@ describe('createPersoon', () => {
             email: 'existing@example.com',
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
         mockDbService.checkEmailUnique.mockResolvedValue(false);
 
@@ -135,7 +135,7 @@ describe('createPersoon', () => {
             achternaam: 'Doe',
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
         mockDbService.createOrUpdatePersoon.mockRejectedValue(new Error('Database error'));
 

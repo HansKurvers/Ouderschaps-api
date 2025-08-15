@@ -1,7 +1,7 @@
 # Auth0 Migration Guide
 
 ## Overview
-This backend has been updated to support Auth0 authentication while maintaining backward compatibility with the existing `x-user-id` header system.
+This backend has been updated to use Auth0 authentication exclusively. The insecure `x-user-id` header has been removed for security reasons.
 
 ## Architecture
 
@@ -84,41 +84,38 @@ const userId = getUserId(request);
 const userId = await requireAuthentication(request);
 ```
 
-## Backward Compatibility
+## Authentication Modes
 
-The system maintains THREE authentication modes:
+The system supports TWO authentication modes:
 
 1. **Auth0 JWT** (Production)
    - `Authorization: Bearer <token>`
-   - Validates with Auth0
-   - Auto-registers users
+   - Validates with Auth0 public keys
+   - Auto-registers users on first login
 
-2. **Legacy Header** (Transition)
-   - `x-user-id: <numeric_id>`
-   - Logs warning to console
-   - Will be deprecated
-
-3. **Development Mode**
-   - `SKIP_AUTH=true`
-   - Uses `DEV_USER_ID`
+2. **Development Mode** (Local only)
+   - `SKIP_AUTH=true` in `.env`
+   - Uses `DEV_USER_ID` 
    - No token validation
+   - ⚠️ NEVER enable in production
 
 ## Migration Steps
 
-### Phase 1: Deploy Backend (Current)
-✅ Backend accepts both Auth0 and legacy auth
+### Phase 1: Backend Update (Complete)
+✅ Backend accepts only Auth0 tokens
 ✅ Auto-registration for new Auth0 users
-✅ Existing users continue working
+✅ Removed insecure x-user-id header
 
-### Phase 2: Frontend Migration
-- Update frontend to send Auth0 tokens
-- Remove x-user-id header logic
+### Phase 2: Frontend Migration (Required)
+⚠️ **IMPORTANT**: Frontend MUST send Auth0 tokens
+- Update all API calls to include `Authorization: Bearer <token>`
+- Remove any x-user-id header logic
 - Test with real Auth0 tokens
 
-### Phase 3: Cleanup (Future)
-- Remove legacy x-user-id support
-- Make auth0_id required in database
-- Remove deprecated functions
+### Phase 3: Production Deployment
+- Ensure SKIP_AUTH=false in production
+- Verify Auth0 environment variables are set
+- Monitor for authentication failures
 
 ## Testing
 
@@ -129,22 +126,22 @@ npm test -- src/services/auth
 
 Test with curl:
 ```bash
-# Auth0 token
+# Auth0 token (REQUIRED in production)
 curl -H "Authorization: Bearer ${TOKEN}" http://localhost:7071/api/dossiers
 
-# Legacy (deprecated)
-curl -H "x-user-id: 1" http://localhost:7071/api/dossiers
-
-# Development mode
+# Development mode (local only)
 SKIP_AUTH=true npm start
+curl http://localhost:7071/api/dossiers  # No auth needed in dev mode
 ```
 
-## Security Considerations
+## Security Improvements
 
-1. **Token Validation**: All tokens validated against Auth0 public keys
-2. **Auto-Registration**: Only creates user, no permissions granted
-3. **Data Isolation**: Users only see their own data (via gebruiker_id)
-4. **No Auth0 IDs Exposed**: Internal IDs used in URLs/logs
+1. **Removed Security Vulnerability**: x-user-id header could be spoofed by anyone
+2. **Cryptographic Validation**: All tokens validated against Auth0 public keys
+3. **Auto-Registration**: Secure user creation on first login
+4. **Data Isolation**: Users only see their own data (via gebruiker_id)
+5. **No Auth0 IDs Exposed**: Internal IDs used in URLs/logs
+6. **Development Mode**: Clearly separated, never enabled in production
 
 ## Troubleshooting
 

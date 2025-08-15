@@ -1,7 +1,7 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
 import { addPartijToDossier } from '../../functions/dossiers/addPartijToDossier';
 import { DossierDatabaseService } from '../../services/database-service';
-import { getUserId } from '../../utils/auth-helper';
+import { requireAuthentication } from '../../utils/auth-helper';
 
 jest.mock('../../services/database-service');
 jest.mock('../../utils/auth-helper');
@@ -10,7 +10,7 @@ describe('addPartijToDossier', () => {
     let mockRequest: HttpRequest;
     let mockContext: InvocationContext;
     let mockDbService: jest.Mocked<DossierDatabaseService>;
-    let mockGetUserId: jest.MockedFunction<typeof getUserId>;
+    let mockRequireAuthentication: jest.MockedFunction<typeof requireAuthentication>;
 
     beforeEach(() => {
         mockRequest = {
@@ -35,7 +35,7 @@ describe('addPartijToDossier', () => {
             linkPersoonToDossierWithReturn: jest.fn(),
         } as unknown as jest.Mocked<DossierDatabaseService>;
 
-        mockGetUserId = getUserId as jest.MockedFunction<typeof getUserId>;
+        mockRequireAuthentication = requireAuthentication as jest.MockedFunction<typeof requireAuthentication>;
 
         (DossierDatabaseService as jest.Mock).mockImplementation(() => mockDbService);
     });
@@ -62,7 +62,7 @@ describe('addPartijToDossier', () => {
             rol: { id: 2, naam: 'Vader' },
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
         mockDbService.checkDossierAccess.mockResolvedValue(true);
         mockDbService.getPersoonById.mockResolvedValue(mockPersoon);
@@ -105,7 +105,7 @@ describe('addPartijToDossier', () => {
             rol: { id: 1, naam: 'Moeder' },
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
         mockDbService.checkDossierAccess.mockResolvedValue(true);
         mockDbService.checkEmailUnique.mockResolvedValue(true);
@@ -132,7 +132,7 @@ describe('addPartijToDossier', () => {
             rolId: 2,
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
         mockDbService.checkDossierAccess.mockResolvedValue(false);
 
@@ -157,7 +157,7 @@ describe('addPartijToDossier', () => {
             voornamen: 'John',
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
         mockDbService.checkDossierAccess.mockResolvedValue(true);
         mockDbService.getPersoonById.mockResolvedValue(mockPersoon);
@@ -178,7 +178,7 @@ describe('addPartijToDossier', () => {
             persoonId: 1,
         };
 
-        mockGetUserId.mockReturnValue(1);
+        mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
 
         const result = await addPartijToDossier(mockRequest, mockContext);

@@ -2,28 +2,9 @@ import { HttpRequest } from '@azure/functions';
 import { getAuthService } from '../services/auth';
 
 /**
- * @deprecated Use getAuthService().authenticateRequest() instead
- */
-export function getUserIdFromRequest(request: HttpRequest): string | null {
-    const userId = request.headers.get('x-user-id');
-    return userId || null;
-}
-
-/**
- * @deprecated Use getAuthService().authenticateRequest() instead
- */
-export function getUserId(request: HttpRequest): number | null {
-    const userId = getUserIdFromRequest(request);
-    if (!userId) {
-        return null;
-    }
-    const numericUserId = parseInt(userId, 10);
-    return isNaN(numericUserId) ? null : numericUserId;
-}
-
-/**
  * Authenticates request and returns user ID
- * Supports both Auth0 JWT tokens and legacy x-user-id header
+ * Supports Auth0 JWT tokens in Authorization header
+ * In development mode (SKIP_AUTH=true), uses default user
  */
 export async function requireAuthentication(request: HttpRequest): Promise<number> {
     const authService = getAuthService();
@@ -33,6 +14,7 @@ export async function requireAuthentication(request: HttpRequest): Promise<numbe
 
 /**
  * Gets authenticated user ID without throwing errors
+ * Returns null if authentication fails
  */
 export async function getAuthenticatedUserId(request: HttpRequest): Promise<number | null> {
     const authService = getAuthService();
