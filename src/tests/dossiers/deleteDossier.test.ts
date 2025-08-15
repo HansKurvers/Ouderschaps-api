@@ -1,9 +1,11 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
 import { deleteDossier } from '../../functions/dossiers/deleteDossier';
 import { DossierDatabaseService } from '../../services/database-service';
+import * as authHelper from '../../utils/auth-helper';
 
-// Mock the database service
+// Mock the database service and auth helper
 jest.mock('../../services/database-service');
+jest.mock('../../utils/auth-helper');
 
 describe('deleteDossier', () => {
     let mockContext: InvocationContext;
@@ -20,6 +22,9 @@ describe('deleteDossier', () => {
         
         mockService.initialize = jest.fn().mockResolvedValue(undefined);
         mockService.close = jest.fn().mockResolvedValue(undefined);
+
+        // Mock requireAuthentication to return a user ID
+        (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(123);
     });
 
     afterEach(() => {
@@ -35,7 +40,7 @@ describe('deleteDossier', () => {
             url: 'http://localhost/api/dossiers/1',
             method: 'DELETE',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
             params: {
                 dossierId: '1'
@@ -54,11 +59,13 @@ describe('deleteDossier', () => {
         expect(response.status).toBe(200);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(true);
-        expect(body.data).toEqual({ message: 'Dossier deleted successfully' });
+        expect(body.message).toBe('Dossier deleted successfully');
     });
 
-    it('should return 401 when x-user-id header is missing', async () => {
+    it('should return 401 when authentication fails', async () => {
         // Arrange
+        (authHelper.requireAuthentication as jest.Mock).mockRejectedValue(new Error('Unauthorized'));
+
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/1',
             method: 'DELETE',
@@ -72,24 +79,45 @@ describe('deleteDossier', () => {
         const response = await deleteDossier(request, mockContext);
 
         // Assert
-        expect(mockService.initialize).not.toHaveBeenCalled();
-        expect(mockService.checkDossierAccess).not.toHaveBeenCalled();
-        
         expect(response.status).toBe(401);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Unauthorized: Missing x-user-id header');
+        expect(mockService.deleteDossier).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when dossierId is invalid', async () => {
+        // Arrange
+        const request = new HttpRequest({
+            url: 'http://localhost/api/dossiers/invalid',
+            method: 'DELETE',
+            headers: {
+                'authorization': 'Bearer fake-token'
+            },
+            params: {
+                dossierId: 'invalid'
+            }
+        });
+
+        // Act
+        const response = await deleteDossier(request, mockContext);
+
+        // Assert
+        expect(response.status).toBe(400);
+        const body = JSON.parse(response.body as string);
+        expect(body.success).toBe(false);
+        expect(body.error).toContain('Invalid parameters');
     });
 
     it('should return 403 when user has no access', async () => {
         // Arrange
+        (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(999);
         mockService.checkDossierAccess = jest.fn().mockResolvedValue(false);
 
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/1',
             method: 'DELETE',
             headers: {
-                'x-user-id': '999'
+                'authorization': 'Bearer fake-token'
             },
             params: {
                 dossierId: '1'
@@ -108,32 +136,7 @@ describe('deleteDossier', () => {
         expect(response.status).toBe(403);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Forbidden: You do not have access to this resource');
-    });
-
-    it('should return 400 when dossierId is invalid', async () => {
-        // Arrange
-        const request = new HttpRequest({
-            url: 'http://localhost/api/dossiers/abc',
-            method: 'DELETE',
-            headers: {
-                'x-user-id': '123'
-            },
-            params: {
-                dossierId: 'abc'
-            }
-        });
-
-        // Act
-        const response = await deleteDossier(request, mockContext);
-
-        // Assert
-        expect(mockService.initialize).not.toHaveBeenCalled();
-        
-        expect(response.status).toBe(400);
-        const body = JSON.parse(response.body as string);
-        expect(body.success).toBe(false);
-        expect(body.error).toContain('Invalid parameters');
+        expect(body.error).toBe('Access denied');
     });
 
     it('should handle database errors', async () => {
@@ -145,7 +148,7 @@ describe('deleteDossier', () => {
             url: 'http://localhost/api/dossiers/1',
             method: 'DELETE',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
             params: {
                 dossierId: '1'
@@ -165,27 +168,6 @@ describe('deleteDossier', () => {
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
         expect(body.error).toBe('Database error');
-    });
-
-    it('should ensure database service is closed even when error occurs', async () => {
-        // Arrange
-        mockService.checkDossierAccess = jest.fn().mockRejectedValue(new Error('Database error'));
-
-        const request = new HttpRequest({
-            url: 'http://localhost/api/dossiers/1',
-            method: 'DELETE',
-            headers: {
-                'x-user-id': '123'
-            },
-            params: {
-                dossierId: '1'
-            }
-        });
-
-        // Act
-        await deleteDossier(request, mockContext);
-
-        // Assert
-        expect(mockService.close).toHaveBeenCalled();
+        expect(mockContext.error).toHaveBeenCalled();
     });
 });

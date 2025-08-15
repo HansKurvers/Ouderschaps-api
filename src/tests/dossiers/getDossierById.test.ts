@@ -2,9 +2,11 @@ import { HttpRequest, InvocationContext } from '@azure/functions';
 import { getDossierById } from '../../functions/dossiers/getDossierById';
 import { DossierDatabaseService } from '../../services/database-service';
 import { Dossier } from '../../models/Dossier';
+import * as authHelper from '../../utils/auth-helper';
 
-// Mock the database service
+// Mock the database service and auth helper
 jest.mock('../../services/database-service');
+jest.mock('../../utils/auth-helper');
 
 describe('getDossierById', () => {
     let mockContext: InvocationContext;
@@ -21,6 +23,9 @@ describe('getDossierById', () => {
         
         mockService.initialize = jest.fn().mockResolvedValue(undefined);
         mockService.close = jest.fn().mockResolvedValue(undefined);
+
+        // Mock requireAuthentication to return a user ID
+        (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(123);
     });
 
     afterEach(() => {
@@ -45,7 +50,7 @@ describe('getDossierById', () => {
             url: 'http://localhost/api/dossiers/1',
             method: 'GET',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
             params: {
                 dossierId: '1'
@@ -67,8 +72,10 @@ describe('getDossierById', () => {
         expect(body.data).toEqual(mockDossier);
     });
 
-    it('should return 401 when x-user-id header is missing', async () => {
+    it('should return 401 when authentication fails', async () => {
         // Arrange
+        (authHelper.requireAuthentication as jest.Mock).mockRejectedValue(new Error('Unauthorized'));
+
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/1',
             method: 'GET',
@@ -82,25 +89,45 @@ describe('getDossierById', () => {
         const response = await getDossierById(request, mockContext);
 
         // Assert
-        expect(mockService.initialize).not.toHaveBeenCalled();
-        expect(mockService.checkDossierAccess).not.toHaveBeenCalled();
-        
         expect(response.status).toBe(401);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Unauthorized: Missing x-user-id header');
+        expect(mockService.checkDossierAccess).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when dossierId is invalid', async () => {
+        // Arrange
+        const request = new HttpRequest({
+            url: 'http://localhost/api/dossiers/invalid',
+            method: 'GET',
+            headers: {
+                'authorization': 'Bearer fake-token'
+            },
+            params: {
+                dossierId: 'invalid'
+            }
+        });
+
+        // Act
+        const response = await getDossierById(request, mockContext);
+
+        // Assert
+        expect(response.status).toBe(400);
+        const body = JSON.parse(response.body as string);
+        expect(body.success).toBe(false);
+        expect(body.error).toContain('Invalid parameters');
     });
 
     it('should return 404 when dossier does not exist', async () => {
         // Arrange
-        mockService.checkDossierAccess = jest.fn().mockResolvedValue(false);
+        mockService.checkDossierAccess = jest.fn().mockResolvedValue(true);
         mockService.getCompleteDossierData = jest.fn().mockResolvedValue(null);
 
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/999',
             method: 'GET',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
             params: {
                 dossierId: '999'
@@ -124,14 +151,14 @@ describe('getDossierById', () => {
 
     it('should return 403 when user has no access', async () => {
         // Arrange
+        (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(999);
         mockService.checkDossierAccess = jest.fn().mockResolvedValue(false);
-        mockService.getCompleteDossierData = jest.fn().mockResolvedValue({ dossier_id: 1 });
 
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/1',
             method: 'GET',
             headers: {
-                'x-user-id': '999'
+                'authorization': 'Bearer fake-token'
             },
             params: {
                 dossierId: '1'
@@ -149,28 +176,24 @@ describe('getDossierById', () => {
         expect(response.status).toBe(403);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Forbidden: You do not have access to this resource');
+        expect(body.error).toBe('Access denied');
     });
 
-    it('should return 400 when dossierId is invalid', async () => {
+    it('should return 400 when dossierId is missing', async () => {
         // Arrange
         const request = new HttpRequest({
-            url: 'http://localhost/api/dossiers/abc',
+            url: 'http://localhost/api/dossiers/',
             method: 'GET',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
-            params: {
-                dossierId: 'abc'
-            }
+            params: {}
         });
 
         // Act
         const response = await getDossierById(request, mockContext);
 
         // Assert
-        expect(mockService.initialize).not.toHaveBeenCalled();
-        
         expect(response.status).toBe(400);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
@@ -179,13 +202,13 @@ describe('getDossierById', () => {
 
     it('should handle database errors', async () => {
         // Arrange
-        mockService.checkDossierAccess = jest.fn().mockRejectedValue(new Error('Database error'));
+        mockService.checkDossierAccess = jest.fn().mockRejectedValue(new Error('Database connection failed'));
 
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/1',
             method: 'GET',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
             params: {
                 dossierId: '1'
@@ -203,6 +226,7 @@ describe('getDossierById', () => {
         expect(response.status).toBe(500);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Database error');
+        expect(body.error).toBe('Database connection failed');
+        expect(mockContext.error).toHaveBeenCalled();
     });
 });

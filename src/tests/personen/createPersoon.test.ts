@@ -72,7 +72,7 @@ describe('createPersoon', () => {
     });
 
     it('should return 401 when user is not authenticated', async () => {
-        mockRequireAuthentication.mockRejectedValue(new Error("Unauthorized"));
+        mockRequireAuthentication.mockRejectedValue(new Error('Unauthorized'));
 
         const result = await createPersoon(mockRequest, mockContext);
 

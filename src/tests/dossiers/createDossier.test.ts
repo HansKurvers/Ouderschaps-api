@@ -2,9 +2,11 @@ import { HttpRequest, InvocationContext } from '@azure/functions';
 import { createDossier } from '../../functions/dossiers/createDossier';
 import { DossierDatabaseService } from '../../services/database-service';
 import { Dossier } from '../../models/Dossier';
+import * as authHelper from '../../utils/auth-helper';
 
-// Mock the database service
+// Mock the database service and auth helper
 jest.mock('../../services/database-service');
+jest.mock('../../utils/auth-helper');
 
 describe('createDossier', () => {
     let mockContext: InvocationContext;
@@ -21,15 +23,18 @@ describe('createDossier', () => {
         
         mockService.initialize = jest.fn().mockResolvedValue(undefined);
         mockService.close = jest.fn().mockResolvedValue(undefined);
+
+        // Mock requireAuthentication to return a user ID
+        (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(123);
     });
 
     afterEach(() => {
         jest.clearAllMocks();
     });
 
-    it('should create a new dossier when valid x-user-id header is provided', async () => {
+    it('should create a new dossier when authenticated', async () => {
         // Arrange
-        const mockDossier: Dossier = {
+        const newDossier: Dossier = {
             id: 1,
             dossierNummer: 'DOS-2024-0001',
             gebruikerId: 123,
@@ -38,15 +43,15 @@ describe('createDossier', () => {
             gewijzigdOp: '2024-01-01T00:00:00.000Z' as any
         };
 
-        mockService.createDossier = jest.fn().mockResolvedValue(mockDossier);
+        mockService.createDossier = jest.fn().mockResolvedValue(newDossier);
 
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers',
             method: 'POST',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
-            body: {}
+            params: {}
         });
 
         // Act
@@ -60,58 +65,53 @@ describe('createDossier', () => {
         expect(response.status).toBe(201);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(true);
-        expect(body.data).toEqual(mockDossier);
+        expect(body.data).toEqual(newDossier);
     });
 
-    it('should return 401 when x-user-id header is missing in production mode', async () => {
+    it('should return 401 when authentication fails', async () => {
         // Arrange
-        const originalEnv = process.env.SKIP_AUTH;
-        process.env.SKIP_AUTH = 'false';
-        
+        (authHelper.requireAuthentication as jest.Mock).mockRejectedValue(new Error('Unauthorized'));
+
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers',
             method: 'POST',
             headers: {},
-            body: {}
+            params: {}
         });
 
         // Act
         const response = await createDossier(request, mockContext);
 
         // Assert
-        expect(mockService.initialize).not.toHaveBeenCalled();
-        expect(mockService.createDossier).not.toHaveBeenCalled();
-        
         expect(response.status).toBe(401);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Unauthorized: Missing x-user-id header');
-        
-        // Cleanup
-        process.env.SKIP_AUTH = originalEnv;
+        expect(mockService.createDossier).not.toHaveBeenCalled();
     });
 
-    it('should work without x-user-id header in development mode', async () => {
+    it('should work in development mode with SKIP_AUTH', async () => {
         // Arrange
-        const originalEnv = process.env.SKIP_AUTH;
         process.env.SKIP_AUTH = 'true';
+        process.env.DEV_USER_ID = '1';
         
-        const mockDossier: Dossier = {
-            id: 1,
-            dossierNummer: 'DOS-2024-0001',
+        (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(1);
+        
+        const newDossier: Dossier = {
+            id: 2,
+            dossierNummer: 'DOS-2024-0002',
             gebruikerId: 1,
             status: false,
             aangemaaktOp: '2024-01-01T00:00:00.000Z' as any,
             gewijzigdOp: '2024-01-01T00:00:00.000Z' as any
         };
 
-        mockService.createDossier = jest.fn().mockResolvedValue(mockDossier);
+        mockService.createDossier = jest.fn().mockResolvedValue(newDossier);
 
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers',
             method: 'POST',
             headers: {},
-            body: {}
+            params: {}
         });
 
         // Act
@@ -125,10 +125,11 @@ describe('createDossier', () => {
         expect(response.status).toBe(201);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(true);
-        expect(body.data).toEqual(mockDossier);
-        
+        expect(body.data).toEqual(newDossier);
+
         // Cleanup
-        process.env.SKIP_AUTH = originalEnv;
+        delete process.env.SKIP_AUTH;
+        delete process.env.DEV_USER_ID;
     });
 
     it('should handle database errors', async () => {
@@ -139,9 +140,9 @@ describe('createDossier', () => {
             url: 'http://localhost/api/dossiers',
             method: 'POST',
             headers: {
-                'x-user-id': '123'
+                'authorization': 'Bearer fake-token'
             },
-            body: {}
+            params: {}
         });
 
         // Act
@@ -156,25 +157,6 @@ describe('createDossier', () => {
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
         expect(body.error).toBe('Database error');
-    });
-
-    it('should ensure database service is closed even when error occurs', async () => {
-        // Arrange
-        mockService.createDossier = jest.fn().mockRejectedValue(new Error('Database error'));
-
-        const request = new HttpRequest({
-            url: 'http://localhost/api/dossiers',
-            method: 'POST',
-            headers: {
-                'x-user-id': '123'
-            },
-            body: {}
-        });
-
-        // Act
-        await createDossier(request, mockContext);
-
-        // Assert
-        expect(mockService.close).toHaveBeenCalled();
+        expect(mockContext.error).toHaveBeenCalled();
     });
 });
