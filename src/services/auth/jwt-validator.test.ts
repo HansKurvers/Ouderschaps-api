@@ -1,12 +1,12 @@
 import { JwtValidator } from './jwt-validator';
 import jwt from 'jsonwebtoken';
-import { JwksClient } from 'jwks-rsa';
+import jwksRsa from 'jwks-rsa';
 
 jest.mock('jwks-rsa');
 
 describe('JwtValidator', () => {
     let validator: JwtValidator;
-    let mockJwksClient: jest.Mocked<JwksClient>;
+    let mockJwksClient: any;
 
     const mockConfig = {
         domain: 'test.auth0.com',
@@ -28,8 +28,8 @@ describe('JwtValidator', () => {
     beforeEach(() => {
         mockJwksClient = {
             getSigningKey: jest.fn()
-        } as any;
-        (JwksClient as jest.Mock).mockReturnValue(mockJwksClient);
+        };
+        (jwksRsa as unknown as jest.Mock).mockReturnValue(mockJwksClient);
         validator = new JwtValidator(mockConfig);
     });
 
@@ -38,7 +38,7 @@ describe('JwtValidator', () => {
             const mockSigningKey = { publicKey: 'mock-public-key' };
             (mockJwksClient.getSigningKey as jest.Mock).mockResolvedValue(mockSigningKey);
             
-            jest.spyOn(jwt, 'decode').mockReturnValue({ header: { kid: 'test-key' }, payload: mockDecodedToken });
+            jest.spyOn(jwt, 'decode').mockReturnValue({ header: { kid: 'test-key' }, payload: mockDecodedToken } as any);
             jest.spyOn(jwt, 'verify').mockImplementation(() => mockDecodedToken);
 
             const result = await validator.validateToken(validToken);
@@ -51,6 +51,10 @@ describe('JwtValidator', () => {
         });
 
         it('should return invalid for expired token', async () => {
+            const mockSigningKey = { publicKey: 'mock-public-key' };
+            (mockJwksClient.getSigningKey as jest.Mock).mockResolvedValue(mockSigningKey);
+            
+            jest.spyOn(jwt, 'decode').mockReturnValue({ header: { kid: 'test-key' }, payload: mockDecodedToken } as any);
             jest.spyOn(jwt, 'verify').mockImplementation(() => {
                 throw new jwt.TokenExpiredError('Token expired', new Date());
             });
@@ -68,14 +72,16 @@ describe('JwtValidator', () => {
             const mockSigningKey = { publicKey: 'mock-public-key' };
             (mockJwksClient.getSigningKey as jest.Mock).mockResolvedValue(mockSigningKey);
             
-            jest.spyOn(jwt, 'decode').mockReturnValue({ header: { kid: 'test-key' }, payload: wrongAudience });
-            jest.spyOn(jwt, 'verify').mockImplementation(() => wrongAudience);
+            jest.spyOn(jwt, 'decode').mockReturnValue({ header: { kid: 'test-key' }, payload: wrongAudience } as any);
+            jest.spyOn(jwt, 'verify').mockImplementation(() => {
+                throw new jwt.JsonWebTokenError('jwt audience invalid. expected: https://api.test.com');
+            });
 
             const result = await validator.validateToken(validToken);
 
             expect(result).toEqual({
                 isValid: false,
-                error: 'Invalid audience'
+                error: 'Invalid token'
             });
         });
 

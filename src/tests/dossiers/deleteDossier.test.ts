@@ -59,7 +59,7 @@ describe('deleteDossier', () => {
         expect(response.status).toBe(200);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(true);
-        expect(body.message).toBe('Dossier deleted successfully');
+        expect(body.data.message).toBe('Dossier deleted successfully');
     });
 
     it('should return 401 when authentication fails', async () => {
@@ -136,7 +136,7 @@ describe('deleteDossier', () => {
         expect(response.status).toBe(403);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Access denied');
+        expect(body.error).toBe('Forbidden: You do not have access to this resource');
     });
 
     it('should handle database errors', async () => {

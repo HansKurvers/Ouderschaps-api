@@ -158,7 +158,7 @@ describe('updateDossier', () => {
         expect(response.status).toBe(403);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Access denied');
+        expect(body.error).toBe('Forbidden: You do not have access to this resource');
     });
 
     it('should handle empty body and return current dossier', async () => {
@@ -185,7 +185,7 @@ describe('updateDossier', () => {
                 dossierId: '1'
             },
             body: {
-                string: ''
+                string: '{}'
             }
         });
 

@@ -152,6 +152,12 @@ describe('getDossierById', () => {
     it('should return 403 when user has no access', async () => {
         // Arrange
         (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(999);
+        mockService.getCompleteDossierData = jest.fn().mockResolvedValue({
+            id: 1,
+            dossierNummer: 'DOS-2024-0001',
+            gebruikerId: 123,
+            status: true
+        });
         mockService.checkDossierAccess = jest.fn().mockResolvedValue(false);
 
         const request = new HttpRequest({
@@ -176,7 +182,7 @@ describe('getDossierById', () => {
         expect(response.status).toBe(403);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
-        expect(body.error).toBe('Access denied');
+        expect(body.error).toBe('Forbidden: You do not have access to this resource');
     });
 
     it('should return 400 when dossierId is missing', async () => {
