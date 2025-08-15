@@ -21,9 +21,9 @@ export async function getDossiers(
 
     try {
         // Check authentication
-        let userID: string;
+        let userID: number;
         try {
-            userID = requireAuthentication(request);
+            userID = await requireAuthentication(request);
         } catch (authError) {
             return createUnauthorizedResponse();
         }
@@ -51,10 +51,9 @@ export async function getDossiers(
         }
 
         const { includeInactive: validatedIncludeInactive, onlyInactive: validatedOnlyInactive, limit: validatedLimit, offset: validatedOffset } = value;
-        const userIDNumber = parseInt(userID);
 
         // Get all dossiers for user
-        let dossiers = await service.getAllDossiers(userIDNumber);
+        let dossiers = await service.getAllDossiers(userID);
 
         // Filter based on status
         // By default: only active dossiers (status = false)
