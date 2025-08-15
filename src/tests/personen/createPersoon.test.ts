@@ -27,8 +27,8 @@ describe('createPersoon', () => {
         mockDbService = {
             initialize: jest.fn(),
             close: jest.fn(),
-            checkEmailUnique: jest.fn(),
-            createOrUpdatePersoon: jest.fn(),
+            checkEmailUniqueForUser: jest.fn(),
+            createOrUpdatePersoonForUser: jest.fn(),
         } as unknown as jest.Mocked<DossierDatabaseService>;
 
         mockRequireAuthentication = requireAuthentication as jest.MockedFunction<typeof requireAuthentication>;
@@ -56,8 +56,8 @@ describe('createPersoon', () => {
 
         mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
-        mockDbService.checkEmailUnique.mockResolvedValue(true);
-        mockDbService.createOrUpdatePersoon.mockResolvedValue(mockPersoon);
+        mockDbService.checkEmailUniqueForUser.mockResolvedValue(true);
+        mockDbService.createOrUpdatePersoonForUser.mockResolvedValue(mockPersoon);
 
         const result = await createPersoon(mockRequest, mockContext);
 
@@ -67,8 +67,8 @@ describe('createPersoon', () => {
             data: mockPersoon,
         });
         expect(mockDbService.initialize).toHaveBeenCalled();
-        expect(mockDbService.checkEmailUnique).toHaveBeenCalledWith('john@example.com');
-        expect(mockDbService.createOrUpdatePersoon).toHaveBeenCalledWith(requestData);
+        expect(mockDbService.checkEmailUniqueForUser).toHaveBeenCalledWith('john@example.com', 1);
+        expect(mockDbService.createOrUpdatePersoonForUser).toHaveBeenCalledWith(requestData, 1);
     });
 
     it('should return 401 when user is not authenticated', async () => {
@@ -119,7 +119,7 @@ describe('createPersoon', () => {
 
         mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
-        mockDbService.checkEmailUnique.mockResolvedValue(false);
+        mockDbService.checkEmailUniqueForUser.mockResolvedValue(false);
 
         const result = await createPersoon(mockRequest, mockContext);
 
@@ -137,7 +137,7 @@ describe('createPersoon', () => {
 
         mockRequireAuthentication.mockResolvedValue(1);
         (mockRequest.text as jest.Mock).mockResolvedValue(JSON.stringify(requestData));
-        mockDbService.createOrUpdatePersoon.mockRejectedValue(new Error('Database error'));
+        mockDbService.createOrUpdatePersoonForUser.mockRejectedValue(new Error('Database error'));
 
         const result = await createPersoon(mockRequest, mockContext);
 
