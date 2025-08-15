@@ -12,9 +12,11 @@ export async function updatePersoon(
 
     try {
         // Get user ID from auth
-        const userId = await requireAuthentication(request);
-        if (userId === null) {
-            return createErrorResponse('Unauthorized', 401);
+        try {
+            await requireAuthentication(request);
+        } catch (authError) {
+            context.log('Authentication failed:', authError);
+            return createErrorResponse('Authentication required', 401);
         }
 
         // Get persoon ID from route

@@ -12,14 +12,11 @@ export async function createPersoon(
 
     try {
         // Get user ID from auth
-        let userId: number;
         try {
-            userId = await requireAuthentication(request);
+            await requireAuthentication(request);
         } catch (authError) {
-            return createErrorResponse('Unauthorized', 401);
-        }
-        if (userId === null) {
-            return createErrorResponse('Unauthorized', 401);
+            context.log('Authentication failed:', authError);
+            return createErrorResponse('Authentication required', 401);
         }
 
         // Get request body

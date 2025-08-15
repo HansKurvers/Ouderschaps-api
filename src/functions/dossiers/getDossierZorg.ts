@@ -10,9 +10,12 @@ export async function getDossierZorg(
     const dbService = new DossierDatabaseService();
 
     try {
-        const userId = await requireAuthentication(request);
-        if (userId === null) {
-            return createErrorResponse('User ID is required', 401);
+        let userId: number;
+        try {
+            userId = await requireAuthentication(request);
+        } catch (authError) {
+            context.log('Authentication failed:', authError);
+            return createErrorResponse('Authentication required', 401);
         }
 
         const dossierId = Number(request.params.dossierId);

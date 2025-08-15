@@ -11,9 +11,12 @@ export async function removePartijFromDossier(
 
     try {
         // Get user ID from auth
-        const userId = await requireAuthentication(request);
-        if (userId === null) {
-            return createErrorResponse('Unauthorized', 401);
+        let userId: number;
+        try {
+            userId = await requireAuthentication(request);
+        } catch (authError) {
+            context.log('Authentication failed:', authError);
+            return createErrorResponse('Authentication required', 401);
         }
 
         // Get dossier ID and partij ID from route

@@ -11,9 +11,11 @@ export async function deletePersoon(
 
     try {
         // Get user ID from headers
-        const userId = await requireAuthentication(request);
-        if (userId === null) {
-            return createErrorResponse('User ID is required', 401);
+        try {
+            await requireAuthentication(request);
+        } catch (authError) {
+            context.log('Authentication failed:', authError);
+            return createErrorResponse('Authentication required', 401);
         }
 
         // Get persoon ID from path

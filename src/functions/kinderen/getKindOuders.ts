@@ -11,9 +11,11 @@ export async function getKindOuders(
 
     try {
         // Get user ID from headers
-        const userId = await requireAuthentication(request);
-        if (userId === null) {
-            return createErrorResponse('User ID is required', 401);
+        try {
+            await requireAuthentication(request);
+        } catch (authError) {
+            context.log('Authentication failed:', authError);
+            return createErrorResponse('Authentication required', 401);
         }
 
         // Get kind ID from path (this is persoon ID of the kind)
