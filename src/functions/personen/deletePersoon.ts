@@ -11,8 +11,9 @@ export async function deletePersoon(
 
     try {
         // Get user ID from headers
+        let userId: number;
         try {
-            await requireAuthentication(request);
+            userId = await requireAuthentication(request);
         } catch (authError) {
             context.log('Authentication failed:', authError);
             return createErrorResponse('Authentication required', 401);
@@ -27,14 +28,14 @@ export async function deletePersoon(
         // Initialize database connection
         await dbService.initialize();
 
-        // Check if persoon exists
-        const existingPersoon = await dbService.getPersoonById(persoonId);
+        // Check if persoon exists and belongs to this user
+        const existingPersoon = await dbService.getPersoonByIdForUser(persoonId, userId);
         if (!existingPersoon) {
             return createErrorResponse('Persoon not found', 404);
         }
 
-        // Delete the persoon
-        const success = await dbService.deletePersoon(persoonId);
+        // Delete the persoon (only if it belongs to this user)
+        const success = await dbService.deletePersoonForUser(persoonId, userId);
         
         if (!success) {
             return createErrorResponse('Failed to delete persoon', 500);

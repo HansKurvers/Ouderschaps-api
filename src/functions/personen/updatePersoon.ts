@@ -12,8 +12,9 @@ export async function updatePersoon(
 
     try {
         // Get user ID from auth
+        let userId: number;
         try {
-            await requireAuthentication(request);
+            userId = await requireAuthentication(request);
         } catch (authError) {
             context.log('Authentication failed:', authError);
             return createErrorResponse('Authentication required', 401);
@@ -50,26 +51,26 @@ export async function updatePersoon(
         // Initialize database
         await dbService.initialize();
 
-        // Check if persoon exists
-        const existingPersoon = await dbService.getPersoonById(persoonId);
+        // Check if persoon exists and belongs to this user
+        const existingPersoon = await dbService.getPersoonByIdForUser(persoonId, userId);
         if (!existingPersoon) {
             return createErrorResponse('Persoon not found', 404);
         }
 
-        // Check email uniqueness if provided and changed
+        // Check email uniqueness if provided and changed (scoped to user)
         if (value.email && value.email !== existingPersoon.email) {
-            const isEmailUnique = await dbService.checkEmailUnique(value.email, persoonId);
+            const isEmailUnique = await dbService.checkEmailUniqueForUser(value.email, userId, persoonId);
             if (!isEmailUnique) {
                 return createErrorResponse('Email address already exists', 409);
             }
         }
 
-        // Update persoon
-        const updatedPersoon = await dbService.createOrUpdatePersoon({
+        // Update persoon (maintaining gebruiker_id)
+        const updatedPersoon = await dbService.updatePersoonForUser({
             ...existingPersoon,
             ...value,
             id: persoonId
-        });
+        }, userId);
 
         context.log(`Updated persoon with ID: ${persoonId}`);
         return createSuccessResponse(updatedPersoon);

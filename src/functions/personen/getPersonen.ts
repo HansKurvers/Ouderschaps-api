@@ -18,9 +18,10 @@ export async function getPersonen(
     const service = new DossierDatabaseService();
 
     try {
-        // Check authentication
+        // Check authentication and get user ID
+        let userId: number;
         try {
-            requireAuthentication(request);
+            userId = await requireAuthentication(request);
         } catch (authError) {
             return createUnauthorizedResponse();
         }
@@ -43,8 +44,8 @@ export async function getPersonen(
 
         const { limit: validatedLimit, offset: validatedOffset } = value;
 
-        // Get all personen
-        const personen = await service.getAllPersonen(validatedLimit, validatedOffset);
+        // Get personen for this user only
+        const personen = await service.getAllPersonenForUser(userId, validatedLimit, validatedOffset);
 
         return createSuccessResponse({
             data: personen.data,

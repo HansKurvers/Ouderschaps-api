@@ -1859,7 +1859,262 @@ export class DossierDatabaseService {
         }
     }
 
-    // Personen methods
+    // Personen methods - User-scoped versions
+    async getAllPersonenForUser(userId: number, limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
+        try {
+            const pool = await this.getPool();
+            
+            // Get total count for this user
+            const countRequest = pool.request();
+            countRequest.input('UserId', sql.Int, userId);
+            const countResult = await countRequest.query(`
+                SELECT COUNT(*) as total FROM dbo.personen
+                WHERE gebruiker_id = @UserId
+            `);
+            const total = countResult.recordset[0].total;
+
+            // Get paginated data for this user
+            const dataRequest = pool.request();
+            dataRequest.input('UserId', sql.Int, userId);
+            dataRequest.input('Limit', sql.Int, limit);
+            dataRequest.input('Offset', sql.Int, offset);
+
+            const result = await dataRequest.query(`
+                SELECT 
+                    id,
+                    voorletters,
+                    voornamen,
+                    roepnaam,
+                    geslacht,
+                    tussenvoegsel,
+                    achternaam,
+                    adres,
+                    postcode,
+                    plaats,
+                    geboorte_plaats,
+                    geboorte_datum,
+                    nationaliteit_1,
+                    nationaliteit_2,
+                    telefoon,
+                    email,
+                    beroep
+                FROM dbo.personen
+                WHERE gebruiker_id = @UserId
+                ORDER BY achternaam, voornamen
+                OFFSET @Offset ROWS
+                FETCH NEXT @Limit ROWS ONLY
+            `);
+
+            return {
+                data: result.recordset.map(row => DbMappers.toPersoon(row)),
+                total
+            };
+        } catch (error) {
+            console.error('Error in getAllPersonenForUser:', error);
+            throw new Error('Failed to fetch personen');
+        }
+    }
+
+    async getPersoonByIdForUser(persoonId: number, userId: number): Promise<Persoon | null> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('PersoonId', sql.Int, persoonId);
+            request.input('UserId', sql.Int, userId);
+
+            const result = await request.query(`
+                SELECT * FROM dbo.personen 
+                WHERE id = @PersoonId AND gebruiker_id = @UserId
+            `);
+
+            return result.recordset.length > 0 
+                ? DbMappers.toPersoon(result.recordset[0])
+                : null;
+        } catch (error) {
+            console.error('Error in getPersoonByIdForUser:', error);
+            throw new Error('Failed to fetch persoon');
+        }
+    }
+
+    async createOrUpdatePersoonForUser(persoonData: Partial<Persoon>, userId: number): Promise<Persoon> {
+        try {
+            const pool = await this.getPool();
+            const dto = DbMappers.toPersoonDto(persoonData as Persoon);
+
+            if (persoonData.id) {
+                // Update existing person (verify it belongs to user)
+                const request = pool.request();
+                request.input('Id', sql.Int, persoonData.id);
+                request.input('UserId', sql.Int, userId);
+                request.input('Voorletters', sql.NVarChar, dto.voorletters);
+                request.input('Voornamen', sql.NVarChar, dto.voornamen);
+                request.input('Roepnaam', sql.NVarChar, dto.roepnaam);
+                request.input('Geslacht', sql.NVarChar, dto.geslacht);
+                request.input('Tussenvoegsel', sql.NVarChar, dto.tussenvoegsel);
+                request.input('Achternaam', sql.NVarChar, dto.achternaam);
+                request.input('Adres', sql.NVarChar, dto.adres);
+                request.input('Postcode', sql.NVarChar, dto.postcode);
+                request.input('Plaats', sql.NVarChar, dto.plaats);
+                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorte_plaats);
+                request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
+                request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
+                request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
+                request.input('Telefoon', sql.NVarChar, dto.telefoon);
+                request.input('Email', sql.NVarChar, dto.email);
+                request.input('Beroep', sql.NVarChar, dto.beroep);
+
+                const result = await request.query(`
+                    UPDATE dbo.personen
+                    SET 
+                        voorletters = @Voorletters,
+                        voornamen = @Voornamen,
+                        roepnaam = @Roepnaam,
+                        geslacht = @Geslacht,
+                        tussenvoegsel = @Tussenvoegsel,
+                        achternaam = @Achternaam,
+                        adres = @Adres,
+                        postcode = @Postcode,
+                        plaats = @Plaats,
+                        geboorte_plaats = @GeboorteplaatsFK,
+                        geboorte_datum = @Geboortedatum,
+                        nationaliteit_1 = @Nationaliteit_1,
+                        nationaliteit_2 = @Nationaliteit_2,
+                        telefoon = @Telefoon,
+                        email = @Email,
+                        beroep = @Beroep
+                    OUTPUT INSERTED.*
+                    WHERE id = @Id AND gebruiker_id = @UserId
+                `);
+
+                if (result.recordset.length === 0) {
+                    throw new Error('Person not found or access denied');
+                }
+
+                return DbMappers.toPersoon(result.recordset[0]);
+            } else {
+                // Create new person with gebruiker_id
+                const request = pool.request();
+                request.input('UserId', sql.Int, userId);
+                request.input('Voorletters', sql.NVarChar, dto.voorletters);
+                request.input('Voornamen', sql.NVarChar, dto.voornamen);
+                request.input('Roepnaam', sql.NVarChar, dto.roepnaam);
+                request.input('Geslacht', sql.NVarChar, dto.geslacht);
+                request.input('Tussenvoegsel', sql.NVarChar, dto.tussenvoegsel);
+                request.input('Achternaam', sql.NVarChar, dto.achternaam);
+                request.input('Adres', sql.NVarChar, dto.adres);
+                request.input('Postcode', sql.NVarChar, dto.postcode);
+                request.input('Plaats', sql.NVarChar, dto.plaats);
+                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorte_plaats);
+                request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
+                request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
+                request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
+                request.input('Telefoon', sql.NVarChar, dto.telefoon);
+                request.input('Email', sql.NVarChar, dto.email);
+                request.input('Beroep', sql.NVarChar, dto.beroep);
+
+                const result = await request.query(`
+                    INSERT INTO dbo.personen (
+                        gebruiker_id,
+                        voorletters,
+                        voornamen,
+                        roepnaam,
+                        geslacht,
+                        tussenvoegsel,
+                        achternaam,
+                        adres,
+                        postcode,
+                        plaats,
+                        geboorte_plaats,
+                        geboorte_datum,
+                        nationaliteit_1,
+                        nationaliteit_2,
+                        telefoon,
+                        email,
+                        beroep
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @UserId,
+                        @Voorletters,
+                        @Voornamen,
+                        @Roepnaam,
+                        @Geslacht,
+                        @Tussenvoegsel,
+                        @Achternaam,
+                        @Adres,
+                        @Postcode,
+                        @Plaats,
+                        @GeboorteplaatsFK,
+                        @Geboortedatum,
+                        @Nationaliteit_1,
+                        @Nationaliteit_2,
+                        @Telefoon,
+                        @Email,
+                        @Beroep
+                    )
+                `);
+
+                return DbMappers.toPersoon(result.recordset[0]);
+            }
+        } catch (error) {
+            console.error('Error in createOrUpdatePersoonForUser:', error);
+            throw new Error('Failed to create or update persoon');
+        }
+    }
+
+    async updatePersoonForUser(persoonData: Partial<Persoon>, userId: number): Promise<Persoon> {
+        return this.createOrUpdatePersoonForUser(persoonData, userId);
+    }
+
+    async checkEmailUniqueForUser(email: string, userId: number, excludePersonId?: number): Promise<boolean> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('Email', sql.NVarChar, email);
+            request.input('UserId', sql.Int, userId);
+            
+            let query = `
+                SELECT COUNT(*) as count 
+                FROM dbo.personen 
+                WHERE email = @Email AND gebruiker_id = @UserId
+            `;
+
+            if (excludePersonId) {
+                request.input('ExcludeId', sql.Int, excludePersonId);
+                query += ' AND id != @ExcludeId';
+            }
+
+            const result = await request.query(query);
+            return result.recordset[0].count === 0;
+        } catch (error) {
+            console.error('Error in checkEmailUniqueForUser:', error);
+            throw new Error('Failed to check email uniqueness');
+        }
+    }
+
+    async deletePersoonForUser(persoonId: number, userId: number): Promise<boolean> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('PersoonId', sql.Int, persoonId);
+            request.input('UserId', sql.Int, userId);
+
+            const result = await request.query(`
+                DELETE FROM dbo.personen 
+                WHERE id = @PersoonId AND gebruiker_id = @UserId
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error in deletePersoonForUser:', error);
+            throw new Error('Failed to delete persoon');
+        }
+    }
+
+    // Personen methods - Legacy (to be removed after migration)
     async getAllPersonen(limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
         try {
             const pool = await this.getPool();

@@ -11,8 +11,9 @@ export async function getPersoonById(
 
     try {
         // Get user ID from auth
+        let userId: number;
         try {
-            await requireAuthentication(request);
+            userId = await requireAuthentication(request);
         } catch (authError) {
             context.log('Authentication failed:', authError);
             return createErrorResponse('Authentication required', 401);
@@ -24,9 +25,9 @@ export async function getPersoonById(
             return createErrorResponse('Invalid persoon ID', 400);
         }
 
-        // Get persoon from database
+        // Get persoon from database (only if it belongs to this user)
         await dbService.initialize();
-        const persoon = await dbService.getPersoonById(persoonId);
+        const persoon = await dbService.getPersoonByIdForUser(persoonId, userId);
 
         if (!persoon) {
             return createErrorResponse('Persoon not found', 404);

@@ -12,8 +12,9 @@ export async function createPersoon(
 
     try {
         // Get user ID from auth
+        let userId: number;
         try {
-            await requireAuthentication(request);
+            userId = await requireAuthentication(request);
         } catch (authError) {
             context.log('Authentication failed:', authError);
             return createErrorResponse('Authentication required', 401);
@@ -44,16 +45,16 @@ export async function createPersoon(
         // Initialize database
         await dbService.initialize();
 
-        // Check email uniqueness if provided
+        // Check email uniqueness if provided (scoped to user)
         if (value.email) {
-            const isEmailUnique = await dbService.checkEmailUnique(value.email);
+            const isEmailUnique = await dbService.checkEmailUniqueForUser(value.email, userId);
             if (!isEmailUnique) {
                 return createErrorResponse('Email address already exists', 409);
             }
         }
 
-        // Create persoon
-        const newPersoon = await dbService.createOrUpdatePersoon(value);
+        // Create persoon with gebruiker_id
+        const newPersoon = await dbService.createOrUpdatePersoonForUser(value, userId);
 
         context.log(`Created persoon with ID: ${newPersoon.id}`);
         return createSuccessResponse(newPersoon);
