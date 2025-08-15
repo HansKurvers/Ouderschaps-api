@@ -81,7 +81,7 @@ describe('JwtValidator', () => {
 
             expect(result).toEqual({
                 isValid: false,
-                error: 'Invalid token'
+                error: 'Invalid token: jwt audience invalid. expected: https://api.test.com'
             });
         });
 
