@@ -92,9 +92,10 @@ export class AuthService {
             };
         } catch (error) {
             console.error('Error finding/creating user:', error);
+            console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
             return {
                 authenticated: false,
-                error: 'Failed to find or create user'
+                error: `Failed to find or create user: ${error instanceof Error ? error.message : 'Unknown error'}`
             };
         }
     }

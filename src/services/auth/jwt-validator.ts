@@ -60,10 +60,8 @@ export class JwtValidator {
             });
 
             console.log('Token verified successfully');
-            if (typeof payload === 'object' && payload.aud !== this.config.audience) {
-                console.log('Audience mismatch:', payload.aud, 'vs', this.config.audience);
-                return { isValid: false, error: 'Invalid audience' };
-            }
+            // jwt.verify already checks the audience, no need for additional check
+            // The audience can be a string or array, and jwt.verify handles both cases
 
             const userId = this.extractUserId(payload);
             console.log('Extracted user ID:', userId);

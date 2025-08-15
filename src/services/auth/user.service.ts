@@ -28,6 +28,7 @@ export class UserService {
     }
 
     async getUserByAuth0Id(auth0Id: string): Promise<User | null> {
+        await this.db.initialize();
         const result = await this.db.executeQuery(
             `SELECT id, auth0_id, email, naam 
              FROM dbo.gebruikers 
@@ -45,6 +46,7 @@ export class UserService {
     }
 
     async getUserById(id: number): Promise<User | null> {
+        await this.db.initialize();
         const result = await this.db.executeQuery(
             `SELECT id, auth0_id, email, naam 
              FROM dbo.gebruikers 
@@ -62,6 +64,7 @@ export class UserService {
     }
 
     private async createUser(auth0User: Auth0User): Promise<User> {
+        await this.db.initialize();
         const result = await this.db.executeQuery(
             `INSERT INTO dbo.gebruikers (auth0_id, email, naam, aangemaakt_op, gewijzigd_op, laatste_login)
              OUTPUT INSERTED.*
