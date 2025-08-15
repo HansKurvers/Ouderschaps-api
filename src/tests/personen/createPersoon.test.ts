@@ -79,7 +79,7 @@ describe('createPersoon', () => {
         expect(result.status).toBe(401);
         expect(JSON.parse(result.body as string)).toEqual({
             success: false,
-            error: 'Unauthorized',
+            error: 'Authentication required',
         });
     });
 
