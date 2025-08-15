@@ -4,6 +4,7 @@ import { app } from '@azure/functions';
 import './functions/health';
 import './functions/health/auth-check';
 import './functions/health/env-check';
+import './functions/health/auth-debug';
 
 // Dossier functions
 import './functions/dossiers/getDossiers';
