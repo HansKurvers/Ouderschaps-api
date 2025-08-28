@@ -60,7 +60,13 @@ import './functions/dossiers/createZorg';
 import './functions/dossiers/updateZorg';
 import './functions/dossiers/deleteZorg';
 
-
+// Alimentatie functions (FASE 5)
+import './functions/alimentatie/getAlimentatieByDossierId';
+import './functions/alimentatie/createAlimentatie';
+import './functions/alimentatie/updateAlimentatie';
+import './functions/alimentatie/getAlimentatieTemplates';
+import './functions/alimentatie/createBijdrageKosten';
+import './functions/alimentatie/createFinancieleAfspraak';
 
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
