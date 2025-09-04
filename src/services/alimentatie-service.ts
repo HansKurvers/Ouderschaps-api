@@ -308,15 +308,40 @@ export class AlimentatieService {
     async createFinancieleAfsprakenKinderen(alimentatieId: number, data: CreateFinancieleAfsprakenKinderenDto): Promise<FinancieleAfsprakenKinderen> {
         try {
             const pool = await this.getPool();
+            
+            // Helper function to convert empty strings to null
+            const toStringOrNull = (value: any): string | null => {
+                if (value === null || value === undefined || value === '') {
+                    return null;
+                }
+                return String(value);
+            };
+            
+            const toDecimalOrNull = (value: any): number | null => {
+                if (value === null || value === undefined || value === '') {
+                    return null;
+                }
+                const parsed = parseFloat(value);
+                return isNaN(parsed) ? null : parsed;
+            };
+            
+            const toIntOrNull = (value: any): number | null => {
+                if (value === null || value === undefined || value === '') {
+                    return null;
+                }
+                const parsed = parseInt(value);
+                return isNaN(parsed) ? null : parsed;
+            };
+            
             const result = await pool.request()
                 .input('AlimentatieId', sql.Int, alimentatieId)
                 .input('KindId', sql.Int, data.kindId)
-                .input('AlimentatieBedrag', sql.Decimal(10, 2), data.alimentatieBedrag || null)
-                .input('Hoofdverblijf', sql.Int, data.hoofdverblijf || null)
-                .input('KinderbijslagOntvanger', sql.Int, data.kinderbijslagOntvanger || null)
-                .input('ZorgkortingPercentage', sql.Decimal(5, 2), data.zorgkortingPercentage || null)
-                .input('Inschrijving', sql.Int, data.inschrijving || null)
-                .input('KindgebondenBudget', sql.Int, data.kindgebondenBudget || null)
+                .input('AlimentatieBedrag', sql.Decimal(10, 2), toDecimalOrNull(data.alimentatieBedrag))
+                .input('Hoofdverblijf', sql.NVarChar(255), toStringOrNull(data.hoofdverblijf))
+                .input('KinderbijslagOntvanger', sql.NVarChar(255), toStringOrNull(data.kinderbijslagOntvanger))
+                .input('ZorgkortingPercentage', sql.Int, toIntOrNull(data.zorgkortingPercentage))
+                .input('Inschrijving', sql.NVarChar(255), toStringOrNull(data.inschrijving))
+                .input('KindgebondenBudget', sql.NVarChar(255), toStringOrNull(data.kindgebondenBudget))
                 .query(`
                     INSERT INTO dbo.financiele_afspraken_kinderen 
                     (alimentatie_id, kind_id, alimentatie_bedrag, hoofdverblijf, 
@@ -365,14 +390,38 @@ export class AlimentatieService {
                 const afspraakId = existingResult.recordset[0].id;
                 console.log(`Updating existing financiele afspraak with id=${afspraakId}`);
                 
+                // Helper function to convert empty strings to null
+                const toStringOrNull = (value: any): string | null => {
+                    if (value === null || value === undefined || value === '') {
+                        return null;
+                    }
+                    return String(value);
+                };
+                
+                const toDecimalOrNull = (value: any): number | null => {
+                    if (value === null || value === undefined || value === '') {
+                        return null;
+                    }
+                    const parsed = parseFloat(value);
+                    return isNaN(parsed) ? null : parsed;
+                };
+                
+                const toIntOrNull = (value: any): number | null => {
+                    if (value === null || value === undefined || value === '') {
+                        return null;
+                    }
+                    const parsed = parseInt(value);
+                    return isNaN(parsed) ? null : parsed;
+                };
+                
                 const result = await pool.request()
                     .input('Id', sql.Int, afspraakId)
-                    .input('AlimentatieBedrag', sql.Decimal(10, 2), data.alimentatieBedrag || null)
-                    .input('Hoofdverblijf', sql.Int, data.hoofdverblijf || null)
-                    .input('KinderbijslagOntvanger', sql.Int, data.kinderbijslagOntvanger || null)
-                    .input('ZorgkortingPercentage', sql.Decimal(5, 2), data.zorgkortingPercentage || null)
-                    .input('Inschrijving', sql.Int, data.inschrijving || null)
-                    .input('KindgebondenBudget', sql.Int, data.kindgebondenBudget || null)
+                    .input('AlimentatieBedrag', sql.Decimal(10, 2), toDecimalOrNull(data.alimentatieBedrag))
+                    .input('Hoofdverblijf', sql.NVarChar(255), toStringOrNull(data.hoofdverblijf))
+                    .input('KinderbijslagOntvanger', sql.NVarChar(255), toStringOrNull(data.kinderbijslagOntvanger))
+                    .input('ZorgkortingPercentage', sql.Int, toIntOrNull(data.zorgkortingPercentage))
+                    .input('Inschrijving', sql.NVarChar(255), toStringOrNull(data.inschrijving))
+                    .input('KindgebondenBudget', sql.NVarChar(255), toStringOrNull(data.kindgebondenBudget))
                     .query(`
                         UPDATE dbo.financiele_afspraken_kinderen
                         SET alimentatie_bedrag = @AlimentatieBedrag,

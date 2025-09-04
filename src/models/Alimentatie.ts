@@ -28,11 +28,11 @@ export interface FinancieleAfsprakenKinderen {
     alimentatieId: number;
     kindId: number;
     alimentatieBedrag?: number;
-    hoofdverblijf?: number;  // personen_id of who has hoofdverblijf
-    kinderbijslagOntvanger?: number;  // personen_id of who receives kinderbijslag
-    zorgkortingPercentage?: number;
-    inschrijving?: number;  // personen_id for inschrijving
-    kindgebondenBudget?: number;  // personen_id who receives kindgebonden budget
+    hoofdverblijf?: string;  // NVARCHAR - personen name/identifier
+    kinderbijslagOntvanger?: string;  // NVARCHAR - personen name/identifier
+    zorgkortingPercentage?: number;  // INTEGER percentage
+    inschrijving?: string;  // NVARCHAR - personen name/identifier
+    kindgebondenBudget?: string;  // NVARCHAR - personen name/identifier
 }
 
 // DTOs for creating and updating
@@ -56,20 +56,20 @@ export interface CreateBijdrageKostenKinderenDto {
 export interface CreateFinancieleAfsprakenKinderenDto {
     kindId: number;
     alimentatieBedrag?: number;
-    hoofdverblijf?: number;
-    kinderbijslagOntvanger?: number;
+    hoofdverblijf?: string;
+    kinderbijslagOntvanger?: string;
     zorgkortingPercentage?: number;
-    inschrijving?: number;
-    kindgebondenBudget?: number;
+    inschrijving?: string;
+    kindgebondenBudget?: string;
 }
 
 export interface UpdateFinancieleAfsprakenKinderenDto {
     alimentatieBedrag?: number;
-    hoofdverblijf?: number;
-    kinderbijslagOntvanger?: number;
+    hoofdverblijf?: string;
+    kinderbijslagOntvanger?: string;
     zorgkortingPercentage?: number;
-    inschrijving?: number;
-    kindgebondenBudget?: number;
+    inschrijving?: string;
+    kindgebondenBudget?: string;
 }
 
 // Complete data structure for API responses
