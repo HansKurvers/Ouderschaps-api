@@ -19,6 +19,7 @@ export interface BijdrageKostenKinderen {
     id: number;
     alimentatieId: number;
     personenId: number;
+    eigenAandeel?: number;
 }
 
 // Financiele afspraken kinderen
@@ -43,6 +44,7 @@ export interface UpdateAlimentatieDto {
 
 export interface CreateBijdrageKostenKinderenDto {
     personenId: number;
+    eigenAandeel?: number;
 }
 
 export interface CreateFinancieleAfsprakenKinderenDto {

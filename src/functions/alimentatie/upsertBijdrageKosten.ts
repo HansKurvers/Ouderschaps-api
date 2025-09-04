@@ -4,11 +4,11 @@ import { requireAuthentication } from '../../utils/auth-helper';
 import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse } from '../../utils/response-helper';
 import { CreateBijdrageKostenKinderenDto } from '../../models/Alimentatie';
 
-export async function createBijdrageKosten(
+export async function upsertBijdrageKosten(
     request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
-    context.log('POST Create Bijdrage Kosten endpoint called');
+    context.log('PUT Upsert Bijdrage Kosten endpoint called');
 
     const alimentatieService = new AlimentatieService();
 
@@ -41,38 +41,38 @@ export async function createBijdrageKosten(
         const results = [];
 
         for (const item of items) {
-            const createData: CreateBijdrageKostenKinderenDto = {
+            const upsertData: CreateBijdrageKostenKinderenDto = {
                 personenId: item.personenId,
                 eigenAandeel: item.eigenAandeel
             };
 
             // Validate required fields
-            if (!createData.personenId) {
+            if (!upsertData.personenId) {
                 return createErrorResponse('Missing required field: personenId', 400);
             }
 
-            // Upsert bijdrage kosten kinderen (will create new or update existing)
-            const bijdrageKostenKinderen = await alimentatieService.upsertBijdrageKostenKinderen(alimentatieId, createData);
+            // Upsert bijdrage kosten kinderen
+            const bijdrageKostenKinderen = await alimentatieService.upsertBijdrageKostenKinderen(alimentatieId, upsertData);
             results.push(bijdrageKostenKinderen);
         }
 
         return createSuccessResponse(
             Array.isArray(body) ? results : results[0], 
-            201
+            200
         );
     } catch (error) {
-        context.error('Error creating bijdrage kosten:', error);
+        context.error('Error upserting bijdrage kosten:', error);
 
         return createErrorResponse(
-            error instanceof Error ? error.message : 'Failed to create bijdrage kosten',
+            error instanceof Error ? error.message : 'Failed to upsert bijdrage kosten',
             500
         );
     }
 }
 
-app.http('createBijdrageKosten', {
-    methods: ['POST'],
+app.http('upsertBijdrageKosten', {
+    methods: ['PUT'],
     authLevel: 'anonymous',
-    route: 'alimentatie/{id}/bijdragen-kosten',
-    handler: createBijdrageKosten,
+    route: 'alimentatie/{id}/bijdragen-kosten/upsert',
+    handler: upsertBijdrageKosten,
 });

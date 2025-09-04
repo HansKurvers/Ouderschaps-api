@@ -63,7 +63,8 @@ export class AlimentatieService {
                     SELECT 
                         id,
                         alimentatie_id as alimentatieId,
-                        personen_id as personenId
+                        personen_id as personenId,
+                        eigen_aandeel as eigenAandeel
                     FROM dbo.bijdragen_kosten_kinderen
                     WHERE alimentatie_id = @AlimentatieId
                 `);
@@ -225,14 +226,16 @@ export class AlimentatieService {
             const result = await pool.request()
                 .input('AlimentatieId', sql.Int, alimentatieId)
                 .input('PersonenId', sql.Int, data.personenId)
+                .input('EigenAandeel', sql.Decimal(10, 2), data.eigenAandeel || null)
                 .query(`
                     INSERT INTO dbo.bijdragen_kosten_kinderen 
-                    (alimentatie_id, personen_id)
+                    (alimentatie_id, personen_id, eigen_aandeel)
                     OUTPUT 
                         inserted.id,
                         inserted.alimentatie_id as alimentatieId,
-                        inserted.personen_id as personenId
-                    VALUES (@AlimentatieId, @PersonenId)
+                        inserted.personen_id as personenId,
+                        inserted.eigen_aandeel as eigenAandeel
+                    VALUES (@AlimentatieId, @PersonenId, @EigenAandeel)
                 `);
 
             const newRecord = result.recordset[0];
@@ -250,6 +253,47 @@ export class AlimentatieService {
             return newRecord as BijdrageKostenKinderen;
         } catch (error) {
             console.error('Error creating bijdrage kosten kinderen:', error);
+            throw error;
+        }
+    }
+
+    // Upsert bijdrage kosten kinderen (insert or update)
+    async upsertBijdrageKostenKinderen(alimentatieId: number, data: CreateBijdrageKostenKinderenDto): Promise<BijdrageKostenKinderen> {
+        try {
+            const pool = await this.getPool();
+            
+            // Check if bijdrage kosten already exists for this alimentatie and personen
+            const existingResult = await pool.request()
+                .input('AlimentatieId', sql.Int, alimentatieId)
+                .input('PersonenId', sql.Int, data.personenId)
+                .query(`
+                    SELECT id FROM dbo.bijdragen_kosten_kinderen 
+                    WHERE alimentatie_id = @AlimentatieId AND personen_id = @PersonenId
+                `);
+            
+            if (existingResult.recordset.length > 0) {
+                // Update existing record
+                const bijdrageId = existingResult.recordset[0].id;
+                const updateResult = await pool.request()
+                    .input('Id', sql.Int, bijdrageId)
+                    .input('EigenAandeel', sql.Decimal(10, 2), data.eigenAandeel || null)
+                    .query(`
+                        UPDATE dbo.bijdragen_kosten_kinderen 
+                        SET eigen_aandeel = @EigenAandeel
+                        OUTPUT 
+                            inserted.id,
+                            inserted.alimentatie_id as alimentatieId,
+                            inserted.personen_id as personenId,
+                            inserted.eigen_aandeel as eigenAandeel
+                        WHERE id = @Id
+                    `);
+                return updateResult.recordset[0] as BijdrageKostenKinderen;
+            } else {
+                // Create new record
+                return await this.createBijdrageKostenKinderen(alimentatieId, data);
+            }
+        } catch (error) {
+            console.error('Error upserting bijdrage kosten kinderen:', error);
             throw error;
         }
     }
