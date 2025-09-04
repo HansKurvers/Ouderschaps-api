@@ -50,9 +50,9 @@ export async function createFinancieleAfspraak(
                 return createErrorResponse('Missing required field: kindId', 400);
             }
 
-            // Create financiele afspraken kinderen
-            const newFinancieleAfsprakenKinderen = await alimentatieService.createFinancieleAfsprakenKinderen(alimentatieId, createData);
-            results.push(newFinancieleAfsprakenKinderen);
+            // Upsert financiele afspraken kinderen (will create new or update existing)
+            const financieleAfsprakenKinderen = await alimentatieService.upsertFinancieleAfsprakenKinderen(alimentatieId, createData);
+            results.push(financieleAfsprakenKinderen);
         }
 
         return createSuccessResponse(

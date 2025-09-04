@@ -322,6 +322,89 @@ export class AlimentatieService {
         }
     }
 
+    // Upsert financiele afspraken kinderen (insert or update)
+    async upsertFinancieleAfsprakenKinderen(alimentatieId: number, data: CreateFinancieleAfsprakenKinderenDto): Promise<FinancieleAfsprakenKinderen> {
+        try {
+            const pool = await this.getPool();
+            
+            // Check if financiele afspraken already exists for this alimentatie and kind
+            const existingResult = await pool.request()
+                .input('AlimentatieId', sql.Int, alimentatieId)
+                .input('KindId', sql.Int, data.kindId)
+                .query(`
+                    SELECT id FROM dbo.financiele_afspraken_kinderen 
+                    WHERE alimentatie_id = @AlimentatieId AND kind_id = @KindId
+                `);
+            
+            if (existingResult.recordset.length > 0) {
+                // Record already exists, just return it
+                const afspraakId = existingResult.recordset[0].id;
+                const result = await pool.request()
+                    .input('Id', sql.Int, afspraakId)
+                    .query(`
+                        SELECT 
+                            id,
+                            alimentatie_id as alimentatieId,
+                            kind_id as kindId
+                        FROM dbo.financiele_afspraken_kinderen
+                        WHERE id = @Id
+                    `);
+                return result.recordset[0] as FinancieleAfsprakenKinderen;
+            } else {
+                // Create new record
+                return await this.createFinancieleAfsprakenKinderen(alimentatieId, data);
+            }
+        } catch (error) {
+            console.error('Error upserting financiele afspraken kinderen:', error);
+            throw error;
+        }
+    }
+
+    // Get bijdrage kosten kinderen by alimentatie ID
+    async getBijdrageKostenByAlimentatieId(alimentatieId: number): Promise<BijdrageKostenKinderen[]> {
+        try {
+            const pool = await this.getPool();
+            const result = await pool.request()
+                .input('AlimentatieId', sql.Int, alimentatieId)
+                .query(`
+                    SELECT 
+                        id,
+                        alimentatie_id as alimentatieId,
+                        personen_id as personenId,
+                        eigen_aandeel as eigenAandeel
+                    FROM dbo.bijdragen_kosten_kinderen
+                    WHERE alimentatie_id = @AlimentatieId
+                `);
+
+            return result.recordset as BijdrageKostenKinderen[];
+        } catch (error) {
+            console.error('Error getting bijdrage kosten by alimentatie ID:', error);
+            throw error;
+        }
+    }
+
+    // Get financiele afspraken kinderen by alimentatie ID
+    async getFinancieleAfsprakenByAlimentatieId(alimentatieId: number): Promise<FinancieleAfsprakenKinderen[]> {
+        try {
+            const pool = await this.getPool();
+            const result = await pool.request()
+                .input('AlimentatieId', sql.Int, alimentatieId)
+                .query(`
+                    SELECT 
+                        id,
+                        alimentatie_id as alimentatieId,
+                        kind_id as kindId
+                    FROM dbo.financiele_afspraken_kinderen
+                    WHERE alimentatie_id = @AlimentatieId
+                `);
+
+            return result.recordset as FinancieleAfsprakenKinderen[];
+        } catch (error) {
+            console.error('Error getting financiele afspraken by alimentatie ID:', error);
+            throw error;
+        }
+    }
+
     // Check if user has access to alimentatie
     async checkAlimentatieAccess(alimentatieId: number, userId: number): Promise<boolean> {
         try {
