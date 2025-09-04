@@ -172,6 +172,32 @@ export class AlimentatieService {
         }
     }
 
+    // Upsert alimentatie (insert or update)
+    async upsertAlimentatie(dossierId: number, data: CreateAlimentatieDto): Promise<Alimentatie> {
+        try {
+            const pool = await this.getPool();
+            
+            // Check if alimentatie already exists for this dossier
+            const existingResult = await pool.request()
+                .input('DossierId', sql.Int, dossierId)
+                .query(`
+                    SELECT id FROM dbo.alimentaties WHERE dossier_id = @DossierId
+                `);
+            
+            if (existingResult.recordset.length > 0) {
+                // Update existing alimentatie
+                const alimentatieId = existingResult.recordset[0].id;
+                return await this.updateAlimentatie(alimentatieId, data);
+            } else {
+                // Create new alimentatie
+                return await this.createAlimentatie(dossierId, data);
+            }
+        } catch (error) {
+            console.error('Error upserting alimentatie:', error);
+            throw error;
+        }
+    }
+
     // Get all templates
     async getTemplates(): Promise<BijdrageTemplate[]> {
         try {

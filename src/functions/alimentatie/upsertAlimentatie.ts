@@ -6,11 +6,11 @@ import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse 
 import { CreateAlimentatieDto } from '../../models/Alimentatie';
 import { AlimentatieValidator } from '../../validators/alimentatie-validator';
 
-export async function createAlimentatie(
+export async function upsertAlimentatie(
     request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
-    context.log('POST Create Alimentatie endpoint called');
+    context.log('PUT Upsert Alimentatie endpoint called');
 
     const alimentatieService = new AlimentatieService();
     const dossierService = new DossierDatabaseService();
@@ -50,12 +50,16 @@ export async function createAlimentatie(
         // Upsert alimentatie (will create new or update existing)
         const alimentatie = await alimentatieService.upsertAlimentatie(dossierId, body);
 
-        return createSuccessResponse(alimentatie, 201);
+        // Check if this was an update or create
+        const existing = await alimentatieService.getAlimentatieByDossierId(dossierId);
+        const statusCode = existing && existing.alimentatie.id !== alimentatie.id ? 200 : 201;
+
+        return createSuccessResponse(alimentatie, statusCode);
     } catch (error) {
-        context.error('Error creating alimentatie:', error);
+        context.error('Error upserting alimentatie:', error);
 
         return createErrorResponse(
-            error instanceof Error ? error.message : 'Failed to create alimentatie',
+            error instanceof Error ? error.message : 'Failed to upsert alimentatie',
             500
         );
     } finally {
@@ -63,9 +67,9 @@ export async function createAlimentatie(
     }
 }
 
-app.http('createAlimentatie', {
-    methods: ['POST'],
+app.http('upsertAlimentatie', {
+    methods: ['PUT'],
     authLevel: 'anonymous',
-    route: 'dossiers/{dossierId}/alimentatie',
-    handler: createAlimentatie,
+    route: 'dossiers/{dossierId}/alimentatie/upsert',
+    handler: upsertAlimentatie,
 });

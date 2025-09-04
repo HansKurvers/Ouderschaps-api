@@ -64,6 +64,7 @@ import './functions/dossiers/deleteZorg';
 import './functions/alimentatie/getAlimentatieByDossierId';
 import './functions/alimentatie/createAlimentatie';
 import './functions/alimentatie/updateAlimentatie';
+import './functions/alimentatie/upsertAlimentatie';
 import './functions/alimentatie/getAlimentatieTemplates';
 import './functions/alimentatie/createBijdrageKosten';
 import './functions/alimentatie/createFinancieleAfspraak';
