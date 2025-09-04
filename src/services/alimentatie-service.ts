@@ -76,7 +76,13 @@ export class AlimentatieService {
                     SELECT 
                         id,
                         alimentatie_id as alimentatieId,
-                        kind_id as kindId
+                        kind_id as kindId,
+                        alimentatie_bedrag as alimentatieBedrag,
+                        hoofdverblijf,
+                        kinderbijslag_ontvanger as kinderbijslagOntvanger,
+                        zorgkorting_percentage as zorgkortingPercentage,
+                        inschrijving,
+                        kindgebonden_budget as kindgebondenBudget
                     FROM dbo.financiele_afspraken_kinderen
                     WHERE alimentatie_id = @AlimentatieId
                 `);
@@ -305,14 +311,28 @@ export class AlimentatieService {
             const result = await pool.request()
                 .input('AlimentatieId', sql.Int, alimentatieId)
                 .input('KindId', sql.Int, data.kindId)
+                .input('AlimentatieBedrag', sql.Decimal(10, 2), data.alimentatieBedrag || null)
+                .input('Hoofdverblijf', sql.Int, data.hoofdverblijf || null)
+                .input('KinderbijslagOntvanger', sql.Int, data.kinderbijslagOntvanger || null)
+                .input('ZorgkortingPercentage', sql.Decimal(5, 2), data.zorgkortingPercentage || null)
+                .input('Inschrijving', sql.Int, data.inschrijving || null)
+                .input('KindgebondenBudget', sql.Int, data.kindgebondenBudget || null)
                 .query(`
                     INSERT INTO dbo.financiele_afspraken_kinderen 
-                    (alimentatie_id, kind_id)
+                    (alimentatie_id, kind_id, alimentatie_bedrag, hoofdverblijf, 
+                     kinderbijslag_ontvanger, zorgkorting_percentage, inschrijving, kindgebonden_budget)
                     OUTPUT 
                         inserted.id,
                         inserted.alimentatie_id as alimentatieId,
-                        inserted.kind_id as kindId
-                    VALUES (@AlimentatieId, @KindId)
+                        inserted.kind_id as kindId,
+                        inserted.alimentatie_bedrag as alimentatieBedrag,
+                        inserted.hoofdverblijf,
+                        inserted.kinderbijslag_ontvanger as kinderbijslagOntvanger,
+                        inserted.zorgkorting_percentage as zorgkortingPercentage,
+                        inserted.inschrijving,
+                        inserted.kindgebonden_budget as kindgebondenBudget
+                    VALUES (@AlimentatieId, @KindId, @AlimentatieBedrag, @Hoofdverblijf, 
+                            @KinderbijslagOntvanger, @ZorgkortingPercentage, @Inschrijving, @KindgebondenBudget)
                 `);
 
             return result.recordset[0] as FinancieleAfsprakenKinderen;
@@ -327,6 +347,8 @@ export class AlimentatieService {
         try {
             const pool = await this.getPool();
             
+            console.log(`Checking for existing financiele afspraak: alimentatieId=${alimentatieId}, kindId=${data.kindId}`);
+            
             // Check if financiele afspraken already exists for this alimentatie and kind
             const existingResult = await pool.request()
                 .input('AlimentatieId', sql.Int, alimentatieId)
@@ -336,26 +358,83 @@ export class AlimentatieService {
                     WHERE alimentatie_id = @AlimentatieId AND kind_id = @KindId
                 `);
             
+            console.log(`Found ${existingResult.recordset.length} existing records`);
+            
             if (existingResult.recordset.length > 0) {
-                // Record already exists, just return it
+                // Update existing record
                 const afspraakId = existingResult.recordset[0].id;
+                console.log(`Updating existing financiele afspraak with id=${afspraakId}`);
+                
                 const result = await pool.request()
                     .input('Id', sql.Int, afspraakId)
+                    .input('AlimentatieBedrag', sql.Decimal(10, 2), data.alimentatieBedrag || null)
+                    .input('Hoofdverblijf', sql.Int, data.hoofdverblijf || null)
+                    .input('KinderbijslagOntvanger', sql.Int, data.kinderbijslagOntvanger || null)
+                    .input('ZorgkortingPercentage', sql.Decimal(5, 2), data.zorgkortingPercentage || null)
+                    .input('Inschrijving', sql.Int, data.inschrijving || null)
+                    .input('KindgebondenBudget', sql.Int, data.kindgebondenBudget || null)
                     .query(`
-                        SELECT 
-                            id,
-                            alimentatie_id as alimentatieId,
-                            kind_id as kindId
-                        FROM dbo.financiele_afspraken_kinderen
+                        UPDATE dbo.financiele_afspraken_kinderen
+                        SET alimentatie_bedrag = @AlimentatieBedrag,
+                            hoofdverblijf = @Hoofdverblijf,
+                            kinderbijslag_ontvanger = @KinderbijslagOntvanger,
+                            zorgkorting_percentage = @ZorgkortingPercentage,
+                            inschrijving = @Inschrijving,
+                            kindgebonden_budget = @KindgebondenBudget
+                        OUTPUT 
+                            inserted.id,
+                            inserted.alimentatie_id as alimentatieId,
+                            inserted.kind_id as kindId,
+                            inserted.alimentatie_bedrag as alimentatieBedrag,
+                            inserted.hoofdverblijf,
+                            inserted.kinderbijslag_ontvanger as kinderbijslagOntvanger,
+                            inserted.zorgkorting_percentage as zorgkortingPercentage,
+                            inserted.inschrijving,
+                            inserted.kindgebonden_budget as kindgebondenBudget
                         WHERE id = @Id
                     `);
                 return result.recordset[0] as FinancieleAfsprakenKinderen;
             } else {
                 // Create new record
+                console.log(`Creating new financiele afspraak`);
                 return await this.createFinancieleAfsprakenKinderen(alimentatieId, data);
             }
         } catch (error) {
             console.error('Error upserting financiele afspraken kinderen:', error);
+            throw error;
+        }
+    }
+
+    // Delete all financiele afspraken for an alimentatie
+    async deleteFinancieleAfsprakenByAlimentatieId(alimentatieId: number): Promise<void> {
+        try {
+            const pool = await this.getPool();
+            await pool.request()
+                .input('AlimentatieId', sql.Int, alimentatieId)
+                .query(`
+                    DELETE FROM dbo.financiele_afspraken_kinderen 
+                    WHERE alimentatie_id = @AlimentatieId
+                `);
+            console.log(`Deleted all financiele afspraken for alimentatieId=${alimentatieId}`);
+        } catch (error) {
+            console.error('Error deleting financiele afspraken:', error);
+            throw error;
+        }
+    }
+
+    // Delete all bijdrage kosten for an alimentatie
+    async deleteBijdrageKostenByAlimentatieId(alimentatieId: number): Promise<void> {
+        try {
+            const pool = await this.getPool();
+            await pool.request()
+                .input('AlimentatieId', sql.Int, alimentatieId)
+                .query(`
+                    DELETE FROM dbo.bijdragen_kosten_kinderen 
+                    WHERE alimentatie_id = @AlimentatieId
+                `);
+            console.log(`Deleted all bijdrage kosten for alimentatieId=${alimentatieId}`);
+        } catch (error) {
+            console.error('Error deleting bijdrage kosten:', error);
             throw error;
         }
     }
@@ -393,7 +472,13 @@ export class AlimentatieService {
                     SELECT 
                         id,
                         alimentatie_id as alimentatieId,
-                        kind_id as kindId
+                        kind_id as kindId,
+                        alimentatie_bedrag as alimentatieBedrag,
+                        hoofdverblijf,
+                        kinderbijslag_ontvanger as kinderbijslagOntvanger,
+                        zorgkorting_percentage as zorgkortingPercentage,
+                        inschrijving,
+                        kindgebonden_budget as kindgebondenBudget
                     FROM dbo.financiele_afspraken_kinderen
                     WHERE alimentatie_id = @AlimentatieId
                 `);

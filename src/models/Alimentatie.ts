@@ -27,6 +27,12 @@ export interface FinancieleAfsprakenKinderen {
     id: number;
     alimentatieId: number;
     kindId: number;
+    alimentatieBedrag?: number;
+    hoofdverblijf?: number;  // personen_id of who has hoofdverblijf
+    kinderbijslagOntvanger?: number;  // personen_id of who receives kinderbijslag
+    zorgkortingPercentage?: number;
+    inschrijving?: number;  // personen_id for inschrijving
+    kindgebondenBudget?: number;  // personen_id who receives kindgebonden budget
 }
 
 // DTOs for creating and updating
@@ -49,6 +55,21 @@ export interface CreateBijdrageKostenKinderenDto {
 
 export interface CreateFinancieleAfsprakenKinderenDto {
     kindId: number;
+    alimentatieBedrag?: number;
+    hoofdverblijf?: number;
+    kinderbijslagOntvanger?: number;
+    zorgkortingPercentage?: number;
+    inschrijving?: number;
+    kindgebondenBudget?: number;
+}
+
+export interface UpdateFinancieleAfsprakenKinderenDto {
+    alimentatieBedrag?: number;
+    hoofdverblijf?: number;
+    kinderbijslagOntvanger?: number;
+    zorgkortingPercentage?: number;
+    inschrijving?: number;
+    kindgebondenBudget?: number;
 }
 
 // Complete data structure for API responses

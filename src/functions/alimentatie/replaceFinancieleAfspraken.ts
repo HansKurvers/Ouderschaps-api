@@ -1,14 +1,14 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { AlimentatieService } from '../../services/alimentatie-service';
 import { requireAuthentication } from '../../utils/auth-helper';
-import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse } from '../../utils/response-helper';
+import { createErrorResponse, createSuccessResponse, createUnauthorizedResponse } from '../../utils/response-helper';
 import { CreateFinancieleAfsprakenKinderenDto } from '../../models/Alimentatie';
 
-export async function createFinancieleAfspraak(
+export async function replaceFinancieleAfspraken(
     request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
-    context.log('POST Create Financiele Afspraak endpoint called');
+    context.log('PUT Replace Financiele Afspraken endpoint called');
 
     const alimentatieService = new AlimentatieService();
 
@@ -17,7 +17,7 @@ export async function createFinancieleAfspraak(
         let userID: number;
         try {
             userID = await requireAuthentication(request);
-        } catch (authError) {
+        } catch (_authError) {
             return createUnauthorizedResponse();
         }
 
@@ -36,9 +36,15 @@ export async function createFinancieleAfspraak(
         // Parse request body
         const body = await request.json();
 
+        // First, delete all existing financiele afspraken for this alimentatie
+        await alimentatieService.deleteFinancieleAfsprakenByAlimentatieId(alimentatieId);
+
         // Handle both single and array of financiele afspraken kinderen
         const items = Array.isArray(body) ? body : [body];
         const results = [];
+
+        // Use a Set to track which kindIds we've already processed to prevent duplicates
+        const processedKindIds = new Set<number>();
 
         for (const item of items) {
             const createData: CreateFinancieleAfsprakenKinderenDto = {
@@ -53,31 +59,36 @@ export async function createFinancieleAfspraak(
 
             // Validate required fields
             if (!createData.kindId) {
-                return createErrorResponse('Missing required field: kindId', 400);
+                continue; // Skip items without kindId
             }
 
-            // Upsert financiele afspraken kinderen (will create new or update existing)
-            const financieleAfsprakenKinderen = await alimentatieService.upsertFinancieleAfsprakenKinderen(alimentatieId, createData);
+            // Skip if we've already processed this kindId
+            if (processedKindIds.has(createData.kindId)) {
+                context.log(`Skipping duplicate kindId: ${createData.kindId}`);
+                continue;
+            }
+
+            processedKindIds.add(createData.kindId);
+
+            // Create new financiele afspraken kinderen
+            const financieleAfsprakenKinderen = await alimentatieService.createFinancieleAfsprakenKinderen(alimentatieId, createData);
             results.push(financieleAfsprakenKinderen);
         }
 
-        return createSuccessResponse(
-            Array.isArray(body) ? results : results[0], 
-            201
-        );
+        return createSuccessResponse(results, 200);
     } catch (error) {
-        context.error('Error creating financiele afspraak:', error);
+        context.error('Error replacing financiele afspraken:', error);
 
         return createErrorResponse(
-            error instanceof Error ? error.message : 'Failed to create financiele afspraak',
+            error instanceof Error ? error.message : 'Failed to replace financiele afspraken',
             500
         );
     }
 }
 
-app.http('createFinancieleAfspraak', {
-    methods: ['POST'],
+app.http('replaceFinancieleAfspraken', {
+    methods: ['PUT'],
     authLevel: 'anonymous',
-    route: 'alimentatie/{id}/financiele-afspraken',
-    handler: createFinancieleAfspraak,
+    route: 'alimentatie/{id}/financiele-afspraken/replace',
+    handler: replaceFinancieleAfspraken,
 });

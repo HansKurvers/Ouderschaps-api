@@ -69,8 +69,10 @@ import './functions/alimentatie/getAlimentatieTemplates';
 import './functions/alimentatie/getBijdrageKosten';
 import './functions/alimentatie/createBijdrageKosten';
 import './functions/alimentatie/upsertBijdrageKosten';
+import './functions/alimentatie/replaceBijdrageKosten';
 import './functions/alimentatie/getFinancieleAfspraken';
 import './functions/alimentatie/createFinancieleAfspraak';
+import './functions/alimentatie/replaceFinancieleAfspraken';
 
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
