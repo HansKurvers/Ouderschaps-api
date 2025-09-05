@@ -261,6 +261,7 @@ export interface PersoonDbDto {
 // Ouderschapsplan Info interfaces
 export interface OuderschapsplanInfo {
     id: number;
+    dossierId: number;
     partij1PersoonId: number;
     partij2PersoonId: number;
     soortRelatie?: string;
@@ -287,6 +288,7 @@ export interface OuderschapsplanInfo {
 
 export interface OuderschapsplanInfoDbDto {
     id?: number;
+    dossier_id: number;
     partij_1_persoon_id: number;
     partij_2_persoon_id: number;
     soort_relatie?: string;

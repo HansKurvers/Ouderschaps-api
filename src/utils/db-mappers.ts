@@ -77,6 +77,7 @@ export class DbMappers {
     static toOuderschapsplanInfo(dto: OuderschapsplanInfoDbDto): OuderschapsplanInfo {
         return {
             id: dto.id!,
+            dossierId: dto.dossier_id,
             partij1PersoonId: dto.partij_1_persoon_id,
             partij2PersoonId: dto.partij_2_persoon_id,
             soortRelatie: dto.soort_relatie,
@@ -105,6 +106,7 @@ export class DbMappers {
     static toOuderschapsplanInfoDto(info: OuderschapsplanInfo): OuderschapsplanInfoDbDto {
         return {
             id: info.id,
+            dossier_id: info.dossierId,
             partij_1_persoon_id: info.partij1PersoonId,
             partij_2_persoon_id: info.partij2PersoonId,
             soort_relatie: info.soortRelatie,

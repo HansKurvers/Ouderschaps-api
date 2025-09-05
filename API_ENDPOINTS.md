@@ -75,8 +75,10 @@ Base URL: `/api`
 - `GET /ouderschapsplan` - Get all parenting plan info (paginated)
 - `GET /ouderschapsplan/{infoId}` - Get specific parenting plan info
 - `GET /personen/{persoonId}/ouderschapsplan` - Get parenting plan info for person
-- `POST /ouderschapsplan` - Create parenting plan info
+- `GET /dossiers/{dossierId}/ouderschapsplan` - Get parenting plan info for dossier
+- `POST /ouderschapsplan` - Create parenting plan info (requires dossierId in body)
 - `PUT /ouderschapsplan/{infoId}` - Update parenting plan info
+- `PUT /dossiers/{dossierId}/ouderschapsplan` - Upsert parenting plan info for dossier
 - `DELETE /ouderschapsplan/{infoId}` - Delete parenting plan info
 
 ## Lookups

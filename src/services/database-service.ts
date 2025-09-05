@@ -2177,6 +2177,7 @@ export class DossierDatabaseService {
             const pool = await this.getPool();
             const request = pool.request();
 
+            request.input('DossierId', sql.Int, dto.dossierId);
             request.input('Partij1PersoonId', sql.Int, dto.partij1PersoonId);
             request.input('Partij2PersoonId', sql.Int, dto.partij2PersoonId);
             request.input('SoortRelatie', sql.NVarChar, dto.soortRelatie);
@@ -2200,6 +2201,7 @@ export class DossierDatabaseService {
 
             const result = await request.query(`
                 INSERT INTO dbo.ouderschapsplan_info (
+                    dossier_id,
                     partij_1_persoon_id,
                     partij_2_persoon_id,
                     soort_relatie,
@@ -2223,6 +2225,7 @@ export class DossierDatabaseService {
                 )
                 OUTPUT INSERTED.*
                 VALUES (
+                    @DossierId,
                     @Partij1PersoonId,
                     @Partij2PersoonId,
                     @SoortRelatie,
@@ -2293,6 +2296,25 @@ export class DossierDatabaseService {
         }
     }
 
+    async getOuderschapsplanInfoByDossierId(dossierId: number): Promise<OuderschapsplanInfo | null> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+
+            const result = await request.query(`
+                SELECT * FROM dbo.ouderschapsplan_info 
+                WHERE dossier_id = @DossierId
+            `);
+
+            return result.recordset[0] ? DbMappers.toOuderschapsplanInfo(result.recordset[0]) : null;
+        } catch (error) {
+            console.error('Error getting ouderschapsplan info by dossier ID:', error);
+            throw error;
+        }
+    }
+
     async updateOuderschapsplanInfo(id: number, dto: UpdateOuderschapsplanInfoDto): Promise<OuderschapsplanInfo> {
         try {
             const pool = await this.getPool();
@@ -2302,6 +2324,10 @@ export class DossierDatabaseService {
 
             const updateFields: string[] = [];
             
+            if (dto.dossierId !== undefined) {
+                request.input('DossierId', sql.Int, dto.dossierId);
+                updateFields.push('dossier_id = @DossierId');
+            }
             if (dto.partij1PersoonId !== undefined) {
                 request.input('Partij1PersoonId', sql.Int, dto.partij1PersoonId);
                 updateFields.push('partij_1_persoon_id = @Partij1PersoonId');
