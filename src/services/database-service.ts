@@ -8,6 +8,9 @@ import {
     Dagdeel,
     Dossier,
     Omgang,
+    OuderschapsplanInfo,
+    CreateOuderschapsplanInfoDto,
+    UpdateOuderschapsplanInfoDto,
     Persoon,
     RegelingTemplate,
     RelatieType,
@@ -2164,6 +2167,294 @@ export class DossierDatabaseService {
             };
         } catch (error) {
             console.error('Error getting all personen:', error);
+            throw error;
+        }
+    }
+
+    // Ouderschapsplan Info methods
+    async createOuderschapsplanInfo(dto: CreateOuderschapsplanInfoDto): Promise<OuderschapsplanInfo> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('Partij1PersoonId', sql.Int, dto.partij1PersoonId);
+            request.input('Partij2PersoonId', sql.Int, dto.partij2PersoonId);
+            request.input('SoortRelatie', sql.NVarChar, dto.soortRelatie);
+            request.input('SoortRelatieVerbreking', sql.NVarChar, dto.soortRelatieVerbreking);
+            request.input('BetrokkenheidKind', sql.NVarChar, dto.betrokkenheidKind);
+            request.input('Kiesplan', sql.NVarChar, dto.kiesplan);
+            request.input('GezagPartij', sql.TinyInt, dto.gezagPartij);
+            request.input('WaOpNaamVanPartij', sql.TinyInt, dto.waOpNaamVanPartij);
+            request.input('KeuzeDevices', sql.NVarChar, dto.keuzeDevices);
+            request.input('ZorgverzekeringOpNaamVanPartij', sql.TinyInt, dto.zorgverzekeringOpNaamVanPartij);
+            request.input('KinderbijslagPartij', sql.TinyInt, dto.kinderbijslagPartij);
+            request.input('BrpPartij1', sql.NVarChar, dto.brpPartij1 ? JSON.stringify(dto.brpPartij1) : null);
+            request.input('BrpPartij2', sql.NVarChar, dto.brpPartij2 ? JSON.stringify(dto.brpPartij2) : null);
+            request.input('KgbPartij1', sql.NVarChar, dto.kgbPartij1 ? JSON.stringify(dto.kgbPartij1) : null);
+            request.input('KgbPartij2', sql.NVarChar, dto.kgbPartij2 ? JSON.stringify(dto.kgbPartij2) : null);
+            request.input('Hoofdverblijf', sql.NVarChar, dto.hoofdverblijf);
+            request.input('Zorgverdeling', sql.NVarChar, dto.zorgverdeling);
+            request.input('OpvangKinderen', sql.NVarChar, dto.opvangKinderen);
+            request.input('Bankrekeningnummers', sql.NVarChar, dto.bankrekeningnummersOpNaamVanKind);
+            request.input('ParentingCoordinator', sql.NVarChar, dto.parentingCoordinator);
+
+            const result = await request.query(`
+                INSERT INTO dbo.ouderschapsplan_info (
+                    partij_1_persoon_id,
+                    partij_2_persoon_id,
+                    soort_relatie,
+                    soort_relatie_verbreking,
+                    betrokkenheid_kind,
+                    kiesplan,
+                    gezag_partij,
+                    wa_op_naam_van_partij,
+                    keuze_devices,
+                    zorgverzekering_op_naam_van_partij,
+                    kinderbijslag_partij,
+                    brp_partij_1,
+                    brp_partij_2,
+                    kgb_partij_1,
+                    kgb_partij_2,
+                    hoofdverblijf,
+                    zorgverdeling,
+                    opvang_kinderen,
+                    bankrekeningnummers_op_naam_van_kind,
+                    parenting_coordinator
+                )
+                OUTPUT INSERTED.*
+                VALUES (
+                    @Partij1PersoonId,
+                    @Partij2PersoonId,
+                    @SoortRelatie,
+                    @SoortRelatieVerbreking,
+                    @BetrokkenheidKind,
+                    @Kiesplan,
+                    @GezagPartij,
+                    @WaOpNaamVanPartij,
+                    @KeuzeDevices,
+                    @ZorgverzekeringOpNaamVanPartij,
+                    @KinderbijslagPartij,
+                    @BrpPartij1,
+                    @BrpPartij2,
+                    @KgbPartij1,
+                    @KgbPartij2,
+                    @Hoofdverblijf,
+                    @Zorgverdeling,
+                    @OpvangKinderen,
+                    @Bankrekeningnummers,
+                    @ParentingCoordinator
+                )
+            `);
+
+            return DbMappers.toOuderschapsplanInfo(result.recordset[0]);
+        } catch (error) {
+            console.error('Error creating ouderschapsplan info:', error);
+            throw error;
+        }
+    }
+
+    async getOuderschapsplanInfoById(id: number): Promise<OuderschapsplanInfo | null> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('Id', sql.Int, id);
+
+            const result = await request.query(`
+                SELECT * FROM dbo.ouderschapsplan_info 
+                WHERE id = @Id
+            `);
+
+            return result.recordset[0] ? DbMappers.toOuderschapsplanInfo(result.recordset[0]) : null;
+        } catch (error) {
+            console.error('Error getting ouderschapsplan info by ID:', error);
+            throw error;
+        }
+    }
+
+    async getOuderschapsplanInfoByPersoonId(persoonId: number): Promise<OuderschapsplanInfo[]> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('PersoonId', sql.Int, persoonId);
+
+            const result = await request.query(`
+                SELECT * FROM dbo.ouderschapsplan_info 
+                WHERE partij_1_persoon_id = @PersoonId 
+                   OR partij_2_persoon_id = @PersoonId
+                ORDER BY updated_at DESC
+            `);
+
+            return result.recordset.map(DbMappers.toOuderschapsplanInfo);
+        } catch (error) {
+            console.error('Error getting ouderschapsplan info by persoon ID:', error);
+            throw error;
+        }
+    }
+
+    async updateOuderschapsplanInfo(id: number, dto: UpdateOuderschapsplanInfoDto): Promise<OuderschapsplanInfo> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('Id', sql.Int, id);
+
+            const updateFields: string[] = [];
+            
+            if (dto.partij1PersoonId !== undefined) {
+                request.input('Partij1PersoonId', sql.Int, dto.partij1PersoonId);
+                updateFields.push('partij_1_persoon_id = @Partij1PersoonId');
+            }
+            if (dto.partij2PersoonId !== undefined) {
+                request.input('Partij2PersoonId', sql.Int, dto.partij2PersoonId);
+                updateFields.push('partij_2_persoon_id = @Partij2PersoonId');
+            }
+            if (dto.soortRelatie !== undefined) {
+                request.input('SoortRelatie', sql.NVarChar, dto.soortRelatie);
+                updateFields.push('soort_relatie = @SoortRelatie');
+            }
+            if (dto.soortRelatieVerbreking !== undefined) {
+                request.input('SoortRelatieVerbreking', sql.NVarChar, dto.soortRelatieVerbreking);
+                updateFields.push('soort_relatie_verbreking = @SoortRelatieVerbreking');
+            }
+            if (dto.betrokkenheidKind !== undefined) {
+                request.input('BetrokkenheidKind', sql.NVarChar, dto.betrokkenheidKind);
+                updateFields.push('betrokkenheid_kind = @BetrokkenheidKind');
+            }
+            if (dto.kiesplan !== undefined) {
+                request.input('Kiesplan', sql.NVarChar, dto.kiesplan);
+                updateFields.push('kiesplan = @Kiesplan');
+            }
+            if (dto.gezagPartij !== undefined) {
+                request.input('GezagPartij', sql.TinyInt, dto.gezagPartij);
+                updateFields.push('gezag_partij = @GezagPartij');
+            }
+            if (dto.waOpNaamVanPartij !== undefined) {
+                request.input('WaOpNaamVanPartij', sql.TinyInt, dto.waOpNaamVanPartij);
+                updateFields.push('wa_op_naam_van_partij = @WaOpNaamVanPartij');
+            }
+            if (dto.keuzeDevices !== undefined) {
+                request.input('KeuzeDevices', sql.NVarChar, dto.keuzeDevices);
+                updateFields.push('keuze_devices = @KeuzeDevices');
+            }
+            if (dto.zorgverzekeringOpNaamVanPartij !== undefined) {
+                request.input('ZorgverzekeringOpNaamVanPartij', sql.TinyInt, dto.zorgverzekeringOpNaamVanPartij);
+                updateFields.push('zorgverzekering_op_naam_van_partij = @ZorgverzekeringOpNaamVanPartij');
+            }
+            if (dto.kinderbijslagPartij !== undefined) {
+                request.input('KinderbijslagPartij', sql.TinyInt, dto.kinderbijslagPartij);
+                updateFields.push('kinderbijslag_partij = @KinderbijslagPartij');
+            }
+            if (dto.brpPartij1 !== undefined) {
+                request.input('BrpPartij1', sql.NVarChar, dto.brpPartij1 ? JSON.stringify(dto.brpPartij1) : null);
+                updateFields.push('brp_partij_1 = @BrpPartij1');
+            }
+            if (dto.brpPartij2 !== undefined) {
+                request.input('BrpPartij2', sql.NVarChar, dto.brpPartij2 ? JSON.stringify(dto.brpPartij2) : null);
+                updateFields.push('brp_partij_2 = @BrpPartij2');
+            }
+            if (dto.kgbPartij1 !== undefined) {
+                request.input('KgbPartij1', sql.NVarChar, dto.kgbPartij1 ? JSON.stringify(dto.kgbPartij1) : null);
+                updateFields.push('kgb_partij_1 = @KgbPartij1');
+            }
+            if (dto.kgbPartij2 !== undefined) {
+                request.input('KgbPartij2', sql.NVarChar, dto.kgbPartij2 ? JSON.stringify(dto.kgbPartij2) : null);
+                updateFields.push('kgb_partij_2 = @KgbPartij2');
+            }
+            if (dto.hoofdverblijf !== undefined) {
+                request.input('Hoofdverblijf', sql.NVarChar, dto.hoofdverblijf);
+                updateFields.push('hoofdverblijf = @Hoofdverblijf');
+            }
+            if (dto.zorgverdeling !== undefined) {
+                request.input('Zorgverdeling', sql.NVarChar, dto.zorgverdeling);
+                updateFields.push('zorgverdeling = @Zorgverdeling');
+            }
+            if (dto.opvangKinderen !== undefined) {
+                request.input('OpvangKinderen', sql.NVarChar, dto.opvangKinderen);
+                updateFields.push('opvang_kinderen = @OpvangKinderen');
+            }
+            if (dto.bankrekeningnummersOpNaamVanKind !== undefined) {
+                request.input('Bankrekeningnummers', sql.NVarChar, dto.bankrekeningnummersOpNaamVanKind);
+                updateFields.push('bankrekeningnummers_op_naam_van_kind = @Bankrekeningnummers');
+            }
+            if (dto.parentingCoordinator !== undefined) {
+                request.input('ParentingCoordinator', sql.NVarChar, dto.parentingCoordinator);
+                updateFields.push('parenting_coordinator = @ParentingCoordinator');
+            }
+
+            updateFields.push('updated_at = GETDATE()');
+
+            if (updateFields.length === 1) {
+                throw new Error('No fields to update');
+            }
+
+            const result = await request.query(`
+                UPDATE dbo.ouderschapsplan_info
+                SET ${updateFields.join(', ')}
+                OUTPUT INSERTED.*
+                WHERE id = @Id
+            `);
+
+            if (result.recordset.length === 0) {
+                throw new Error('OuderschapsplanInfo not found');
+            }
+
+            return DbMappers.toOuderschapsplanInfo(result.recordset[0]);
+        } catch (error) {
+            console.error('Error updating ouderschapsplan info:', error);
+            throw error;
+        }
+    }
+
+    async deleteOuderschapsplanInfo(id: number): Promise<boolean> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('Id', sql.Int, id);
+
+            const result = await request.query(`
+                DELETE FROM dbo.ouderschapsplan_info 
+                WHERE id = @Id
+            `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Error deleting ouderschapsplan info:', error);
+            throw error;
+        }
+    }
+
+    async getAllOuderschapsplanInfo(limit: number = 100, offset: number = 0): Promise<{ data: OuderschapsplanInfo[], total: number }> {
+        try {
+            const pool = await this.getPool();
+            
+            // Get total count
+            const countRequest = pool.request();
+            const countResult = await countRequest.query(`
+                SELECT COUNT(*) as total FROM dbo.ouderschapsplan_info
+            `);
+            const total = countResult.recordset[0].total;
+
+            // Get paginated data
+            const request = pool.request();
+            request.input('Limit', sql.Int, limit);
+            request.input('Offset', sql.Int, offset);
+
+            const result = await request.query(`
+                SELECT * FROM dbo.ouderschapsplan_info
+                ORDER BY updated_at DESC
+                OFFSET @Offset ROWS
+                FETCH NEXT @Limit ROWS ONLY
+            `);
+
+            return {
+                data: result.recordset.map(DbMappers.toOuderschapsplanInfo),
+                total
+            };
+        } catch (error) {
+            console.error('Error getting all ouderschapsplan info:', error);
             throw error;
         }
     }

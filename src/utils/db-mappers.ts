@@ -3,6 +3,8 @@ import {
     Dossier,
     Persoon,
     PersoonDbDto,
+    OuderschapsplanInfo,
+    OuderschapsplanInfoDbDto,
 } from '../models/Dossier';
 
 export class DbMappers {
@@ -69,6 +71,62 @@ export class DbMappers {
             telefoon: persoon.telefoon,
             email: persoon.email,
             beroep: persoon.beroep,
+        };
+    }
+
+    static toOuderschapsplanInfo(dto: OuderschapsplanInfoDbDto): OuderschapsplanInfo {
+        return {
+            id: dto.id!,
+            partij1PersoonId: dto.partij_1_persoon_id,
+            partij2PersoonId: dto.partij_2_persoon_id,
+            soortRelatie: dto.soort_relatie,
+            soortRelatieVerbreking: dto.soort_relatie_verbreking,
+            betrokkenheidKind: dto.betrokkenheid_kind,
+            kiesplan: dto.kiesplan,
+            gezagPartij: dto.gezag_partij as 1 | 2 | undefined,
+            waOpNaamVanPartij: dto.wa_op_naam_van_partij as 1 | 2 | undefined,
+            keuzeDevices: dto.keuze_devices,
+            zorgverzekeringOpNaamVanPartij: dto.zorgverzekering_op_naam_van_partij as 1 | 2 | undefined,
+            kinderbijslagPartij: dto.kinderbijslag_partij as 1 | 2 | 3 | undefined,
+            brpPartij1: dto.brp_partij_1 ? JSON.parse(dto.brp_partij_1) as number[] : undefined,
+            brpPartij2: dto.brp_partij_2 ? JSON.parse(dto.brp_partij_2) as number[] : undefined,
+            kgbPartij1: dto.kgb_partij_1 ? JSON.parse(dto.kgb_partij_1) as number[] : undefined,
+            kgbPartij2: dto.kgb_partij_2 ? JSON.parse(dto.kgb_partij_2) as number[] : undefined,
+            hoofdverblijf: dto.hoofdverblijf,
+            zorgverdeling: dto.zorgverdeling,
+            opvangKinderen: dto.opvang_kinderen,
+            bankrekeningnummersOpNaamVanKind: dto.bankrekeningnummers_op_naam_van_kind,
+            parentingCoordinator: dto.parenting_coordinator,
+            createdAt: dto.created_at,
+            updatedAt: dto.updated_at,
+        };
+    }
+
+    static toOuderschapsplanInfoDto(info: OuderschapsplanInfo): OuderschapsplanInfoDbDto {
+        return {
+            id: info.id,
+            partij_1_persoon_id: info.partij1PersoonId,
+            partij_2_persoon_id: info.partij2PersoonId,
+            soort_relatie: info.soortRelatie,
+            soort_relatie_verbreking: info.soortRelatieVerbreking,
+            betrokkenheid_kind: info.betrokkenheidKind,
+            kiesplan: info.kiesplan,
+            gezag_partij: info.gezagPartij,
+            wa_op_naam_van_partij: info.waOpNaamVanPartij,
+            keuze_devices: info.keuzeDevices,
+            zorgverzekering_op_naam_van_partij: info.zorgverzekeringOpNaamVanPartij,
+            kinderbijslag_partij: info.kinderbijslagPartij,
+            brp_partij_1: info.brpPartij1 ? JSON.stringify(info.brpPartij1) : undefined,
+            brp_partij_2: info.brpPartij2 ? JSON.stringify(info.brpPartij2) : undefined,
+            kgb_partij_1: info.kgbPartij1 ? JSON.stringify(info.kgbPartij1) : undefined,
+            kgb_partij_2: info.kgbPartij2 ? JSON.stringify(info.kgbPartij2) : undefined,
+            hoofdverblijf: info.hoofdverblijf,
+            zorgverdeling: info.zorgverdeling,
+            opvang_kinderen: info.opvangKinderen,
+            bankrekeningnummers_op_naam_van_kind: info.bankrekeningnummersOpNaamVanKind,
+            parenting_coordinator: info.parentingCoordinator,
+            created_at: info.createdAt,
+            updated_at: info.updatedAt,
         };
     }
 
