@@ -12,6 +12,7 @@ import './functions/dossiers/createDossier';
 import './functions/dossiers/getDossierById';
 import './functions/dossiers/updateDossier';
 import './functions/dossiers/deleteDossier';
+import './functions/dossiers/updateDossierAnonymity';
 import './functions/dossiers/addPartijToDossier';
 import './functions/dossiers/removePartijFromDossier';
 import './functions/dossiers/getDossierPartijen';
@@ -73,6 +74,16 @@ import './functions/alimentatie/replaceBijdrageKosten';
 import './functions/alimentatie/getFinancieleAfspraken';
 import './functions/alimentatie/createFinancieleAfspraak';
 import './functions/alimentatie/replaceFinancieleAfspraken';
+
+// Ouderschapsplan functions
+import './functions/ouderschapsplan/getAllOuderschapsplanInfo';
+import './functions/ouderschapsplan/getOuderschapsplanInfoById';
+import './functions/ouderschapsplan/getOuderschapsplanInfoByDossierId';
+import './functions/ouderschapsplan/getOuderschapsplanInfoByPersoonId';
+import './functions/ouderschapsplan/createOuderschapsplanInfo';
+import './functions/ouderschapsplan/updateOuderschapsplanInfo';
+import './functions/ouderschapsplan/deleteOuderschapsplanInfo';
+import './functions/ouderschapsplan/upsertOuderschapsplanInfo';
 
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
