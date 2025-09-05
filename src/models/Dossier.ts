@@ -3,6 +3,7 @@ export interface Dossier {
     dossierNummer: string;
     gebruikerId: number;
     status: boolean;
+    isAnoniem?: boolean;
     aangemaaktOp: Date;
     gewijzigdOp: Date;
 }
@@ -234,6 +235,7 @@ export interface DossierDbDto {
     dossier_nummer: string;
     gebruiker_id: number;
     status: boolean;
+    is_anoniem?: boolean;
     aangemaakt_op?: Date;
     gewijzigd_op?: Date;
 }

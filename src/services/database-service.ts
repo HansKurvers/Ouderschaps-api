@@ -57,6 +57,7 @@ export class DossierDatabaseService {
                     dossier_nummer,
                     gebruiker_id,
                     status,
+                    is_anoniem,
                     aangemaakt_op,
                     gewijzigd_op
                 FROM dbo.dossiers 
@@ -84,6 +85,7 @@ export class DossierDatabaseService {
                     dossier_nummer,
                     gebruiker_id,
                     status,
+                    is_anoniem,
                     aangemaakt_op,
                     gewijzigd_op
                 FROM dbo.dossiers 
@@ -215,6 +217,7 @@ export class DossierDatabaseService {
                     dossier_nummer,
                     gebruiker_id,
                     status,
+                    is_anoniem,
                     aangemaakt_op,
                     gewijzigd_op
                 FROM dbo.dossiers 
@@ -228,6 +231,43 @@ export class DossierDatabaseService {
             return DbMappers.toDossier(result.recordset[0]);
         } catch (error) {
             console.error('Error updating dossier status:', error);
+            throw error;
+        }
+    }
+
+    async updateDossierAnonymity(dossierID: number, isAnoniem: boolean, userID: number): Promise<Dossier> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('DossierID', sql.Int, dossierID);
+            request.input('UserID', sql.Int, userID);
+            request.input('IsAnoniem', sql.Bit, isAnoniem);
+
+            const result = await request.query(`
+                UPDATE dbo.dossiers 
+                SET is_anoniem = @IsAnoniem, gewijzigd_op = GETDATE()
+                WHERE id = @DossierID AND gebruiker_id = @UserID;
+                
+                SELECT 
+                    id,
+                    dossier_nummer,
+                    gebruiker_id,
+                    status,
+                    is_anoniem,
+                    aangemaakt_op,
+                    gewijzigd_op
+                FROM dbo.dossiers 
+                WHERE id = @DossierID;
+            `);
+
+            if (result.recordset.length === 0) {
+                throw new Error('Dossier not found or access denied');
+            }
+
+            return DbMappers.toDossier(result.recordset[0]);
+        } catch (error) {
+            console.error('Error updating dossier anonymity:', error);
             throw error;
         }
     }

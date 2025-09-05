@@ -14,6 +14,7 @@ Base URL: `/api`
 - `POST /dossiers` - Create new dossier
 - `PUT /dossiers/{dossierId}` - Update dossier
 - `DELETE /dossiers/{dossierId}` - Delete dossier
+- `PATCH /dossiers/{dossierId}/anonymity` - Update dossier anonymity flag
 
 ### Dossier Partijen (Parties)
 - `GET /dossiers/{dossierId}/partijen` - Get parties in dossier
