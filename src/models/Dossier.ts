@@ -22,7 +22,7 @@ export interface Persoon {
     adres?: string;
     postcode?: string;
     plaats?: string;
-    geboortePlaats?: string;
+    geboorteplaats?: string;
     geboorteDatum?: Date;
     nationaliteit1?: string;
     nationaliteit2?: string;
@@ -249,7 +249,7 @@ export interface PersoonDbDto {
     adres?: string;
     postcode?: string;
     plaats?: string;
-    geboorte_plaats?: string;
+    geboorteplaats?: string;
     geboorte_datum?: Date;
     nationaliteit_1?: string;
     nationaliteit_2?: string;

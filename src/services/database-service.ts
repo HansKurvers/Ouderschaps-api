@@ -382,7 +382,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboortePlaats', sql.NVarChar, dto.geboorte_plaats);
+                request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('GeboorteDatum', sql.Date, dto.geboorte_datum);
                 request.input('Nationaliteit1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit2', sql.NVarChar, dto.nationaliteit_2);
@@ -401,7 +401,7 @@ export class DossierDatabaseService {
                         adres = @Adres,
                         postcode = @Postcode,
                         plaats = @Plaats,
-                        geboorte_plaats = @GeboortePlaats,
+                        geboorteplaats = @GeboortePlaats,
                         geboorte_datum = @GeboorteDatum,
                         nationaliteit_1 = @Nationaliteit1,
                         nationaliteit_2 = @Nationaliteit2,
@@ -425,7 +425,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboortePlaats', sql.NVarChar, dto.geboorte_plaats);
+                request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('GeboorteDatum', sql.Date, dto.geboorte_datum);
                 request.input('Nationaliteit1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit2', sql.NVarChar, dto.nationaliteit_2);
@@ -436,7 +436,7 @@ export class DossierDatabaseService {
                 const result = await request.query(`
                     INSERT INTO dbo.personen (
                         voorletters, voornamen, roepnaam, geslacht, tussenvoegsel, achternaam,
-                        adres, postcode, plaats, geboorte_plaats, geboorte_datum,
+                        adres, postcode, plaats, geboorteplaats, geboorte_datum,
                         nationaliteit_1, nationaliteit_2, telefoon, email, beroep
                     )
                     OUTPUT INSERTED.*
@@ -1174,7 +1174,7 @@ export class DossierDatabaseService {
                     p.adres,
                     p.postcode,
                     p.plaats,
-                    p.geboorte_plaats,
+                    p.geboorteplaats,
                     p.geboorte_datum,
                     p.nationaliteit_1,
                     p.nationaliteit_2,
@@ -1214,7 +1214,7 @@ export class DossierDatabaseService {
                     adres: row.adres,
                     postcode: row.postcode,
                     plaats: row.plaats,
-                    geboorte_plaats: row.geboorte_plaats,
+                    geboorteplaats: row.geboorteplaats,
                     geboorte_datum: row.geboorte_datum,
                     nationaliteit_1: row.nationaliteit_1,
                     nationaliteit_2: row.nationaliteit_2,
@@ -1542,7 +1542,7 @@ export class DossierDatabaseService {
                     p.adres as verzorger_adres,
                     p.postcode as verzorger_postcode,
                     p.plaats as verzorger_plaats,
-                    p.geboorte_plaats as verzorger_geboorte_plaats,
+                    p.geboorte_plaats as verzorger_geboorteplaats,
                     p.geboorte_datum as verzorger_geboorte_datum,
                     p.nationaliteit_1 as verzorger_nationaliteit_1,
                     p.nationaliteit_2 as verzorger_nationaliteit_2,
@@ -1582,7 +1582,7 @@ export class DossierDatabaseService {
                     adres: row.verzorger_adres,
                     postcode: row.verzorger_postcode,
                     plaats: row.verzorger_plaats,
-                    geboortePlaats: row.verzorger_geboorte_plaats,
+                    geboortePlaats: row.verzorger_geboorteplaats,
                     geboorteDatum: row.verzorger_geboorte_datum,
                     nationaliteit1: row.verzorger_nationaliteit_1,
                     nationaliteit2: row.verzorger_nationaliteit_2,
@@ -1891,7 +1891,7 @@ export class DossierDatabaseService {
                     adres,
                     postcode,
                     plaats,
-                    geboorte_plaats,
+                    geboorteplaats,
                     geboorte_datum,
                     nationaliteit_1,
                     nationaliteit_2,
@@ -1956,7 +1956,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorte_plaats);
+                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
@@ -2005,7 +2005,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorte_plaats);
+                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
@@ -2025,7 +2025,7 @@ export class DossierDatabaseService {
                         adres,
                         postcode,
                         plaats,
-                        geboorte_plaats,
+                        geboorteplaats,
                         geboorte_datum,
                         nationaliteit_1,
                         nationaliteit_2,
@@ -2143,7 +2143,7 @@ export class DossierDatabaseService {
                     adres,
                     postcode,
                     plaats,
-                    geboorte_plaats,
+                    geboorteplaats,
                     geboorte_datum,
                     nationaliteit_1,
                     nationaliteit_2,
