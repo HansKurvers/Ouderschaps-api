@@ -31,7 +31,7 @@ Unified table for all persons (parents, children, parties).
 - **adres** (nvarchar(200), nullable) - Address
 - **postcode** (nvarchar(10), nullable) - Postal code
 - **plaats** (nvarchar(100), nullable) - City
-- **geboorte_plaats** (nvarchar(100), nullable) - Birth place
+- **geboorteplaats** (nvarchar(100), nullable) - Birth place
 - **geboorte_datum** (date, nullable) - Birth date
 - **nationaliteit_1** (nvarchar(50), nullable) - Primary nationality
 - **nationaliteit_2** (nvarchar(50), nullable) - Secondary nationality
