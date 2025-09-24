@@ -252,7 +252,7 @@ export interface PersoonDbDto {
     postcode?: string;
     plaats?: string;
     geboorteplaats?: string;
-    geboorte_datum?: Date;
+    geboortedatum?: Date;
     nationaliteit_1?: string;
     nationaliteit_2?: string;
     telefoon?: string;

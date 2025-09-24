@@ -32,7 +32,7 @@ Unified table for all persons (parents, children, parties).
 - **postcode** (nvarchar(10), nullable) - Postal code
 - **plaats** (nvarchar(100), nullable) - City
 - **geboorteplaats** (nvarchar(100), nullable) - Birth place
-- **geboorte_datum** (date, nullable) - Birth date
+- **geboortedatum** (date, nullable) - Birth date
 - **nationaliteit_1** (nvarchar(50), nullable) - Primary nationality
 - **nationaliteit_2** (nvarchar(50), nullable) - Secondary nationality
 - **telefoon** (nvarchar(20), nullable) - Phone number
