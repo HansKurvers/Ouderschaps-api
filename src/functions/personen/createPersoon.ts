@@ -9,6 +9,7 @@ export async function createPersoon(
     context: InvocationContext
 ): Promise<HttpResponseInit> {
     const dbService = new DossierDatabaseService();
+    let persoonData: any = null;
 
     try {
         // Get user ID from auth
@@ -26,10 +27,9 @@ export async function createPersoon(
             return createErrorResponse('Request body is required', 400);
         }
 
-        let persoonData;
         try {
             persoonData = JSON.parse(requestBody);
-        } catch (error) {
+        } catch (parseError) {
             return createErrorResponse('Invalid JSON in request body', 400);
         }
 
@@ -61,6 +61,9 @@ export async function createPersoon(
 
     } catch (error) {
         context.error('Error in createPersoon:', error);
+        if (persoonData) {
+            context.error('Request data:', JSON.stringify(persoonData, null, 2));
+        }
         return createErrorResponse('Internal server error', 500);
     } finally {
         await dbService.close();

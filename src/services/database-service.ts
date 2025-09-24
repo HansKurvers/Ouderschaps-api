@@ -1981,9 +1981,9 @@ export class DossierDatabaseService {
     }
 
     async createOrUpdatePersoonForUser(persoonData: Partial<Persoon>, userId: number): Promise<Persoon> {
+        const dto = DbMappers.toPersoonDto(persoonData as Persoon);
         try {
             const pool = await this.getPool();
-            const dto = DbMappers.toPersoonDto(persoonData as Persoon);
 
             if (persoonData.id) {
                 // Update existing person (verify it belongs to user)
@@ -2000,7 +2000,20 @@ export class DossierDatabaseService {
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
                 request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
-                request.input('Geboortedatum', sql.Date, dto.geboortedatum ? new Date(dto.geboortedatum) : null);
+                // Handle date parsing more safely
+                let parsedDate = null;
+                if (dto.geboortedatum) {
+                    try {
+                        parsedDate = new Date(dto.geboortedatum);
+                        if (isNaN(parsedDate.getTime())) {
+                            parsedDate = null;
+                        }
+                    } catch (dateError) {
+                        console.error('Error parsing geboortedatum:', dto.geboortedatum, dateError);
+                        parsedDate = null;
+                    }
+                }
+                request.input('Geboortedatum', sql.Date, parsedDate);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
@@ -2049,7 +2062,20 @@ export class DossierDatabaseService {
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
                 request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
-                request.input('Geboortedatum', sql.Date, dto.geboortedatum ? new Date(dto.geboortedatum) : null);
+                // Handle date parsing more safely
+                let parsedDate = null;
+                if (dto.geboortedatum) {
+                    try {
+                        parsedDate = new Date(dto.geboortedatum);
+                        if (isNaN(parsedDate.getTime())) {
+                            parsedDate = null;
+                        }
+                    } catch (dateError) {
+                        console.error('Error parsing geboortedatum:', dto.geboortedatum, dateError);
+                        parsedDate = null;
+                    }
+                }
+                request.input('Geboortedatum', sql.Date, parsedDate);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
@@ -2102,7 +2128,9 @@ export class DossierDatabaseService {
             }
         } catch (error) {
             console.error('Error in createOrUpdatePersoonForUser:', error);
-            throw new Error('Failed to create or update persoon');
+            console.error('Person data:', JSON.stringify(persoonData, null, 2));
+            console.error('Mapped DTO:', JSON.stringify(dto, null, 2));
+            throw error; // Re-throw original error for better debugging
         }
     }
 
