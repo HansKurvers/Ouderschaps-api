@@ -85,6 +85,9 @@ import './functions/ouderschapsplan/updateOuderschapsplanInfo';
 import './functions/ouderschapsplan/deleteOuderschapsplanInfo';
 import './functions/ouderschapsplan/upsertOuderschapsplanInfo';
 
+// Debug functions
+import './functions/debug/inspectDossier';
+
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
 

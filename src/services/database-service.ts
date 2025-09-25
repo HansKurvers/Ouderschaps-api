@@ -339,6 +339,129 @@ export class DossierDatabaseService {
         }
     }
 
+    async inspectDossierRelations(dossierID: number): Promise<any> {
+        try {
+            const pool = await this.getPool();
+            const inspectionResults: any = {};
+
+            // Check main dossier
+            const dossierResult = await pool
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query('SELECT * FROM dbo.dossiers WHERE id = @DossierID');
+
+            inspectionResults.dossier = {
+                exists: dossierResult.recordset.length > 0,
+                data: dossierResult.recordset[0] || null
+            };
+
+            if (dossierResult.recordset.length === 0) {
+                return inspectionResults;
+            }
+
+            // Check for related data in all related tables
+            const tables = [
+                'dbo.alimentaties',
+                'dbo.ouderschapsplan_info',
+                'dbo.omgang',
+                'dbo.zorg',
+                'dbo.dossiers_kinderen',
+                'dbo.dossiers_partijen'
+            ];
+
+            for (const table of tables) {
+                try {
+                    const result = await pool
+                        .request()
+                        .input('DossierID', sql.Int, dossierID)
+                        .query(`SELECT COUNT(*) as count FROM ${table} WHERE dossier_id = @DossierID`);
+
+                    const detailResult = await pool
+                        .request()
+                        .input('DossierID', sql.Int, dossierID)
+                        .query(`SELECT TOP 5 * FROM ${table} WHERE dossier_id = @DossierID`);
+
+                    inspectionResults[table] = {
+                        count: result.recordset[0].count,
+                        sampleRecords: detailResult.recordset
+                    };
+                } catch (err) {
+                    inspectionResults[table] = {
+                        error: `Table might not exist: ${err instanceof Error ? err.message : 'Unknown error'}`
+                    };
+                }
+            }
+
+            // Check for alimentatie-related child tables
+            try {
+                const bkkResult = await pool
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`
+                        SELECT COUNT(*) as count
+                        FROM dbo.bijdragen_kosten_kinderen bkk
+                        INNER JOIN dbo.alimentaties a ON bkk.alimentatie_id = a.id
+                        WHERE a.dossier_id = @DossierID
+                    `);
+
+                const bkkDetailResult = await pool
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`
+                        SELECT TOP 5 bkk.*, a.dossier_id
+                        FROM dbo.bijdragen_kosten_kinderen bkk
+                        INNER JOIN dbo.alimentaties a ON bkk.alimentatie_id = a.id
+                        WHERE a.dossier_id = @DossierID
+                    `);
+
+                inspectionResults['bijdragen_kosten_kinderen'] = {
+                    count: bkkResult.recordset[0].count,
+                    sampleRecords: bkkDetailResult.recordset
+                };
+            } catch (err) {
+                inspectionResults['bijdragen_kosten_kinderen'] = {
+                    error: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`
+                };
+            }
+
+            try {
+                const fakResult = await pool
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`
+                        SELECT COUNT(*) as count
+                        FROM dbo.financiele_afspraken_kinderen fak
+                        INNER JOIN dbo.alimentaties a ON fak.alimentatie_id = a.id
+                        WHERE a.dossier_id = @DossierID
+                    `);
+
+                const fakDetailResult = await pool
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`
+                        SELECT TOP 5 fak.*, a.dossier_id
+                        FROM dbo.financiele_afspraken_kinderen fak
+                        INNER JOIN dbo.alimentaties a ON fak.alimentatie_id = a.id
+                        WHERE a.dossier_id = @DossierID
+                    `);
+
+                inspectionResults['financiele_afspraken_kinderen'] = {
+                    count: fakResult.recordset[0].count,
+                    sampleRecords: fakDetailResult.recordset
+                };
+            } catch (err) {
+                inspectionResults['financiele_afspraken_kinderen'] = {
+                    error: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`
+                };
+            }
+
+            return inspectionResults;
+
+        } catch (error) {
+            throw new Error(`Failed to inspect dossier relations: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
     async updateDossierStatus(dossierID: number, status: boolean): Promise<Dossier> {
         try {
             const pool = await this.getPool();
