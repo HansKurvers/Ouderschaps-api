@@ -144,7 +144,7 @@ describe('createPersoon', () => {
         expect(result.status).toBe(500);
         expect(JSON.parse(result.body as string)).toEqual({
             success: false,
-            error: 'Internal server error',
+            error: 'Internal server error: Database error',
         });
         expect(mockDbService.close).toHaveBeenCalled();
     });
