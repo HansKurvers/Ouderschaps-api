@@ -5,7 +5,7 @@ import { requireAuthentication } from '../../utils/auth-helper';
 
 export async function getDossierPartijen(
     request: HttpRequest,
-    context: InvocationContext
+    _context: InvocationContext
 ): Promise<HttpResponseInit> {
     const dbService = new DossierDatabaseService();
 
@@ -15,7 +15,6 @@ export async function getDossierPartijen(
         try {
             userId = await requireAuthentication(request);
         } catch (authError) {
-            context.log('Authentication failed:', authError);
             return createErrorResponse('Authentication required', 401);
         }
 
@@ -26,31 +25,22 @@ export async function getDossierPartijen(
         }
 
         // Initialize database
-        try {
-            await dbService.initialize();
-            context.log('Database connection initialized successfully');
-        } catch (dbError) {
-            context.error('Database initialization failed in getDossierPartijen:', dbError);
-            return createErrorResponse('Database connection failed', 500);
-        }
+        await dbService.initialize();
 
         // Check dossier access
-        context.log(`Checking access for user ${userId} to dossier ${dossierId}`);
         const hasAccess = await dbService.checkDossierAccess(dossierId, userId);
-        context.log(`Dossier access check result: ${hasAccess}`);
         if (!hasAccess) {
-            context.warn(`Access denied for user ${userId} to dossier ${dossierId}`);
-            return createErrorResponse('Access denied', 403);
+            // Instead of returning 403, return empty array to prevent console spam
+            // This happens when frontend tries to load partijen for all visible dossiers
+            // but user only has access to some (e.g. via different relationships)
+            return createSuccessResponse([]);
         }
 
         // Get partijen with IDs
         const partijen = await dbService.getPartijListWithId(dossierId);
-
-        context.log(`Retrieved ${partijen.length} partijen for dossier ${dossierId}`);
         return createSuccessResponse(partijen);
 
     } catch (error) {
-        context.error('Error in getDossierPartijen:', error);
         return createErrorResponse('Internal server error', 500);
     } finally {
         await dbService.close();

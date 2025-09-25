@@ -153,35 +153,75 @@ export class DossierDatabaseService {
             console.log(`Starting cascade delete for dossier ID: ${dossierID}`);
 
             // Delete related data in correct order (from most dependent to least)
-            // 1. Delete omgang records
+
+            // 1. Delete alimentatie related tables first (most dependent)
+            // 1a. Delete bijdragen kosten kinderen
+            const bijdragenKostenResult = await transaction
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query(`
+                    DELETE FROM dbo.bijdragen_kosten_kinderen
+                    WHERE alimentatie_id IN (
+                        SELECT id FROM dbo.alimentaties WHERE dossier_id = @DossierID
+                    )
+                `);
+            console.log(`Deleted ${bijdragenKostenResult.rowsAffected[0]} bijdragen_kosten_kinderen records`);
+
+            // 1b. Delete financiele afspraken kinderen
+            const financieleAfsprakenResult = await transaction
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query(`
+                    DELETE FROM dbo.financiele_afspraken_kinderen
+                    WHERE alimentatie_id IN (
+                        SELECT id FROM dbo.alimentaties WHERE dossier_id = @DossierID
+                    )
+                `);
+            console.log(`Deleted ${financieleAfsprakenResult.rowsAffected[0]} financiele_afspraken_kinderen records`);
+
+            // 1c. Delete alimentaties
+            const alimentatiesResult = await transaction
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query('DELETE FROM dbo.alimentaties WHERE dossier_id = @DossierID');
+            console.log(`Deleted ${alimentatiesResult.rowsAffected[0]} alimentaties records`);
+
+            // 2. Delete ouderschapsplan info
+            const ouderschapsplanResult = await transaction
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query('DELETE FROM dbo.ouderschapsplan_info WHERE dossier_id = @DossierID');
+            console.log(`Deleted ${ouderschapsplanResult.rowsAffected[0]} ouderschapsplan_info records`);
+
+            // 3. Delete omgang records
             const omgangResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.omgang WHERE dossier_id = @DossierID');
             console.log(`Deleted ${omgangResult.rowsAffected[0]} omgang records`);
 
-            // 2. Delete zorg records
+            // 4. Delete zorg records
             const zorgResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.zorg WHERE dossier_id = @DossierID');
             console.log(`Deleted ${zorgResult.rowsAffected[0]} zorg records`);
 
-            // 3. Delete dossier-child relationships
+            // 5. Delete dossier-child relationships
             const kinderenResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers_kinderen WHERE dossier_id = @DossierID');
             console.log(`Deleted ${kinderenResult.rowsAffected[0]} dossiers_kinderen records`);
 
-            // 4. Delete dossier-party relationships
+            // 6. Delete dossier-party relationships
             const partijenResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query('DELETE FROM dbo.dossiers_partijen WHERE dossier_id = @DossierID');
             console.log(`Deleted ${partijenResult.rowsAffected[0]} dossiers_partijen records`);
 
-            // 5. Finally delete the dossier itself
+            // 7. Finally delete the dossier itself
             const dossierResult = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
