@@ -5,6 +5,7 @@ import './functions/health';
 import './functions/health/auth-check';
 import './functions/health/env-check';
 import './functions/health/auth-debug';
+import './functions/debug/test-issues';
 
 // Dossier functions
 import './functions/dossiers/getDossiers';
