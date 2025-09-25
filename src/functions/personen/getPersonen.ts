@@ -53,10 +53,23 @@ export async function getPersonen(
 
         const { limit: validatedLimit, offset: validatedOffset } = value;
 
-        // Get personen for this user only
+        // Get personen for this user only - try direct first, then via dossier relationships
         context.log(`Fetching personen for user ${userId} with limit ${validatedLimit}, offset ${validatedOffset}`);
-        const personen = await service.getAllPersonenForUser(userId, validatedLimit, validatedOffset);
-        context.log(`Successfully retrieved ${personen.data.length} personen (total: ${personen.total})`);
+        let personen = await service.getAllPersonenForUser(userId, validatedLimit, validatedOffset);
+
+        // If no direct personen found, try via dossier relationships
+        if (personen.total === 0) {
+            context.log(`No direct personen found for user ${userId}, trying via dossier relationships...`);
+            try {
+                personen = await service.getAllPersonenForUserViaDossiers(userId, validatedLimit, validatedOffset);
+                context.log(`Retrieved ${personen.data.length} personen via dossier relationships (total: ${personen.total})`);
+            } catch (dossierError) {
+                context.error('Failed to fetch personen via dossier relationships:', dossierError);
+                // Continue with empty result from direct method
+            }
+        } else {
+            context.log(`Successfully retrieved ${personen.data.length} personen directly (total: ${personen.total})`);
+        }
 
         return createSuccessResponse({
             data: personen.data,

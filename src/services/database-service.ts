@@ -1918,6 +1918,77 @@ export class DossierDatabaseService {
         }
     }
 
+    // Alternative method to get personen via dossier relationships
+    async getAllPersonenForUserViaDossiers(userId: number, limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
+        try {
+            console.log(`getAllPersonenForUserViaDossiers called with userId: ${userId}, limit: ${limit}, offset: ${offset}`);
+            const pool = await this.getPool();
+            console.log('Database pool obtained successfully');
+
+            // Get count of unique persons linked to user's dossiers
+            const countRequest = pool.request();
+            countRequest.input('UserId', sql.Int, userId);
+            console.log('Executing count query for personen via dossiers...');
+            const countResult = await countRequest.query(`
+                SELECT COUNT(DISTINCT p.id) as total
+                FROM dbo.personen p
+                INNER JOIN dbo.dossiers_partijen dp ON p.id = dp.persoon_id
+                INNER JOIN dbo.dossiers d ON dp.dossier_id = d.id
+                WHERE d.gebruiker_id = @UserId
+            `);
+            const total = countResult.recordset[0].total;
+            console.log(`Total personen count via dossiers for user ${userId}: ${total}`);
+
+            // Get paginated data
+            const dataRequest = pool.request();
+            dataRequest.input('UserId', sql.Int, userId);
+            dataRequest.input('Limit', sql.Int, limit);
+            dataRequest.input('Offset', sql.Int, offset);
+
+            console.log('Executing data query for personen via dossiers...');
+            const result = await dataRequest.query(`
+                SELECT DISTINCT
+                    p.id,
+                    p.voorletters,
+                    p.voornamen,
+                    p.roepnaam,
+                    p.geslacht,
+                    p.tussenvoegsel,
+                    p.achternaam,
+                    p.adres,
+                    p.postcode,
+                    p.plaats,
+                    p.geboorteplaats,
+                    p.geboorte_datum,
+                    p.nationaliteit_1,
+                    p.nationaliteit_2,
+                    p.telefoon,
+                    p.email,
+                    p.beroep
+                FROM dbo.personen p
+                INNER JOIN dbo.dossiers_partijen dp ON p.id = dp.persoon_id
+                INNER JOIN dbo.dossiers d ON dp.dossier_id = d.id
+                WHERE d.gebruiker_id = @UserId
+                ORDER BY p.achternaam, p.voornamen
+                OFFSET @Offset ROWS
+                FETCH NEXT @Limit ROWS ONLY
+            `);
+
+            console.log(`Retrieved ${result.recordset.length} personen records via dossiers from database`);
+            const mappedPersonen = result.recordset.map(row => DbMappers.toPersoon(row));
+            console.log(`Successfully mapped ${mappedPersonen.length} personen objects`);
+
+            return {
+                data: mappedPersonen,
+                total
+            };
+        } catch (error) {
+            console.error('Error in getAllPersonenForUserViaDossiers:', error);
+            console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+            throw new Error(`Failed to fetch personen via dossiers: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
     // Personen methods - User-scoped versions
     async getAllPersonenForUser(userId: number, limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
         try {

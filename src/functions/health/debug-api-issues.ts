@@ -95,6 +95,63 @@ export async function debugApiIssues(
             };
         }
 
+        // Test 4b: Try alternative method - persons via dossier relationships
+        try {
+            const userPersonsViaDossiers = await dbService.getAllPersonenForUserViaDossiers(userId, 50, 0);
+            results.tests.userPersonsViaDossiers = {
+                status: 'SUCCESS',
+                total: userPersonsViaDossiers.total,
+                data: userPersonsViaDossiers.data.map(p => ({
+                    id: p.id,
+                    achternaam: p.achternaam,
+                    voornamen: p.voornamen,
+                    email: p.email
+                })),
+                message: `Found ${userPersonsViaDossiers.total} persons via dossier relationships`
+            };
+        } catch (error) {
+            results.tests.userPersonsViaDossiers = {
+                status: 'FAILED',
+                error: error instanceof Error ? error.message : String(error),
+                message: 'Failed to fetch user persons via dossier relationships'
+            };
+        }
+
+        // Test 4c: Check if ANY persons exist in database
+        try {
+            await dbService.initialize();
+            const pool = await (dbService as any).getPool();
+            const request = pool.request();
+
+            const allPersonsResult = await request.query(`
+                SELECT COUNT(*) as total_persons,
+                       COUNT(DISTINCT gebruiker_id) as unique_users,
+                       STRING_AGG(CAST(gebruiker_id as VARCHAR), ', ') as all_user_ids
+                FROM dbo.personen
+            `);
+
+            const userPersonsResult = await request.query(`
+                SELECT COUNT(*) as user_persons
+                FROM dbo.personen
+                WHERE gebruiker_id = ${userId}
+            `);
+
+            results.tests.personenDatabaseAnalysis = {
+                status: 'SUCCESS',
+                totalPersonsInDb: allPersonsResult.recordset[0].total_persons,
+                uniqueUsersWithPersons: allPersonsResult.recordset[0].unique_users,
+                allUserIds: allPersonsResult.recordset[0].all_user_ids,
+                currentUserPersons: userPersonsResult.recordset[0].user_persons,
+                message: `Database analysis: ${allPersonsResult.recordset[0].total_persons} total persons, current user has ${userPersonsResult.recordset[0].user_persons}`
+            };
+        } catch (error) {
+            results.tests.personenDatabaseAnalysis = {
+                status: 'FAILED',
+                error: error instanceof Error ? error.message : String(error),
+                message: 'Failed to analyze personen database'
+            };
+        }
+
         // Test 5: Specific Dossier Access (1013 mentioned in the issue)
         try {
             const hasAccess1013 = await dbService.checkDossierAccess(1013, userId);
