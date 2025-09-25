@@ -33,25 +33,38 @@ export class DbMappers {
     }
 
     static toPersoon(dto: PersoonDbDto): Persoon {
-        return {
-            id: dto.id!,
-            voorletters: dto.voorletters,
-            voornamen: dto.voornamen,
-            roepnaam: dto.roepnaam,
-            geslacht: dto.geslacht,
-            tussenvoegsel: dto.tussenvoegsel,
-            achternaam: dto.achternaam,
-            adres: dto.adres,
-            postcode: dto.postcode,
-            plaats: dto.plaats,
-            geboorteplaats: dto.geboorteplaats,
-            geboorteDatum: dto.geboorte_datum,
-            nationaliteit1: dto.nationaliteit_1,
-            nationaliteit2: dto.nationaliteit_2,
-            telefoon: dto.telefoon,
-            email: dto.email,
-            beroep: dto.beroep,
-        };
+        try {
+            if (!dto.id) {
+                throw new Error('Persoon ID is required but missing from database result');
+            }
+            if (!dto.achternaam) {
+                throw new Error('Persoon achternaam is required but missing from database result');
+            }
+
+            return {
+                id: dto.id,
+                voorletters: dto.voorletters,
+                voornamen: dto.voornamen,
+                roepnaam: dto.roepnaam,
+                geslacht: dto.geslacht,
+                tussenvoegsel: dto.tussenvoegsel,
+                achternaam: dto.achternaam,
+                adres: dto.adres,
+                postcode: dto.postcode,
+                plaats: dto.plaats,
+                geboorteplaats: dto.geboorteplaats,
+                geboorteDatum: dto.geboorte_datum,
+                nationaliteit1: dto.nationaliteit_1,
+                nationaliteit2: dto.nationaliteit_2,
+                telefoon: dto.telefoon,
+                email: dto.email,
+                beroep: dto.beroep,
+            };
+        } catch (error) {
+            console.error('Error mapping Persoon from database:', error);
+            console.error('Database DTO:', JSON.stringify(dto, null, 2));
+            throw error;
+        }
     }
 
     static toPersoonDto(persoon: Persoon): PersoonDbDto {

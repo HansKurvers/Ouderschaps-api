@@ -72,6 +72,14 @@ export const initializeDatabase = async (): Promise<sql.ConnectionPool> => {
 
         connectionPool.on('error', err => {
             console.error('SQL Server connection error:', err);
+            console.error('Error details:', {
+                message: err.message,
+                code: (err as any).code,
+                state: (err as any).state,
+                severity: (err as any).severity,
+                serverName: (err as any).serverName,
+                procName: (err as any).procName
+            });
             isConnecting = false;
             connectionPool = null;
         });

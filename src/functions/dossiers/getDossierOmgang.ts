@@ -23,10 +23,19 @@ export async function getDossierOmgang(
             return createErrorResponse('Invalid dossier ID', 400);
         }
 
-        await dbService.initialize();
+        try {
+            await dbService.initialize();
+            context.log('Database connection initialized successfully');
+        } catch (dbError) {
+            context.error('Database initialization failed in getDossierOmgang:', dbError);
+            return createErrorResponse('Database connection failed', 500);
+        }
 
+        context.log(`Checking access for user ${userId} to dossier ${dossierId}`);
         const hasAccess = await dbService.checkDossierAccess(dossierId, userId);
+        context.log(`Dossier access check result: ${hasAccess}`);
         if (!hasAccess) {
+            context.warn(`Access denied for user ${userId} to dossier ${dossierId}`);
             return createErrorResponse('Access denied to this dossier', 403);
         }
 

@@ -26,11 +26,20 @@ export async function getDossierPartijen(
         }
 
         // Initialize database
-        await dbService.initialize();
+        try {
+            await dbService.initialize();
+            context.log('Database connection initialized successfully');
+        } catch (dbError) {
+            context.error('Database initialization failed in getDossierPartijen:', dbError);
+            return createErrorResponse('Database connection failed', 500);
+        }
 
         // Check dossier access
+        context.log(`Checking access for user ${userId} to dossier ${dossierId}`);
         const hasAccess = await dbService.checkDossierAccess(dossierId, userId);
+        context.log(`Dossier access check result: ${hasAccess}`);
         if (!hasAccess) {
+            context.warn(`Access denied for user ${userId} to dossier ${dossierId}`);
             return createErrorResponse('Access denied', 403);
         }
 

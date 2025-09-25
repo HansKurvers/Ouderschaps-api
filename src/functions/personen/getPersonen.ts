@@ -22,15 +22,24 @@ export async function getPersonen(
         let userId: number;
         try {
             userId = await requireAuthentication(request);
+            context.log(`Authentication successful for user ID: ${userId}`);
         } catch (authError) {
+            context.error('Authentication failed in getPersonen:', authError);
             return createUnauthorizedResponse();
         }
 
-        await service.initialize();
+        try {
+            await service.initialize();
+            context.log('Database connection initialized successfully');
+        } catch (dbError) {
+            context.error('Database initialization failed in getPersonen:', dbError);
+            return createErrorResponse('Database connection failed', 500);
+        }
 
         const { searchParams } = new URL(request.url);
         const limit = parseInt(searchParams.get('limit') || '50');
         const offset = parseInt(searchParams.get('offset') || '0');
+        context.log(`Query parameters: limit=${limit}, offset=${offset}`);
 
         // Validate query parameters
         const { error, value } = querySchema.validate({
@@ -45,7 +54,9 @@ export async function getPersonen(
         const { limit: validatedLimit, offset: validatedOffset } = value;
 
         // Get personen for this user only
+        context.log(`Fetching personen for user ${userId} with limit ${validatedLimit}, offset ${validatedOffset}`);
         const personen = await service.getAllPersonenForUser(userId, validatedLimit, validatedOffset);
+        context.log(`Successfully retrieved ${personen.data.length} personen (total: ${personen.total})`);
 
         return createSuccessResponse({
             data: personen.data,
