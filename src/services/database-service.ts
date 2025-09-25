@@ -143,6 +143,56 @@ export class DossierDatabaseService {
         }
     }
 
+    private async logRelatedData(transaction: sql.Transaction, dossierID: number): Promise<void> {
+        try {
+            // Check for related data in all related tables
+            const tables = [
+                'dbo.alimentaties',
+                'dbo.ouderschapsplan_info',
+                'dbo.omgang',
+                'dbo.zorg',
+                'dbo.dossiers_kinderen',
+                'dbo.dossiers_partijen'
+            ];
+
+            for (const table of tables) {
+                const result = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`SELECT COUNT(*) as count FROM ${table} WHERE dossier_id = @DossierID`);
+
+                console.log(`${table}: ${result.recordset[0].count} records`);
+            }
+
+            // Check for bijdragen_kosten_kinderen via alimentaties
+            const bkkResult = await transaction
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query(`
+                    SELECT COUNT(*) as count
+                    FROM dbo.bijdragen_kosten_kinderen bkk
+                    INNER JOIN dbo.alimentaties a ON bkk.alimentatie_id = a.id
+                    WHERE a.dossier_id = @DossierID
+                `);
+            console.log(`bijdragen_kosten_kinderen (via alimentaties): ${bkkResult.recordset[0].count} records`);
+
+            // Check for financiele_afspraken_kinderen via alimentaties
+            const fakResult = await transaction
+                .request()
+                .input('DossierID', sql.Int, dossierID)
+                .query(`
+                    SELECT COUNT(*) as count
+                    FROM dbo.financiele_afspraken_kinderen fak
+                    INNER JOIN dbo.alimentaties a ON fak.alimentatie_id = a.id
+                    WHERE a.dossier_id = @DossierID
+                `);
+            console.log(`financiele_afspraken_kinderen (via alimentaties): ${fakResult.recordset[0].count} records`);
+
+        } catch (error) {
+            console.warn('Could not log related data:', error);
+        }
+    }
+
     async deleteDossier(dossierID: number): Promise<boolean> {
         const pool = await this.getPool();
         const transaction = new sql.Transaction(pool);
@@ -151,6 +201,9 @@ export class DossierDatabaseService {
             await transaction.begin();
 
             console.log(`Starting cascade delete for dossier ID: ${dossierID}`);
+
+            // First, let's check what related data exists
+            await this.logRelatedData(transaction, dossierID);
 
             // Delete related data in correct order (from most dependent to least)
 
@@ -208,48 +261,81 @@ export class DossierDatabaseService {
             }
 
             // 3. Delete omgang records
-            const omgangResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.omgang WHERE dossier_id = @DossierID');
-            console.log(`Deleted ${omgangResult.rowsAffected[0]} omgang records`);
+            try {
+                const omgangResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query('DELETE FROM dbo.omgang WHERE dossier_id = @DossierID');
+                console.log(`Deleted ${omgangResult.rowsAffected[0]} omgang records`);
+            } catch (error) {
+                console.error('Error deleting omgang records:', error);
+                throw error;
+            }
 
             // 4. Delete zorg records
-            const zorgResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.zorg WHERE dossier_id = @DossierID');
-            console.log(`Deleted ${zorgResult.rowsAffected[0]} zorg records`);
+            try {
+                const zorgResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query('DELETE FROM dbo.zorg WHERE dossier_id = @DossierID');
+                console.log(`Deleted ${zorgResult.rowsAffected[0]} zorg records`);
+            } catch (error) {
+                console.error('Error deleting zorg records:', error);
+                throw error;
+            }
 
             // 5. Delete dossier-child relationships
-            const kinderenResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.dossiers_kinderen WHERE dossier_id = @DossierID');
-            console.log(`Deleted ${kinderenResult.rowsAffected[0]} dossiers_kinderen records`);
+            try {
+                const kinderenResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query('DELETE FROM dbo.dossiers_kinderen WHERE dossier_id = @DossierID');
+                console.log(`Deleted ${kinderenResult.rowsAffected[0]} dossiers_kinderen records`);
+            } catch (error) {
+                console.error('Error deleting dossiers_kinderen records:', error);
+                throw error;
+            }
 
             // 6. Delete dossier-party relationships
-            const partijenResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.dossiers_partijen WHERE dossier_id = @DossierID');
-            console.log(`Deleted ${partijenResult.rowsAffected[0]} dossiers_partijen records`);
+            try {
+                const partijenResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query('DELETE FROM dbo.dossiers_partijen WHERE dossier_id = @DossierID');
+                console.log(`Deleted ${partijenResult.rowsAffected[0]} dossiers_partijen records`);
+            } catch (error) {
+                console.error('Error deleting dossiers_partijen records:', error);
+                throw error;
+            }
 
             // 7. Finally delete the dossier itself
-            const dossierResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
-            console.log(`Deleted ${dossierResult.rowsAffected[0]} dossier records`);
+            try {
+                const dossierResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
+                console.log(`Deleted ${dossierResult.rowsAffected[0]} dossier records`);
 
-            await transaction.commit();
-            console.log(`Successfully completed cascade delete for dossier ID: ${dossierID}`);
-            
-            return dossierResult.rowsAffected[0] > 0;
+                await transaction.commit();
+                console.log(`Successfully completed cascade delete for dossier ID: ${dossierID}`);
+
+                return dossierResult.rowsAffected[0] > 0;
+            } catch (error) {
+                console.error('Error deleting dossier record:', error);
+                throw error;
+            }
         } catch (error) {
             await transaction.rollback();
             console.error('Error during cascade delete of dossier:', error);
-            throw new Error(`Failed to delete dossier: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+            // Provide more detailed error information
+            if (error instanceof Error) {
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+            }
+
+            throw new Error(`Failed to delete dossier ${dossierID}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
