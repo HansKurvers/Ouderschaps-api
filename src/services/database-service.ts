@@ -208,7 +208,7 @@ export class DossierDatabaseService {
             // Delete related data in correct order (from most dependent to least)
 
             // 1. Delete alimentatie related tables first (most dependent)
-            // Use simple approach - try to delete, ignore if tables don't exist
+            // Delete bijdragen_kosten_kinderen first
             try {
                 const bijdragenKostenResult = await transaction
                     .request()
@@ -221,9 +221,11 @@ export class DossierDatabaseService {
                     `);
                 console.log(`Deleted ${bijdragenKostenResult.rowsAffected[0]} bijdragen_kosten_kinderen records`);
             } catch (error) {
-                console.log('No bijdragen_kosten_kinderen to delete or table does not exist');
+                console.error('Error deleting bijdragen_kosten_kinderen records:', error);
+                throw error;
             }
 
+            // Delete financiele_afspraken_kinderen second
             try {
                 const financieleAfsprakenResult = await transaction
                     .request()
@@ -236,9 +238,11 @@ export class DossierDatabaseService {
                     `);
                 console.log(`Deleted ${financieleAfsprakenResult.rowsAffected[0]} financiele_afspraken_kinderen records`);
             } catch (error) {
-                console.log('No financiele_afspraken_kinderen to delete or table does not exist');
+                console.error('Error deleting financiele_afspraken_kinderen records:', error);
+                throw error;
             }
 
+            // Delete alimentaties third
             try {
                 const alimentatiesResult = await transaction
                     .request()
@@ -246,7 +250,8 @@ export class DossierDatabaseService {
                     .query('DELETE FROM dbo.alimentaties WHERE dossier_id = @DossierID');
                 console.log(`Deleted ${alimentatiesResult.rowsAffected[0]} alimentaties records`);
             } catch (error) {
-                console.log('No alimentaties to delete or table does not exist');
+                console.error('Error deleting alimentaties records:', error);
+                throw error;
             }
 
             // 2. Delete ouderschapsplan info
@@ -257,7 +262,8 @@ export class DossierDatabaseService {
                     .query('DELETE FROM dbo.ouderschapsplan_info WHERE dossier_id = @DossierID');
                 console.log(`Deleted ${ouderschapsplanResult.rowsAffected[0]} ouderschapsplan_info records`);
             } catch (error) {
-                console.log('No ouderschapsplan_info to delete or table does not exist');
+                console.error('Error deleting ouderschapsplan_info records:', error);
+                throw error;
             }
 
             // 3. Delete omgang records
