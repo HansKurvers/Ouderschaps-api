@@ -2096,7 +2096,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorteplaats);
+                request.input('Geboorteplaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
@@ -2116,7 +2116,7 @@ export class DossierDatabaseService {
                         adres = @Adres,
                         postcode = @Postcode,
                         plaats = @Plaats,
-                        geboorteplaats = @GeboorteplaatsFK,
+                        geboorteplaats = @Geboorteplaats,
                         geboorte_datum = @Geboortedatum,
                         nationaliteit_1 = @Nationaliteit_1,
                         nationaliteit_2 = @Nationaliteit_2,
@@ -2145,7 +2145,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorteplaats);
+                request.input('Geboorteplaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
@@ -2185,7 +2185,7 @@ export class DossierDatabaseService {
                         @Adres,
                         @Postcode,
                         @Plaats,
-                        @GeboorteplaatsFK,
+                        @Geboorteplaats,
                         @Geboortedatum,
                         @Nationaliteit_1,
                         @Nationaliteit_2,
@@ -2199,7 +2199,10 @@ export class DossierDatabaseService {
             }
         } catch (error) {
             console.error('Error in createOrUpdatePersoonForUser:', error);
-            throw new Error('Failed to create or update persoon');
+            console.error('Person data:', JSON.stringify(persoonData, null, 2));
+            console.error('User ID:', userId);
+            console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+            throw new Error(`Failed to create or update persoon: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

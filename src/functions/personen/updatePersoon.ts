@@ -9,6 +9,7 @@ export async function updatePersoon(
     context: InvocationContext
 ): Promise<HttpResponseInit> {
     const dbService = new DossierDatabaseService();
+    let updateData: any = null;
 
     try {
         // Get user ID from auth
@@ -32,7 +33,6 @@ export async function updatePersoon(
             return createErrorResponse('Request body is required', 400);
         }
 
-        let updateData;
         try {
             updateData = JSON.parse(requestBody);
         } catch (error) {
@@ -77,7 +77,12 @@ export async function updatePersoon(
 
     } catch (error) {
         context.error('Error in updatePersoon:', error);
-        return createErrorResponse('Internal server error', 500);
+        if (updateData) {
+            context.error('Update data:', JSON.stringify(updateData, null, 2));
+        }
+        context.error(`Persoon ID: ${request.params.persoonId}`);
+        context.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+        return createErrorResponse(`Internal server error: ${error instanceof Error ? error.message : String(error)}`, 500);
     } finally {
         await dbService.close();
     }

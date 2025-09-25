@@ -9,6 +9,7 @@ export async function createPersoon(
     context: InvocationContext
 ): Promise<HttpResponseInit> {
     const dbService = new DossierDatabaseService();
+    let persoonData: any = null;
 
     try {
         // Get user ID from auth
@@ -26,7 +27,6 @@ export async function createPersoon(
             return createErrorResponse('Request body is required', 400);
         }
 
-        let persoonData;
         try {
             persoonData = JSON.parse(requestBody);
         } catch (error) {
@@ -61,7 +61,11 @@ export async function createPersoon(
 
     } catch (error) {
         context.error('Error in createPersoon:', error);
-        return createErrorResponse('Internal server error', 500);
+        if (persoonData) {
+            context.error('Request data:', JSON.stringify(persoonData, null, 2));
+        }
+        context.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+        return createErrorResponse(`Internal server error: ${error instanceof Error ? error.message : String(error)}`, 500);
     } finally {
         await dbService.close();
     }
