@@ -155,29 +155,28 @@ export class DossierDatabaseService {
             // Delete related data in correct order (from most dependent to least)
 
             // 1. Delete alimentatie related tables first (most dependent)
-            // 1a. Delete bijdragen kosten kinderen
-            const bijdragenKostenResult = await transaction
+            // First get alimentatie IDs for this dossier
+            const alimentatieIds = await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
-                .query(`
-                    DELETE FROM dbo.bijdragen_kosten_kinderen
-                    WHERE alimentatie_id IN (
-                        SELECT id FROM dbo.alimentaties WHERE dossier_id = @DossierID
-                    )
-                `);
-            console.log(`Deleted ${bijdragenKostenResult.rowsAffected[0]} bijdragen_kosten_kinderen records`);
+                .query('SELECT id FROM dbo.alimentaties WHERE dossier_id = @DossierID');
 
-            // 1b. Delete financiele afspraken kinderen
-            const financieleAfsprakenResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query(`
-                    DELETE FROM dbo.financiele_afspraken_kinderen
-                    WHERE alimentatie_id IN (
-                        SELECT id FROM dbo.alimentaties WHERE dossier_id = @DossierID
-                    )
-                `);
-            console.log(`Deleted ${financieleAfsprakenResult.rowsAffected[0]} financiele_afspraken_kinderen records`);
+            // Delete related records if alimentaties exist
+            if (alimentatieIds.recordset.length > 0) {
+                const alimentatieIdList = alimentatieIds.recordset.map(r => r.id).join(',');
+
+                // 1a. Delete bijdragen kosten kinderen
+                const bijdragenKostenResult = await transaction
+                    .request()
+                    .query(`DELETE FROM dbo.bijdragen_kosten_kinderen WHERE alimentatie_id IN (${alimentatieIdList})`);
+                console.log(`Deleted ${bijdragenKostenResult.rowsAffected[0]} bijdragen_kosten_kinderen records`);
+
+                // 1b. Delete financiele afspraken kinderen
+                const financieleAfsprakenResult = await transaction
+                    .request()
+                    .query(`DELETE FROM dbo.financiele_afspraken_kinderen WHERE alimentatie_id IN (${alimentatieIdList})`);
+                console.log(`Deleted ${financieleAfsprakenResult.rowsAffected[0]} financiele_afspraken_kinderen records`);
+            }
 
             // 1c. Delete alimentaties
             const alimentatiesResult = await transaction
