@@ -1,34 +1,6 @@
 import Joi from 'joi';
 import { Geslacht } from '../models/Dossier';
 
-// Normalize field names from snake_case to camelCase for backwards compatibility
-function normalizePersonFields(data: any): any {
-    if (!data || typeof data !== 'object') {
-        return data;
-    }
-
-    const normalized = { ...data };
-
-    // Map snake_case fields to camelCase
-    const fieldMappings = {
-        'geboorte_datum': 'geboorteDatum',
-        'geboorte_plaats': 'geboorteplaats'
-    };
-
-    for (const [snakeCase, camelCase] of Object.entries(fieldMappings)) {
-        if (snakeCase in normalized) {
-            // Only use snake_case value if camelCase version doesn't exist
-            if (!(camelCase in normalized)) {
-                normalized[camelCase] = normalized[snakeCase];
-            }
-            // Remove the snake_case version
-            delete normalized[snakeCase];
-        }
-    }
-
-    return normalized;
-}
-
 export const persoonSchema = Joi.object({
     voorletters: Joi.string().max(10).optional(),
     voornamen: Joi.string().max(100).optional(),
@@ -74,15 +46,11 @@ export const updatePersoonSchema = Joi.object({
 });
 
 export const validatePersoon = (data: any) => {
-    // Normalize field names from snake_case to camelCase if present
-    const normalizedData = normalizePersonFields(data);
-    return persoonSchema.validate(normalizedData, { abortEarly: false });
+    return persoonSchema.validate(data, { abortEarly: false });
 };
 
 export const validateUpdatePersoon = (data: any) => {
-    // Normalize field names from snake_case to camelCase if present
-    const normalizedData = normalizePersonFields(data);
-    return updatePersoonSchema.validate(normalizedData, { abortEarly: false });
+    return updatePersoonSchema.validate(data, { abortEarly: false });
 };
 
 export const validateAddPartij = (data: any) => {

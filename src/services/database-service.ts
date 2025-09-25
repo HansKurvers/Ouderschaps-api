@@ -1999,7 +1999,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
+                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboortedatum ? new Date(dto.geboortedatum) : null);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
@@ -2019,7 +2019,7 @@ export class DossierDatabaseService {
                         adres = @Adres,
                         postcode = @Postcode,
                         plaats = @Plaats,
-                        geboorteplaats = @GeboortePlaats,
+                        geboorteplaats = @GeboorteplaatsFK,
                         geboortedatum = @Geboortedatum,
                         nationaliteit_1 = @Nationaliteit_1,
                         nationaliteit_2 = @Nationaliteit_2,
@@ -2048,7 +2048,7 @@ export class DossierDatabaseService {
                 request.input('Adres', sql.NVarChar, dto.adres);
                 request.input('Postcode', sql.NVarChar, dto.postcode);
                 request.input('Plaats', sql.NVarChar, dto.plaats);
-                request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
+                request.input('GeboorteplaatsFK', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboortedatum ? new Date(dto.geboortedatum) : null);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
@@ -2088,7 +2088,7 @@ export class DossierDatabaseService {
                         @Adres,
                         @Postcode,
                         @Plaats,
-                        @GeboortePlaats,
+                        @GeboorteplaatsFK,
                         @Geboortedatum,
                         @Nationaliteit_1,
                         @Nationaliteit_2,
