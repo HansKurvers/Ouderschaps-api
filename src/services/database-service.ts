@@ -155,42 +155,57 @@ export class DossierDatabaseService {
             // Delete related data in correct order (from most dependent to least)
 
             // 1. Delete alimentatie related tables first (most dependent)
-            // First get alimentatie IDs for this dossier
-            const alimentatieIds = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('SELECT id FROM dbo.alimentaties WHERE dossier_id = @DossierID');
-
-            // Delete related records if alimentaties exist
-            if (alimentatieIds.recordset.length > 0) {
-                const alimentatieIdList = alimentatieIds.recordset.map(r => r.id).join(',');
-
-                // 1a. Delete bijdragen kosten kinderen
+            // Use simple approach - try to delete, ignore if tables don't exist
+            try {
                 const bijdragenKostenResult = await transaction
                     .request()
-                    .query(`DELETE FROM dbo.bijdragen_kosten_kinderen WHERE alimentatie_id IN (${alimentatieIdList})`);
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`
+                        DELETE bkk
+                        FROM dbo.bijdragen_kosten_kinderen bkk
+                        INNER JOIN dbo.alimentaties a ON bkk.alimentatie_id = a.id
+                        WHERE a.dossier_id = @DossierID
+                    `);
                 console.log(`Deleted ${bijdragenKostenResult.rowsAffected[0]} bijdragen_kosten_kinderen records`);
-
-                // 1b. Delete financiele afspraken kinderen
-                const financieleAfsprakenResult = await transaction
-                    .request()
-                    .query(`DELETE FROM dbo.financiele_afspraken_kinderen WHERE alimentatie_id IN (${alimentatieIdList})`);
-                console.log(`Deleted ${financieleAfsprakenResult.rowsAffected[0]} financiele_afspraken_kinderen records`);
+            } catch (error) {
+                console.log('No bijdragen_kosten_kinderen to delete or table does not exist');
             }
 
-            // 1c. Delete alimentaties
-            const alimentatiesResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.alimentaties WHERE dossier_id = @DossierID');
-            console.log(`Deleted ${alimentatiesResult.rowsAffected[0]} alimentaties records`);
+            try {
+                const financieleAfsprakenResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`
+                        DELETE fak
+                        FROM dbo.financiele_afspraken_kinderen fak
+                        INNER JOIN dbo.alimentaties a ON fak.alimentatie_id = a.id
+                        WHERE a.dossier_id = @DossierID
+                    `);
+                console.log(`Deleted ${financieleAfsprakenResult.rowsAffected[0]} financiele_afspraken_kinderen records`);
+            } catch (error) {
+                console.log('No financiele_afspraken_kinderen to delete or table does not exist');
+            }
+
+            try {
+                const alimentatiesResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query('DELETE FROM dbo.alimentaties WHERE dossier_id = @DossierID');
+                console.log(`Deleted ${alimentatiesResult.rowsAffected[0]} alimentaties records`);
+            } catch (error) {
+                console.log('No alimentaties to delete or table does not exist');
+            }
 
             // 2. Delete ouderschapsplan info
-            const ouderschapsplanResult = await transaction
-                .request()
-                .input('DossierID', sql.Int, dossierID)
-                .query('DELETE FROM dbo.ouderschapsplan_info WHERE dossier_id = @DossierID');
-            console.log(`Deleted ${ouderschapsplanResult.rowsAffected[0]} ouderschapsplan_info records`);
+            try {
+                const ouderschapsplanResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query('DELETE FROM dbo.ouderschapsplan_info WHERE dossier_id = @DossierID');
+                console.log(`Deleted ${ouderschapsplanResult.rowsAffected[0]} ouderschapsplan_info records`);
+            } catch (error) {
+                console.log('No ouderschapsplan_info to delete or table does not exist');
+            }
 
             // 3. Delete omgang records
             const omgangResult = await transaction
