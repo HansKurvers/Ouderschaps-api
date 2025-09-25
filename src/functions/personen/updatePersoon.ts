@@ -6,7 +6,7 @@ import { requireAuthentication } from '../../utils/auth-helper';
 
 export async function updatePersoon(
     request: HttpRequest,
-    context: InvocationContext
+    _context: InvocationContext
 ): Promise<HttpResponseInit> {
     const dbService = new DossierDatabaseService();
     let updateData: any = null;
@@ -17,7 +17,6 @@ export async function updatePersoon(
         try {
             userId = await requireAuthentication(request);
         } catch (authError) {
-            context.log('Authentication failed:', authError);
             return createErrorResponse('Authentication required', 401);
         }
 
@@ -72,16 +71,9 @@ export async function updatePersoon(
             id: persoonId
         }, userId);
 
-        context.log(`Updated persoon with ID: ${persoonId}`);
         return createSuccessResponse(updatedPersoon);
 
     } catch (error) {
-        context.error('Error in updatePersoon:', error);
-        if (updateData) {
-            context.error('Update data:', JSON.stringify(updateData, null, 2));
-        }
-        context.error(`Persoon ID: ${request.params.persoonId}`);
-        context.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
         return createErrorResponse(`Internal server error: ${error instanceof Error ? error.message : String(error)}`, 500);
     } finally {
         await dbService.close();

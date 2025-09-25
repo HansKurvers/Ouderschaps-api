@@ -11,10 +11,8 @@ const querySchema = Joi.object({
 
 export async function getPersonen(
     request: HttpRequest,
-    context: InvocationContext
+    _context: InvocationContext
 ): Promise<HttpResponseInit> {
-    context.log('GET Personen endpoint called');
-
     const service = new DossierDatabaseService();
 
     try {
@@ -22,24 +20,15 @@ export async function getPersonen(
         let userId: number;
         try {
             userId = await requireAuthentication(request);
-            context.log(`Authentication successful for user ID: ${userId}`);
         } catch (authError) {
-            context.error('Authentication failed in getPersonen:', authError);
             return createUnauthorizedResponse();
         }
 
-        try {
-            await service.initialize();
-            context.log('Database connection initialized successfully');
-        } catch (dbError) {
-            context.error('Database initialization failed in getPersonen:', dbError);
-            return createErrorResponse('Database connection failed', 500);
-        }
+        await service.initialize();
 
         const { searchParams } = new URL(request.url);
         const limit = parseInt(searchParams.get('limit') || '50');
         const offset = parseInt(searchParams.get('offset') || '0');
-        context.log(`Query parameters: limit=${limit}, offset=${offset}`);
 
         // Validate query parameters
         const { error, value } = querySchema.validate({
@@ -54,21 +43,15 @@ export async function getPersonen(
         const { limit: validatedLimit, offset: validatedOffset } = value;
 
         // Get personen for this user only - try direct first, then via dossier relationships
-        context.log(`Fetching personen for user ${userId} with limit ${validatedLimit}, offset ${validatedOffset}`);
         let personen = await service.getAllPersonenForUser(userId, validatedLimit, validatedOffset);
 
         // If no direct personen found, try via dossier relationships
         if (personen.total === 0) {
-            context.log(`No direct personen found for user ${userId}, trying via dossier relationships...`);
             try {
                 personen = await service.getAllPersonenForUserViaDossiers(userId, validatedLimit, validatedOffset);
-                context.log(`Retrieved ${personen.data.length} personen via dossier relationships (total: ${personen.total})`);
             } catch (dossierError) {
-                context.error('Failed to fetch personen via dossier relationships:', dossierError);
                 // Continue with empty result from direct method
             }
-        } else {
-            context.log(`Successfully retrieved ${personen.data.length} personen directly (total: ${personen.total})`);
         }
 
         return createSuccessResponse({
@@ -81,8 +64,6 @@ export async function getPersonen(
             },
         });
     } catch (error) {
-        context.error('Error fetching personen:', error);
-
         return createErrorResponse(
             error instanceof Error ? error.message : 'Failed to fetch personen',
             500

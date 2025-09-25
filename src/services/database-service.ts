@@ -101,37 +101,21 @@ export class DossierDatabaseService {
 
     async checkDossierAccess(dossierID: number, userID: number): Promise<boolean> {
         try {
-            console.log(`checkDossierAccess called with dossierID: ${dossierID}, userID: ${userID}`);
             const pool = await this.getPool();
             const request = pool.request();
 
             request.input('DossierID', sql.Int, dossierID);
             request.input('UserID', sql.Int, userID);
 
-            console.log('Executing dossier access check query...');
             const result = await request.query(`
-                SELECT COUNT(*) as count,
-                       (SELECT gebruiker_id FROM dbo.dossiers WHERE id = @DossierID) as actual_owner
+                SELECT COUNT(*) as count
                 FROM dbo.dossiers
                 WHERE id = @DossierID AND gebruiker_id = @UserID
             `);
 
-            const count = result.recordset[0].count;
-            const actualOwner = result.recordset[0].actual_owner;
-            const hasAccess = count > 0;
-
-            console.log(`Dossier ${dossierID} access check: hasAccess=${hasAccess}, count=${count}, actualOwner=${actualOwner}, requestingUser=${userID}`);
-
-            if (!hasAccess && actualOwner !== null) {
-                console.warn(`User ${userID} attempted to access dossier ${dossierID} owned by user ${actualOwner}`);
-            } else if (actualOwner === null) {
-                console.warn(`Dossier ${dossierID} does not exist`);
-            }
-
-            return hasAccess;
+            return result.recordset[0].count > 0;
         } catch (error) {
             console.error('Error checking dossier access:', error);
-            console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
             throw error;
         }
     }
@@ -1921,14 +1905,11 @@ export class DossierDatabaseService {
     // Alternative method to get personen via dossier relationships
     async getAllPersonenForUserViaDossiers(userId: number, limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
         try {
-            console.log(`getAllPersonenForUserViaDossiers called with userId: ${userId}, limit: ${limit}, offset: ${offset}`);
             const pool = await this.getPool();
-            console.log('Database pool obtained successfully');
 
             // Get count of unique persons linked to user's dossiers
             const countRequest = pool.request();
             countRequest.input('UserId', sql.Int, userId);
-            console.log('Executing count query for personen via dossiers...');
             const countResult = await countRequest.query(`
                 SELECT COUNT(DISTINCT p.id) as total
                 FROM dbo.personen p
@@ -1937,7 +1918,6 @@ export class DossierDatabaseService {
                 WHERE d.gebruiker_id = @UserId
             `);
             const total = countResult.recordset[0].total;
-            console.log(`Total personen count via dossiers for user ${userId}: ${total}`);
 
             // Get paginated data
             const dataRequest = pool.request();
@@ -1945,7 +1925,6 @@ export class DossierDatabaseService {
             dataRequest.input('Limit', sql.Int, limit);
             dataRequest.input('Offset', sql.Int, offset);
 
-            console.log('Executing data query for personen via dossiers...');
             const result = await dataRequest.query(`
                 SELECT DISTINCT
                     p.id,
@@ -1974,38 +1953,29 @@ export class DossierDatabaseService {
                 FETCH NEXT @Limit ROWS ONLY
             `);
 
-            console.log(`Retrieved ${result.recordset.length} personen records via dossiers from database`);
-            const mappedPersonen = result.recordset.map(row => DbMappers.toPersoon(row));
-            console.log(`Successfully mapped ${mappedPersonen.length} personen objects`);
-
             return {
-                data: mappedPersonen,
+                data: result.recordset.map(row => DbMappers.toPersoon(row)),
                 total
             };
         } catch (error) {
             console.error('Error in getAllPersonenForUserViaDossiers:', error);
-            console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-            throw new Error(`Failed to fetch personen via dossiers: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error('Failed to fetch personen via dossiers');
         }
     }
 
     // Personen methods - User-scoped versions
     async getAllPersonenForUser(userId: number, limit: number, offset: number): Promise<{ data: Persoon[], total: number }> {
         try {
-            console.log(`getAllPersonenForUser called with userId: ${userId}, limit: ${limit}, offset: ${offset}`);
             const pool = await this.getPool();
-            console.log('Database pool obtained successfully');
 
             // Get total count for this user
             const countRequest = pool.request();
             countRequest.input('UserId', sql.Int, userId);
-            console.log('Executing count query for personen...');
             const countResult = await countRequest.query(`
                 SELECT COUNT(*) as total FROM dbo.personen
                 WHERE gebruiker_id = @UserId
             `);
             const total = countResult.recordset[0].total;
-            console.log(`Total personen count for user ${userId}: ${total}`);
 
             // Get paginated data for this user
             const dataRequest = pool.request();
@@ -2013,7 +1983,6 @@ export class DossierDatabaseService {
             dataRequest.input('Limit', sql.Int, limit);
             dataRequest.input('Offset', sql.Int, offset);
 
-            console.log('Executing data query for personen...');
             const result = await dataRequest.query(`
                 SELECT 
                     id,
@@ -2040,18 +2009,13 @@ export class DossierDatabaseService {
                 FETCH NEXT @Limit ROWS ONLY
             `);
 
-            console.log(`Retrieved ${result.recordset.length} personen records from database`);
-            const mappedPersonen = result.recordset.map(row => DbMappers.toPersoon(row));
-            console.log(`Successfully mapped ${mappedPersonen.length} personen objects`);
-
             return {
-                data: mappedPersonen,
+                data: result.recordset.map(row => DbMappers.toPersoon(row)),
                 total
             };
         } catch (error) {
             console.error('Error in getAllPersonenForUser:', error);
-            console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-            throw new Error(`Failed to fetch personen: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error('Failed to fetch personen');
         }
     }
 
@@ -2199,10 +2163,7 @@ export class DossierDatabaseService {
             }
         } catch (error) {
             console.error('Error in createOrUpdatePersoonForUser:', error);
-            console.error('Person data:', JSON.stringify(persoonData, null, 2));
-            console.error('User ID:', userId);
-            console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-            throw new Error(`Failed to create or update persoon: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error('Failed to create or update persoon');
         }
     }
 

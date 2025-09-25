@@ -60,11 +60,6 @@ export async function createPersoon(
         return createSuccessResponse(newPersoon);
 
     } catch (error) {
-        context.error('Error in createPersoon:', error);
-        if (persoonData) {
-            context.error('Request data:', JSON.stringify(persoonData, null, 2));
-        }
-        context.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
         return createErrorResponse(`Internal server error: ${error instanceof Error ? error.message : String(error)}`, 500);
     } finally {
         await dbService.close();
