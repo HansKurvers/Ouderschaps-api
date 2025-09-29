@@ -208,7 +208,23 @@ export class DossierDatabaseService {
             // Delete related data in correct order (from most dependent to least)
 
             // 1. Delete alimentatie related tables first (most dependent)
-            // Delete bijdragen_kosten_kinderen first
+            // First, set alimentaties.bijdrage_kosten_kinderen to NULL to break the FK constraint
+            try {
+                const nullifyBijdrageResult = await transaction
+                    .request()
+                    .input('DossierID', sql.Int, dossierID)
+                    .query(`
+                        UPDATE dbo.alimentaties
+                        SET bijdrage_kosten_kinderen = NULL
+                        WHERE dossier_id = @DossierID
+                    `);
+                console.log(`Nullified ${nullifyBijdrageResult.rowsAffected[0]} alimentaties.bijdrage_kosten_kinderen references`);
+            } catch (error) {
+                console.error('Error nullifying alimentaties.bijdrage_kosten_kinderen:', error);
+                throw error;
+            }
+
+            // Now delete bijdragen_kosten_kinderen
             try {
                 const bijdragenKostenResult = await transaction
                     .request()
@@ -2468,20 +2484,62 @@ export class DossierDatabaseService {
     }
 
     async deletePersoonForUser(persoonId: number, userId: number): Promise<boolean> {
+        const pool = await this.getPool();
+        const transaction = new sql.Transaction(pool);
+
         try {
-            const pool = await this.getPool();
-            const request = pool.request();
+            await transaction.begin();
 
-            request.input('PersoonId', sql.Int, persoonId);
-            request.input('UserId', sql.Int, userId);
+            // Delete related data in correct order (from most dependent to least)
 
-            const result = await request.query(`
-                DELETE FROM dbo.personen 
-                WHERE id = @PersoonId AND gebruiker_id = @UserId
-            `);
+            // 1. Delete from kinderen_ouders where person is a child
+            const deleteKindRelaties = await transaction
+                .request()
+                .input('PersoonId', sql.Int, persoonId)
+                .query('DELETE FROM dbo.kinderen_ouders WHERE kind_id = @PersoonId');
+            console.log(`Deleted ${deleteKindRelaties.rowsAffected[0]} kinderen_ouders records (as kind)`);
 
-            return result.rowsAffected[0] > 0;
+            // 2. Delete from kinderen_ouders where person is a parent
+            const deleteOuderRelaties = await transaction
+                .request()
+                .input('PersoonId', sql.Int, persoonId)
+                .query('DELETE FROM dbo.kinderen_ouders WHERE ouder_id = @PersoonId');
+            console.log(`Deleted ${deleteOuderRelaties.rowsAffected[0]} kinderen_ouders records (as ouder)`);
+
+            // 3. Delete from dossiers_kinderen
+            const deleteDossiersKinderen = await transaction
+                .request()
+                .input('PersoonId', sql.Int, persoonId)
+                .query('DELETE FROM dbo.dossiers_kinderen WHERE kind_id = @PersoonId');
+            console.log(`Deleted ${deleteDossiersKinderen.rowsAffected[0]} dossiers_kinderen records`);
+
+            // 4. Delete from dossiers_partijen
+            const deleteDossiersPartijen = await transaction
+                .request()
+                .input('PersoonId', sql.Int, persoonId)
+                .query('DELETE FROM dbo.dossiers_partijen WHERE persoon_id = @PersoonId');
+            console.log(`Deleted ${deleteDossiersPartijen.rowsAffected[0]} dossiers_partijen records`);
+
+            // 5. Delete from omgang where person is verzorger
+            const deleteOmgang = await transaction
+                .request()
+                .input('PersoonId', sql.Int, persoonId)
+                .query('DELETE FROM dbo.omgang WHERE verzorger_id = @PersoonId');
+            console.log(`Deleted ${deleteOmgang.rowsAffected[0]} omgang records`);
+
+            // 6. Finally, delete the person
+            const deletePersoon = await transaction
+                .request()
+                .input('PersoonId', sql.Int, persoonId)
+                .input('UserId', sql.Int, userId)
+                .query('DELETE FROM dbo.personen WHERE id = @PersoonId AND gebruiker_id = @UserId');
+
+            await transaction.commit();
+            console.log(`Persoon with ID ${persoonId} deleted successfully`);
+
+            return deletePersoon.rowsAffected[0] > 0;
         } catch (error) {
+            await transaction.rollback();
             console.error('Error in deletePersoonForUser:', error);
             throw new Error('Failed to delete persoon');
         }
