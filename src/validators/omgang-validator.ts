@@ -46,7 +46,7 @@ export const omgangDaySchema = Joi.object({
 
 export const omgangWeekSchema = Joi.object({
     weekRegelingId: Joi.number().integer().positive().required(),
-    days: Joi.array().items(omgangDaySchema).min(1).max(7).required(),
+    days: Joi.array().items(omgangDaySchema).min(0).max(7).required(),
     weekRegelingAnders: Joi.string().allow('').optional()
 });
 
