@@ -284,6 +284,9 @@ export interface OuderschapsplanInfo {
     opvangKinderen?: string;
     bankrekeningnummersOpNaamVanKind?: string;
     parentingCoordinator?: string;
+    datumAanvangRelatie?: Date;
+    overeenkomstGemaakt?: boolean;
+    plaatsRelatie?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -311,6 +314,9 @@ export interface OuderschapsplanInfoDbDto {
     opvang_kinderen?: string;
     bankrekeningnummers_op_naam_van_kind?: string;
     parenting_coordinator?: string;
+    datum_aanvang_relatie?: Date;
+    overeenkomst_gemaakt?: boolean;
+    plaats_relatie?: string;
     created_at?: Date;
     updated_at?: Date;
 }

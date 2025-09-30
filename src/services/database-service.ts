@@ -2626,6 +2626,9 @@ export class DossierDatabaseService {
             request.input('OpvangKinderen', sql.NVarChar, dto.opvangKinderen);
             request.input('Bankrekeningnummers', sql.NVarChar, dto.bankrekeningnummersOpNaamVanKind);
             request.input('ParentingCoordinator', sql.NVarChar, dto.parentingCoordinator);
+            request.input('DatumAanvangRelatie', sql.Date, dto.datumAanvangRelatie);
+            request.input('OvereenkomstGemaakt', sql.Bit, dto.overeenkomstGemaakt);
+            request.input('PlaatsRelatie', sql.NVarChar, dto.plaatsRelatie);
 
             const result = await request.query(`
                 INSERT INTO dbo.ouderschapsplan_info (
@@ -2649,7 +2652,10 @@ export class DossierDatabaseService {
                     zorgverdeling,
                     opvang_kinderen,
                     bankrekeningnummers_op_naam_van_kind,
-                    parenting_coordinator
+                    parenting_coordinator,
+                    datum_aanvang_relatie,
+                    overeenkomst_gemaakt,
+                    plaats_relatie
                 )
                 OUTPUT INSERTED.*
                 VALUES (
@@ -2673,7 +2679,10 @@ export class DossierDatabaseService {
                     @Zorgverdeling,
                     @OpvangKinderen,
                     @Bankrekeningnummers,
-                    @ParentingCoordinator
+                    @ParentingCoordinator,
+                    @DatumAanvangRelatie,
+                    @OvereenkomstGemaakt,
+                    @PlaatsRelatie
                 )
             `);
 
@@ -2835,6 +2844,18 @@ export class DossierDatabaseService {
             if (dto.parentingCoordinator !== undefined) {
                 request.input('ParentingCoordinator', sql.NVarChar, dto.parentingCoordinator);
                 updateFields.push('parenting_coordinator = @ParentingCoordinator');
+            }
+            if (dto.datumAanvangRelatie !== undefined) {
+                request.input('DatumAanvangRelatie', sql.Date, dto.datumAanvangRelatie);
+                updateFields.push('datum_aanvang_relatie = @DatumAanvangRelatie');
+            }
+            if (dto.overeenkomstGemaakt !== undefined) {
+                request.input('OvereenkomstGemaakt', sql.Bit, dto.overeenkomstGemaakt);
+                updateFields.push('overeenkomst_gemaakt = @OvereenkomstGemaakt');
+            }
+            if (dto.plaatsRelatie !== undefined) {
+                request.input('PlaatsRelatie', sql.NVarChar, dto.plaatsRelatie);
+                updateFields.push('plaats_relatie = @PlaatsRelatie');
             }
 
             updateFields.push('updated_at = GETDATE()');

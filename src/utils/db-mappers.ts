@@ -115,6 +115,9 @@ export class DbMappers {
             opvangKinderen: dto.opvang_kinderen,
             bankrekeningnummersOpNaamVanKind: dto.bankrekeningnummers_op_naam_van_kind,
             parentingCoordinator: dto.parenting_coordinator,
+            datumAanvangRelatie: dto.datum_aanvang_relatie,
+            overeenkomstGemaakt: dto.overeenkomst_gemaakt,
+            plaatsRelatie: dto.plaats_relatie,
             createdAt: dto.created_at,
             updatedAt: dto.updated_at,
         };
@@ -144,6 +147,9 @@ export class DbMappers {
             opvang_kinderen: info.opvangKinderen,
             bankrekeningnummers_op_naam_van_kind: info.bankrekeningnummersOpNaamVanKind,
             parenting_coordinator: info.parentingCoordinator,
+            datum_aanvang_relatie: info.datumAanvangRelatie,
+            overeenkomst_gemaakt: info.overeenkomstGemaakt,
+            plaats_relatie: info.plaatsRelatie,
             created_at: info.createdAt,
             updated_at: info.updatedAt,
         };
