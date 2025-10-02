@@ -983,6 +983,38 @@ export class DossierDatabaseService {
         }
     }
 
+    async updatePartijRol(dossierId: number, partijId: number, rolId: number): Promise<{id: number, persoon: Persoon, rol: Rol}> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('DossierId', sql.Int, dossierId);
+            request.input('PartijId', sql.Int, partijId);
+            request.input('RolId', sql.Int, rolId);
+
+            await request.query(`
+                UPDATE dbo.dossiers_partijen
+                SET rol_id = @RolId
+                WHERE dossier_id = @DossierId AND id = @PartijId
+            `);
+
+            // Get the updated partij data
+            const partijData = await this.getPartijById(dossierId, partijId);
+            if (!partijData) {
+                throw new Error('Failed to retrieve updated partij');
+            }
+
+            return {
+                id: partijId,
+                persoon: partijData.persoon,
+                rol: partijData.rol
+            };
+        } catch (error) {
+            console.error('Error updating partij rol:', error);
+            throw error;
+        }
+    }
+
     async getPartijListWithId(dossierID: number): Promise<Array<{ id: number; persoon: Persoon; rol: Rol }>> {
         try {
             const pool = await this.getPool();
