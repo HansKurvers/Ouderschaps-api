@@ -809,8 +809,8 @@ export class DossierDatabaseService {
             const request = pool.request();
 
             const result = await request.query(`
-                SELECT id, naam 
-                FROM dbo.rollen 
+                SELECT id, naam
+                FROM dbo.rollen
                 ORDER BY naam
             `);
 
@@ -820,6 +820,30 @@ export class DossierDatabaseService {
             }));
         } catch (error) {
             console.error('Error getting rollen:', error);
+            throw error;
+        }
+    }
+
+    async getPersoonTypes(): Promise<{ id: number; naam: string; beschrijving?: string; actief: boolean }[]> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            const result = await request.query(`
+                SELECT id, naam, beschrijving, actief
+                FROM dbo.persoon_types
+                WHERE actief = 1
+                ORDER BY naam
+            `);
+
+            return result.recordset.map(row => ({
+                id: row.id,
+                naam: row.naam,
+                beschrijving: row.beschrijving,
+                actief: row.actief
+            }));
+        } catch (error) {
+            console.error('Error getting persoon types:', error);
             throw error;
         }
     }
@@ -2269,27 +2293,30 @@ export class DossierDatabaseService {
             dataRequest.input('Offset', sql.Int, offset);
 
             const result = await dataRequest.query(`
-                SELECT 
-                    id,
-                    voorletters,
-                    voornamen,
-                    roepnaam,
-                    geslacht,
-                    tussenvoegsel,
-                    achternaam,
-                    adres,
-                    postcode,
-                    plaats,
-                    geboorteplaats,
-                    geboorte_datum,
-                    nationaliteit_1,
-                    nationaliteit_2,
-                    telefoon,
-                    email,
-                    beroep
-                FROM dbo.personen
-                WHERE gebruiker_id = @UserId
-                ORDER BY achternaam, voornamen
+                SELECT
+                    p.id,
+                    p.voorletters,
+                    p.voornamen,
+                    p.roepnaam,
+                    p.geslacht,
+                    p.tussenvoegsel,
+                    p.achternaam,
+                    p.adres,
+                    p.postcode,
+                    p.plaats,
+                    p.geboorteplaats,
+                    p.geboorte_datum,
+                    p.nationaliteit_1,
+                    p.nationaliteit_2,
+                    p.telefoon,
+                    p.email,
+                    p.beroep,
+                    p.persoon_type_id,
+                    pt.naam as persoon_type_naam
+                FROM dbo.personen p
+                LEFT JOIN dbo.persoon_types pt ON p.persoon_type_id = pt.id
+                WHERE p.gebruiker_id = @UserId
+                ORDER BY p.achternaam, p.voornamen
                 OFFSET @Offset ROWS
                 FETCH NEXT @Limit ROWS ONLY
             `);
@@ -2352,10 +2379,11 @@ export class DossierDatabaseService {
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
                 request.input('Email', sql.NVarChar, dto.email);
                 request.input('Beroep', sql.NVarChar, dto.beroep);
+                request.input('PersoonTypeId', sql.Int, persoonData.persoonTypeId || null);
 
                 const result = await request.query(`
                     UPDATE dbo.personen
-                    SET 
+                    SET
                         voorletters = @Voorletters,
                         voornamen = @Voornamen,
                         roepnaam = @Roepnaam,
@@ -2371,7 +2399,8 @@ export class DossierDatabaseService {
                         nationaliteit_2 = @Nationaliteit_2,
                         telefoon = @Telefoon,
                         email = @Email,
-                        beroep = @Beroep
+                        beroep = @Beroep,
+                        persoon_type_id = @PersoonTypeId
                     OUTPUT INSERTED.*
                     WHERE id = @Id AND gebruiker_id = @UserId
                 `);
@@ -2401,6 +2430,7 @@ export class DossierDatabaseService {
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
                 request.input('Email', sql.NVarChar, dto.email);
                 request.input('Beroep', sql.NVarChar, dto.beroep);
+                request.input('PersoonTypeId', sql.Int, persoonData.persoonTypeId || null);
 
                 const result = await request.query(`
                     INSERT INTO dbo.personen (
@@ -2420,7 +2450,8 @@ export class DossierDatabaseService {
                         nationaliteit_2,
                         telefoon,
                         email,
-                        beroep
+                        beroep,
+                        persoon_type_id
                     )
                     OUTPUT INSERTED.*
                     VALUES (
@@ -2440,7 +2471,8 @@ export class DossierDatabaseService {
                         @Nationaliteit_2,
                         @Telefoon,
                         @Email,
-                        @Beroep
+                        @Beroep,
+                        @PersoonTypeId
                     )
                 `);
 

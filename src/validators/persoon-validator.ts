@@ -19,7 +19,8 @@ export const persoonSchema = Joi.object({
     nationaliteit2: Joi.string().max(50).optional(),
     telefoon: Joi.string().max(20).optional(),
     email: Joi.string().email().max(100).optional(),
-    beroep: Joi.string().max(100).optional()
+    beroep: Joi.string().max(100).optional(),
+    persoonTypeId: Joi.number().integer().positive().optional()
 });
 
 export const addPartijSchema = Joi.object({
@@ -46,7 +47,8 @@ export const updatePersoonSchema = Joi.object({
     nationaliteit2: Joi.string().max(50).optional(),
     telefoon: Joi.string().max(20).optional(),
     email: Joi.string().email().max(100).optional(),
-    beroep: Joi.string().max(100).optional()
+    beroep: Joi.string().max(100).optional(),
+    persoonTypeId: Joi.number().integer().positive().optional()
 });
 
 export const validatePersoon = (data: any) => {
