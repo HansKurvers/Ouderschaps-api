@@ -260,6 +260,8 @@ export interface PersoonDbDto {
     telefoon?: string;
     email?: string;
     beroep?: string;
+    rol_id?: number;
+    rol_naam?: string;
 }
 
 // Ouderschapsplan Info interfaces

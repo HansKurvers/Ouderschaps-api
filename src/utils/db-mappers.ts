@@ -41,7 +41,7 @@ export class DbMappers {
                 throw new Error('Persoon achternaam is required but missing from database result');
             }
 
-            return {
+            const persoon: Persoon = {
                 id: dto.id,
                 voorletters: dto.voorletters,
                 voornamen: dto.voornamen,
@@ -59,7 +59,18 @@ export class DbMappers {
                 telefoon: dto.telefoon,
                 email: dto.email,
                 beroep: dto.beroep,
+                rolId: dto.rol_id,
             };
+
+            // Add rol object if rol_naam is present
+            if (dto.rol_id && dto.rol_naam) {
+                persoon.rol = {
+                    id: dto.rol_id,
+                    naam: dto.rol_naam
+                };
+            }
+
+            return persoon;
         } catch (error) {
             console.error('Error mapping Persoon from database:', error);
             console.error('Database DTO:', JSON.stringify(dto, null, 2));
