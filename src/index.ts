@@ -35,7 +35,6 @@ import './functions/kinderen/removeOuderFromKind';
 
 // Lookup functions
 import './functions/lookups/getRollen';
-import './functions/lookups/getPersoonTypes';
 import './functions/lookups/getRelatieTypes';
 import './functions/lookups/getDagen';
 import './functions/lookups/getDagdelen';

@@ -30,15 +30,8 @@ export interface Persoon {
     telefoon?: string;
     email?: string;
     beroep?: string;
-    persoonTypeId?: number;
-    persoonType?: PersoonType;
-}
-
-export interface PersoonType {
-    id: number;
-    naam: string;
-    beschrijving?: string;
-    actief: boolean;
+    rolId?: number;
+    rol?: Rol;
 }
 
 export interface KindOuder {
