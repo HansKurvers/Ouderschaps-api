@@ -15,6 +15,7 @@ import './functions/dossiers/deleteDossier';
 import './functions/dossiers/updateDossierAnonymity';
 import './functions/dossiers/addPartijToDossier';
 import './functions/dossiers/removePartijFromDossier';
+import './functions/dossiers/updatePartijRol';
 import './functions/dossiers/getDossierPartijen';
 import './functions/dossiers/getDossierKinderen';
 import './functions/dossiers/addKindToDossier';
