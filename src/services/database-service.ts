@@ -2349,11 +2349,15 @@ export class DossierDatabaseService {
             request.input('UserId', sql.Int, userId);
 
             const result = await request.query(`
-                SELECT * FROM dbo.personen 
-                WHERE id = @PersoonId AND gebruiker_id = @UserId
+                SELECT
+                    p.*,
+                    r.naam as rol_naam
+                FROM dbo.personen p
+                LEFT JOIN dbo.rollen r ON p.rol_id = r.id
+                WHERE p.id = @PersoonId AND p.gebruiker_id = @UserId
             `);
 
-            return result.recordset.length > 0 
+            return result.recordset.length > 0
                 ? DbMappers.toPersoon(result.recordset[0])
                 : null;
         } catch (error) {
