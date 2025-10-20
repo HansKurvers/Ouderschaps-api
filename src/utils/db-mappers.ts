@@ -5,6 +5,7 @@ import {
     PersoonDbDto,
     OuderschapsplanInfo,
     OuderschapsplanInfoDbDto,
+    Alimentatie,
 } from '../models/Dossier';
 
 export class DbMappers {
@@ -163,6 +164,22 @@ export class DbMappers {
             plaats_relatie: info.plaatsRelatie,
             created_at: info.createdAt,
             updated_at: info.updatedAt,
+        };
+    }
+
+    static toAlimentatie(row: any): Alimentatie {
+        return {
+            id: row.id,
+            dossierId: row.dossier_id,
+            betalerId: row.betaler_id,
+            ontvangerId: row.ontvanger_id,
+            bedrag: parseFloat(row.bedrag),
+            frequentie: row.frequentie,
+            ingangsdatum: new Date(row.ingangsdatum),
+            einddatum: row.einddatum ? new Date(row.einddatum) : undefined,
+            opmerkingen: row.opmerkingen || undefined,
+            aangemaaktOp: new Date(row.aangemaakt_op),
+            gewijzigdOp: new Date(row.gewijzigd_op)
         };
     }
 

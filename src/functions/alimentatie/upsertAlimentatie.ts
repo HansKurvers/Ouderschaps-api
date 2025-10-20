@@ -4,7 +4,7 @@ import { DossierDatabaseService } from '../../services/database-service';
 import { requireAuthentication } from '../../utils/auth-helper';
 import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse } from '../../utils/response-helper';
 import { CreateAlimentatieDto } from '../../models/Alimentatie';
-import { AlimentatieValidator } from '../../validators/alimentatie-validator';
+// import { AlimentatieValidator } from '../../validators/alimentatie-validator';
 
 export async function upsertAlimentatie(
     request: HttpRequest,
@@ -41,11 +41,11 @@ export async function upsertAlimentatie(
         // Parse request body
         const body = await request.json() as CreateAlimentatieDto;
 
-        // Validate data
-        const validation = AlimentatieValidator.validateCreateAlimentatie(body);
-        if (!validation.valid) {
-            return createErrorResponse(`Validation errors: ${validation.errors.join(', ')}`, 400);
-        }
+        // Validate data (commented out - old validator removed)
+        // const validation = AlimentatieValidator.validateCreateAlimentatie(body);
+        // if (!validation.valid) {
+        //     return createErrorResponse(`Validation errors: ${validation.errors.join(', ')}`, 400);
+        // }
 
         // Upsert alimentatie (will create new or update existing)
         const alimentatie = await alimentatieService.upsertAlimentatie(dossierId, body);

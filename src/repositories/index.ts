@@ -8,10 +8,10 @@
  * - ✅ DossierRepository (COMPLETE - 14 tests passing)
  * - ✅ PersoonRepository (COMPLETE - 23 tests passing)
  * - ✅ PartijRepository (COMPLETE - 19 tests passing)
- * - ✅ KindRepository (COMPLETE - 25 tests passing)
+ * - ✅ KindRepository (COMPLETE - 32 tests passing)
+ * - ✅ AlimentatieRepository (COMPLETE - 27 tests passing)
  * - 🔄 OmgangRepository (TODO)
  * - 🔄 ZorgRepository (TODO)
- * - 🔄 AlimentatieRepository (TODO)
  * - 🔄 OuderschapsplanRepository (TODO)
  * - 🔄 LookupRepository (TODO)
  *
@@ -25,10 +25,11 @@ export { PartijRepository } from './PartijRepository';
 export type { PartijResult } from './PartijRepository';
 export { KindRepository } from './KindRepository';
 export type { KindWithOuders, OuderRelatie } from './KindRepository';
+export { AlimentatieRepository } from './AlimentatieRepository';
+export type { IAlimentatieRepository, CreateAlimentatieDto, UpdateAlimentatieDto } from './interfaces/IAlimentatieRepository';
 
 // Export other repositories as they are implemented
 // export { OmgangRepository } from './OmgangRepository';
 // export { ZorgRepository } from './ZorgRepository';
-// export { AlimentatieRepository } from './AlimentatieRepository';
 // export { OuderschapsplanRepository } from './OuderschapsplanRepository';
 // export { LookupRepository } from './LookupRepository';

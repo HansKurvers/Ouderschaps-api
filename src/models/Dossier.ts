@@ -198,6 +198,34 @@ export interface UpdateZorgDto {
     overeenkomst?: string;
 }
 
+// FASE 5: Alimentatie interfaces
+
+export interface Alimentatie {
+    id: number;
+    dossierId: number;
+    betalerId: number;
+    ontvangerId: number;
+    bedrag: number;
+    frequentie: string;
+    ingangsdatum: Date;
+    einddatum?: Date;
+    opmerkingen?: string;
+    aangemaaktOp: Date;
+    gewijzigdOp: Date;
+}
+
+export interface AlimentatieWithPersonen {
+    alimentatie: Alimentatie;
+    betaler: Persoon;
+    ontvanger: Persoon;
+}
+
+export enum AlimentatieFrequentie {
+    PER_MAAND = 'per maand',
+    PER_WEEK = 'per week',
+    PER_JAAR = 'per jaar',
+    EENMALIG = 'eenmalig'
+}
 
 export interface CompleteDossierData {
     dossier: Dossier;
