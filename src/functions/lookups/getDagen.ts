@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { OmgangRepository } from '../../repositories/OmgangRepository';
+import { LookupRepository } from '../../repositories/LookupRepository';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 
@@ -27,15 +27,12 @@ export async function getDagen(
         return createSuccessResponse(dagenCache);
     }
 
-    const dbService = new DossierDatabaseService();
-    let omgangRepository: OmgangRepository | undefined;
-
     try {
         if (USE_REPOSITORY_PATTERN) {
-            omgangRepository = new OmgangRepository();
+            const lookupRepository = new LookupRepository();
 
             // Get dagen from repository
-            const dagen = await omgangRepository.getAllDagen();
+            const dagen = await lookupRepository.getAllDagen();
 
             // Update cache
             dagenCache = dagen;
@@ -44,25 +41,30 @@ export async function getDagen(
             context.log(`Retrieved ${dagen.length} dagen from repository`);
             return createSuccessResponse(dagen);
         } else {
-            // Initialize database connection
-            await dbService.initialize();
+            // Legacy path using DossierDatabaseService
+            const dbService = new DossierDatabaseService();
 
-            // Get dagen from database
-            const dagen = await dbService.getDagen();
+            try {
+                // Initialize database connection
+                await dbService.initialize();
 
-            // Update cache
-            dagenCache = dagen;
-            cacheTimestamp = now;
+                // Get dagen from database
+                const dagen = await dbService.getDagen();
 
-            context.log(`Retrieved ${dagen.length} dagen from database`);
-            return createSuccessResponse(dagen);
+                // Update cache
+                dagenCache = dagen;
+                cacheTimestamp = now;
+
+                context.log(`Retrieved ${dagen.length} dagen from database`);
+                return createSuccessResponse(dagen);
+            } finally {
+                await dbService.close();
+            }
         }
 
     } catch (error) {
         context.error('Error in getDagen:', error);
         return createErrorResponse('Internal server error', 500);
-    } finally {
-        await dbService.close();
     }
 }
 

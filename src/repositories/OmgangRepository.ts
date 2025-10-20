@@ -28,9 +28,9 @@ import { DbMappers } from '../utils/db-mappers';
  *
  * Database Schema:
  * - dbo.omgang: Main table with omgang records
- * - dbo.dag: Lookup table for days of week (1-7)
- * - dbo.dagdeel: Lookup table for parts of day (1-4)
- * - dbo.week_regeling: Lookup table for week patterns
+ * - dbo.dagen: Lookup table for days of week (1-7)
+ * - dbo.dagdelen: Lookup table for parts of day (1-4)
+ * - dbo.week_regelingen: Lookup table for week patterns
  * - dbo.personen: Referenced for verzorger
  * - dbo.dossiers_partijen: Junction table for verzorger validation
  *
@@ -87,10 +87,10 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
                 wr.id as week_regeling_id,
                 wr.omschrijving as week_regeling_omschrijving
             FROM dbo.omgang o
-            INNER JOIN dbo.dag d ON o.dag_id = d.id
-            INNER JOIN dbo.dagdeel dd ON o.dagdeel_id = dd.id
+            INNER JOIN dbo.dagen d ON o.dag_id = d.id
+            INNER JOIN dbo.dagdelen dd ON o.dagdeel_id = dd.id
             INNER JOIN dbo.personen p ON o.verzorger_id = p.id
-            INNER JOIN dbo.week_regeling wr ON o.week_regeling_id = wr.id
+            INNER JOIN dbo.week_regelingen wr ON o.week_regeling_id = wr.id
             WHERE o.dossier_id = @dossierId
             ORDER BY d.id, dd.id
         `;
@@ -145,10 +145,10 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
                 wr.id as week_regeling_id,
                 wr.omschrijving as week_regeling_omschrijving
             FROM dbo.omgang o
-            INNER JOIN dbo.dag d ON o.dag_id = d.id
-            INNER JOIN dbo.dagdeel dd ON o.dagdeel_id = dd.id
+            INNER JOIN dbo.dagen d ON o.dag_id = d.id
+            INNER JOIN dbo.dagdelen dd ON o.dagdeel_id = dd.id
             INNER JOIN dbo.personen p ON o.verzorger_id = p.id
-            INNER JOIN dbo.week_regeling wr ON o.week_regeling_id = wr.id
+            INNER JOIN dbo.week_regelingen wr ON o.week_regeling_id = wr.id
             WHERE o.id = @omgangId
         `;
 
@@ -398,7 +398,7 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
     async getAllDagen(): Promise<Dag[]> {
         const query = `
             SELECT id, naam
-            FROM dbo.dag
+            FROM dbo.dagen
             ORDER BY id
         `;
 
@@ -414,7 +414,7 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
     async getAllDagdelen(): Promise<Dagdeel[]> {
         const query = `
             SELECT id, naam
-            FROM dbo.dagdeel
+            FROM dbo.dagdelen
             ORDER BY id
         `;
 
@@ -430,7 +430,7 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
     async getAllWeekRegelingen(): Promise<WeekRegeling[]> {
         const query = `
             SELECT id, omschrijving
-            FROM dbo.week_regeling
+            FROM dbo.week_regelingen
             ORDER BY id
         `;
 

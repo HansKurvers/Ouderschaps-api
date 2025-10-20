@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { OmgangRepository } from '../../repositories/OmgangRepository';
+import { LookupRepository } from '../../repositories/LookupRepository';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 
@@ -27,15 +27,12 @@ export async function getWeekRegelingen(
         return createSuccessResponse(weekRegelingenCache);
     }
 
-    const dbService = new DossierDatabaseService();
-    let omgangRepository: OmgangRepository | undefined;
-
     try {
         if (USE_REPOSITORY_PATTERN) {
-            omgangRepository = new OmgangRepository();
+            const lookupRepository = new LookupRepository();
 
             // Get week regelingen from repository
-            const weekRegelingen = await omgangRepository.getAllWeekRegelingen();
+            const weekRegelingen = await lookupRepository.getAllWeekRegelingen();
 
             // Update cache
             weekRegelingenCache = weekRegelingen;
@@ -44,25 +41,30 @@ export async function getWeekRegelingen(
             context.log(`Retrieved ${weekRegelingen.length} week regelingen from repository`);
             return createSuccessResponse(weekRegelingen);
         } else {
-            // Initialize database connection
-            await dbService.initialize();
+            // Legacy path using DossierDatabaseService
+            const dbService = new DossierDatabaseService();
 
-            // Get week regelingen from database
-            const weekRegelingen = await dbService.getWeekRegelingen();
+            try {
+                // Initialize database connection
+                await dbService.initialize();
 
-            // Update cache
-            weekRegelingenCache = weekRegelingen;
-            cacheTimestamp = now;
+                // Get week regelingen from database
+                const weekRegelingen = await dbService.getWeekRegelingen();
 
-            context.log(`Retrieved ${weekRegelingen.length} week regelingen from database`);
-            return createSuccessResponse(weekRegelingen);
+                // Update cache
+                weekRegelingenCache = weekRegelingen;
+                cacheTimestamp = now;
+
+                context.log(`Retrieved ${weekRegelingen.length} week regelingen from database`);
+                return createSuccessResponse(weekRegelingen);
+            } finally {
+                await dbService.close();
+            }
         }
 
     } catch (error) {
         context.error('Error in getWeekRegelingen:', error);
         return createErrorResponse('Internal server error', 500);
-    } finally {
-        await dbService.close();
     }
 }
 

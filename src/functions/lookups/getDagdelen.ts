@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { OmgangRepository } from '../../repositories/OmgangRepository';
+import { LookupRepository } from '../../repositories/LookupRepository';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 
@@ -27,15 +27,12 @@ export async function getDagdelen(
         return createSuccessResponse(dagdelenCache);
     }
 
-    const dbService = new DossierDatabaseService();
-    let omgangRepository: OmgangRepository | undefined;
-
     try {
         if (USE_REPOSITORY_PATTERN) {
-            omgangRepository = new OmgangRepository();
+            const lookupRepository = new LookupRepository();
 
             // Get dagdelen from repository
-            const dagdelen = await omgangRepository.getAllDagdelen();
+            const dagdelen = await lookupRepository.getAllDagdelen();
 
             // Update cache
             dagdelenCache = dagdelen;
@@ -44,25 +41,30 @@ export async function getDagdelen(
             context.log(`Retrieved ${dagdelen.length} dagdelen from repository`);
             return createSuccessResponse(dagdelen);
         } else {
-            // Initialize database connection
-            await dbService.initialize();
+            // Legacy path using DossierDatabaseService
+            const dbService = new DossierDatabaseService();
 
-            // Get dagdelen from database
-            const dagdelen = await dbService.getDagdelen();
+            try {
+                // Initialize database connection
+                await dbService.initialize();
 
-            // Update cache
-            dagdelenCache = dagdelen;
-            cacheTimestamp = now;
+                // Get dagdelen from database
+                const dagdelen = await dbService.getDagdelen();
 
-            context.log(`Retrieved ${dagdelen.length} dagdelen from database`);
-            return createSuccessResponse(dagdelen);
+                // Update cache
+                dagdelenCache = dagdelen;
+                cacheTimestamp = now;
+
+                context.log(`Retrieved ${dagdelen.length} dagdelen from database`);
+                return createSuccessResponse(dagdelen);
+            } finally {
+                await dbService.close();
+            }
         }
 
     } catch (error) {
         context.error('Error in getDagdelen:', error);
         return createErrorResponse('Internal server error', 500);
-    } finally {
-        await dbService.close();
     }
 }
 
