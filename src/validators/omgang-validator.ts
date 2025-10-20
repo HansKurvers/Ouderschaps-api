@@ -7,12 +7,11 @@ import Joi from 'joi';
  * - dagId must be between 1-7 (Maandag through Zondag)
  * - dagdeelId must be between 1-4 (Ochtend, Middag, Avond, Nacht)
  * - verzorgerId must be a partij in the dossier (validated separately)
- * - wisselTijd format must be HH:MM (24-hour format)
+ * - wisselTijd accepts any text string (e.g., "18:00", "na school", "8 uur", etc.)
  * - weekRegelingAnders max 255 characters
  */
 
-// Time format validation: HH:MM (24-hour)
-export const wisselTijdPattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+// Note: wisselTijd validation removed - now accepts any string (free text input)
 
 export const createOmgangSchema = Joi.object({
     dossierId: Joi.number().integer().positive().required()
@@ -49,10 +48,10 @@ export const createOmgangSchema = Joi.object({
             'any.required': 'Verzorger is required'
         }),
 
-    wisselTijd: Joi.string().pattern(wisselTijdPattern).allow('', null).optional()
+    wisselTijd: Joi.string().max(255).allow('', null).optional()
         .messages({
             'string.base': 'Wissel tijd must be a string',
-            'string.pattern.base': 'Wissel tijd must be in format HH:MM (24-hour), e.g., 08:30 or 14:00'
+            'string.max': 'Wissel tijd mag maximaal 255 karakters zijn'
         }),
 
     weekRegelingId: Joi.number().integer().positive().required()
@@ -94,10 +93,10 @@ export const updateOmgangSchema = Joi.object({
             'number.positive': 'Verzorger ID must be positive'
         }),
 
-    wisselTijd: Joi.string().pattern(wisselTijdPattern).allow('', null).optional()
+    wisselTijd: Joi.string().max(255).allow('', null).optional()
         .messages({
             'string.base': 'Wissel tijd must be a string',
-            'string.pattern.base': 'Wissel tijd must be in format HH:MM (24-hour), e.g., 08:30 or 14:00'
+            'string.max': 'Wissel tijd mag maximaal 255 karakters zijn'
         }),
 
     weekRegelingId: Joi.number().integer().positive().optional()
@@ -121,7 +120,7 @@ export const omgangEntrySchema = Joi.object({
     dagId: Joi.number().integer().min(1).max(7).required(),
     dagdeelId: Joi.number().integer().min(1).max(4).required(),
     verzorgerId: Joi.number().integer().positive().required(),
-    wisselTijd: Joi.string().pattern(wisselTijdPattern).allow('', null).optional(),
+    wisselTijd: Joi.string().max(255).allow('', null).optional(),
     weekRegelingId: Joi.number().integer().positive().required(),
     weekRegelingAnders: Joi.string().max(255).allow('', null).optional()
 });
@@ -137,7 +136,7 @@ export const dagdeelSchema = Joi.object({
 
 export const omgangDaySchema = Joi.object({
     dagId: Joi.number().integer().min(1).max(7).required(),
-    wisselTijd: Joi.string().pattern(wisselTijdPattern).allow('', null).optional(),
+    wisselTijd: Joi.string().max(255).allow('', null).optional(),
     dagdelen: Joi.array().items(dagdeelSchema).min(1).required()
 });
 
