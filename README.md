@@ -337,3 +337,5 @@ All endpoints return appropriate HTTP status codes:
 ### Request Validation
 
 All endpoints use Joi validation for request data. Invalid requests return detailed error messages with status code 400.
+
+<!-- Test deployment after fixing Azure Federated Credential case-sensitivity issue - 2025-10-20 -->
