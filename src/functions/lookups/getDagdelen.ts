@@ -1,6 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { OmgangRepository } from '../../repositories/OmgangRepository';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
+
+const USE_REPOSITORY_PATTERN = process.env.USE_REPOSITORY_PATTERN === 'true';
 
 // In-memory cache for dagdelen
 let dagdelenCache: Array<{id: number, naam: string}> | null = null;
@@ -25,20 +28,35 @@ export async function getDagdelen(
     }
 
     const dbService = new DossierDatabaseService();
+    let omgangRepository: OmgangRepository | undefined;
 
     try {
-        // Initialize database connection
-        await dbService.initialize();
+        if (USE_REPOSITORY_PATTERN) {
+            omgangRepository = new OmgangRepository();
 
-        // Get dagdelen from database
-        const dagdelen = await dbService.getDagdelen();
+            // Get dagdelen from repository
+            const dagdelen = await omgangRepository.getAllDagdelen();
 
-        // Update cache
-        dagdelenCache = dagdelen;
-        cacheTimestamp = now;
+            // Update cache
+            dagdelenCache = dagdelen;
+            cacheTimestamp = now;
 
-        context.log(`Retrieved ${dagdelen.length} dagdelen from database`);
-        return createSuccessResponse(dagdelen);
+            context.log(`Retrieved ${dagdelen.length} dagdelen from repository`);
+            return createSuccessResponse(dagdelen);
+        } else {
+            // Initialize database connection
+            await dbService.initialize();
+
+            // Get dagdelen from database
+            const dagdelen = await dbService.getDagdelen();
+
+            // Update cache
+            dagdelenCache = dagdelen;
+            cacheTimestamp = now;
+
+            context.log(`Retrieved ${dagdelen.length} dagdelen from database`);
+            return createSuccessResponse(dagdelen);
+        }
 
     } catch (error) {
         context.error('Error in getDagdelen:', error);

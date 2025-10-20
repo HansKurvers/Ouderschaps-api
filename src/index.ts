@@ -47,11 +47,13 @@ import './functions/lookups/getRegelingenTemplates';
 
 
 
-// Omgang functions (FASE 4)
-import './functions/dossiers/getDossierOmgang';
-import './functions/dossiers/createOmgang';
-import './functions/dossiers/updateOmgang';
-import './functions/dossiers/deleteOmgang';
+// Omgang functions (FASE 4) - Migrated to repository pattern
+import './functions/omgang/createOmgang';
+import './functions/omgang/getDossierOmgang';
+import './functions/omgang/getDossierSchedule';
+import './functions/omgang/updateOmgang';
+import './functions/omgang/deleteOmgang';
+// Legacy batch/week functions (to be deprecated)
 import './functions/dossiers/createOmgangBatch';
 import './functions/dossiers/upsertOmgangWeek';
 import './functions/dossiers/getOmgangWeek';

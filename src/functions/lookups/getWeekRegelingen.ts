@@ -1,6 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { OmgangRepository } from '../../repositories/OmgangRepository';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
+
+const USE_REPOSITORY_PATTERN = process.env.USE_REPOSITORY_PATTERN === 'true';
 
 // In-memory cache for week regelingen
 let weekRegelingenCache: Array<{id: number, omschrijving: string}> | null = null;
@@ -25,20 +28,35 @@ export async function getWeekRegelingen(
     }
 
     const dbService = new DossierDatabaseService();
+    let omgangRepository: OmgangRepository | undefined;
 
     try {
-        // Initialize database connection
-        await dbService.initialize();
+        if (USE_REPOSITORY_PATTERN) {
+            omgangRepository = new OmgangRepository();
 
-        // Get week regelingen from database
-        const weekRegelingen = await dbService.getWeekRegelingen();
+            // Get week regelingen from repository
+            const weekRegelingen = await omgangRepository.getAllWeekRegelingen();
 
-        // Update cache
-        weekRegelingenCache = weekRegelingen;
-        cacheTimestamp = now;
+            // Update cache
+            weekRegelingenCache = weekRegelingen;
+            cacheTimestamp = now;
 
-        context.log(`Retrieved ${weekRegelingen.length} week regelingen from database`);
-        return createSuccessResponse(weekRegelingen);
+            context.log(`Retrieved ${weekRegelingen.length} week regelingen from repository`);
+            return createSuccessResponse(weekRegelingen);
+        } else {
+            // Initialize database connection
+            await dbService.initialize();
+
+            // Get week regelingen from database
+            const weekRegelingen = await dbService.getWeekRegelingen();
+
+            // Update cache
+            weekRegelingenCache = weekRegelingen;
+            cacheTimestamp = now;
+
+            context.log(`Retrieved ${weekRegelingen.length} week regelingen from database`);
+            return createSuccessResponse(weekRegelingen);
+        }
 
     } catch (error) {
         context.error('Error in getWeekRegelingen:', error);

@@ -107,6 +107,38 @@ export interface ZorgSituatie {
 
 export interface Omgang {
     id: number;
+    dossierId: number;
+    dagId: number;
+    dagdeelId: number;
+    verzorgerId: number;
+    wisselTijd?: string;
+    weekRegelingId: number;
+    weekRegelingAnders?: string;
+    aangemaaktOp: Date;
+    gewijzigdOp: Date;
+}
+
+export interface OmgangWithLookups {
+    omgang: Omgang;
+    dag: Dag;
+    dagdeel: Dagdeel;
+    verzorger: Persoon;
+    weekRegeling: WeekRegeling;
+}
+
+export interface OmgangSchedule {
+    [dagNaam: string]: {
+        [dagdeelNaam: string]: {
+            verzorger: Persoon;
+            wisselTijd?: string;
+            weekRegeling: string;
+        };
+    };
+}
+
+// Legacy Omgang interface for backward compatibility with DossierDatabaseService
+export interface OmgangLegacy {
+    id: number;
     dag: Dag;
     dagdeel: Dagdeel;
     verzorger: Persoon;

@@ -1,6 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { OmgangRepository } from '../../repositories/OmgangRepository';
 import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
+
+const USE_REPOSITORY_PATTERN = process.env.USE_REPOSITORY_PATTERN === 'true';
 
 // In-memory cache for dagen
 let dagenCache: Array<{id: number, naam: string}> | null = null;
@@ -25,20 +28,35 @@ export async function getDagen(
     }
 
     const dbService = new DossierDatabaseService();
+    let omgangRepository: OmgangRepository | undefined;
 
     try {
-        // Initialize database connection
-        await dbService.initialize();
+        if (USE_REPOSITORY_PATTERN) {
+            omgangRepository = new OmgangRepository();
 
-        // Get dagen from database
-        const dagen = await dbService.getDagen();
+            // Get dagen from repository
+            const dagen = await omgangRepository.getAllDagen();
 
-        // Update cache
-        dagenCache = dagen;
-        cacheTimestamp = now;
+            // Update cache
+            dagenCache = dagen;
+            cacheTimestamp = now;
 
-        context.log(`Retrieved ${dagen.length} dagen from database`);
-        return createSuccessResponse(dagen);
+            context.log(`Retrieved ${dagen.length} dagen from repository`);
+            return createSuccessResponse(dagen);
+        } else {
+            // Initialize database connection
+            await dbService.initialize();
+
+            // Get dagen from database
+            const dagen = await dbService.getDagen();
+
+            // Update cache
+            dagenCache = dagen;
+            cacheTimestamp = now;
+
+            context.log(`Retrieved ${dagen.length} dagen from database`);
+            return createSuccessResponse(dagen);
+        }
 
     } catch (error) {
         context.error('Error in getDagen:', error);

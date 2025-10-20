@@ -9,6 +9,10 @@ import {
     Zorg,
     ZorgCategorie,
     ZorgSituatie,
+    Omgang,
+    Dag,
+    Dagdeel,
+    WeekRegeling,
 } from '../models/Dossier';
 
 export class DbMappers {
@@ -213,6 +217,42 @@ export class DbMappers {
             id: row.id,
             naam: row.naam,
             zorgCategorieId: row.zorg_categorie_id || undefined
+        };
+    }
+
+    static toOmgang(row: any): Omgang {
+        return {
+            id: row.id,
+            dossierId: row.dossier_id,
+            dagId: row.dag_id,
+            dagdeelId: row.dagdeel_id,
+            verzorgerId: row.verzorger_id,
+            wisselTijd: row.wissel_tijd || undefined,
+            weekRegelingId: row.week_regeling_id,
+            weekRegelingAnders: row.week_regeling_anders || undefined,
+            aangemaaktOp: new Date(row.aangemaakt_op),
+            gewijzigdOp: new Date(row.gewijzigd_op)
+        };
+    }
+
+    static toDag(row: any): Dag {
+        return {
+            id: row.id,
+            naam: row.naam
+        };
+    }
+
+    static toDagdeel(row: any): Dagdeel {
+        return {
+            id: row.id,
+            naam: row.naam
+        };
+    }
+
+    static toWeekRegeling(row: any): WeekRegeling {
+        return {
+            id: row.id,
+            omschrijving: row.omschrijving
         };
     }
 

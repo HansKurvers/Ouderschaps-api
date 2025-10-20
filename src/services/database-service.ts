@@ -7,7 +7,7 @@ import {
     Dag,
     Dagdeel,
     Dossier,
-    Omgang,
+    OmgangLegacy,
     OuderschapsplanInfo,
     CreateOuderschapsplanInfoDto,
     UpdateOuderschapsplanInfoDto,
@@ -1507,7 +1507,7 @@ export class DossierDatabaseService {
     }
 
     // Omgang CRUD methods
-    async getOmgangByDossier(dossierId: number): Promise<Omgang[]> {
+    async getOmgangByDossier(dossierId: number): Promise<OmgangLegacy[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
@@ -1601,7 +1601,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async createOmgang(data: CreateOmgangDto): Promise<Omgang> {
+    async createOmgang(data: CreateOmgangDto): Promise<OmgangLegacy> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
@@ -1645,7 +1645,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async updateOmgang(omgangId: number, data: UpdateOmgangDto): Promise<Omgang> {
+    async updateOmgang(omgangId: number, data: UpdateOmgangDto): Promise<OmgangLegacy> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
@@ -1763,7 +1763,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async createOmgangBatch(dossierId: number, entries: any[]): Promise<Omgang[]> {
+    async createOmgangBatch(dossierId: number, entries: any[]): Promise<OmgangLegacy[]> {
         const pool = await this.getPool();
         const transaction = pool.transaction();
         
@@ -1811,7 +1811,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async upsertOmgangWeek(dossierId: number, weekRegelingId: number, days: any[], weekRegelingAnders?: string): Promise<Omgang[]> {
+    async upsertOmgangWeek(dossierId: number, weekRegelingId: number, days: any[], weekRegelingAnders?: string): Promise<OmgangLegacy[]> {
         const pool = await this.getPool();
         const transaction = pool.transaction();
         
@@ -1874,7 +1874,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getOmgangByWeek(dossierId: number, weekRegelingId: number): Promise<Omgang[]> {
+    async getOmgangByWeek(dossierId: number, weekRegelingId: number): Promise<OmgangLegacy[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
