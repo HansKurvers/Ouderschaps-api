@@ -1,13 +1,19 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { DossierRepository, KindRepository } from '../../repositories';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { requireAuthentication } from '../../utils/auth-helper';
+
+// Feature flag: Use new Repository Pattern or legacy DossierDatabaseService
+const USE_REPOSITORY_PATTERN = process.env.USE_REPOSITORY_PATTERN === 'true';
 
 export async function removeKindFromDossier(
     request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
-    const dbService = new DossierDatabaseService();
+    context.log(`Using ${USE_REPOSITORY_PATTERN ? 'Repository Pattern' : 'Legacy Service'}`);
+
+    const dbService = USE_REPOSITORY_PATTERN ? null : new DossierDatabaseService();
 
     try {
         // Get user ID from headers
@@ -21,45 +27,70 @@ export async function removeKindFromDossier(
 
         // Get dossier ID and kind ID from path
         const dossierId = Number(request.params.dossierId);
-        const kindId = Number(request.params.kindId);
+        const dossierKindId = Number(request.params.kindId); // Actually dossiers_kinderen.id
 
         if (!dossierId || isNaN(dossierId)) {
             return createErrorResponse('Invalid dossier ID', 400);
         }
-        if (!kindId || isNaN(kindId)) {
+        if (!dossierKindId || isNaN(dossierKindId)) {
             return createErrorResponse('Invalid kind ID', 400);
         }
 
-        // Initialize database connection
-        await dbService.initialize();
+        let success;
 
-        // Check dossier access
-        const hasAccess = await dbService.checkDossierAccess(dossierId, userId);
-        if (!hasAccess) {
-            return createErrorResponse('Access denied to this dossier', 403);
+        if (USE_REPOSITORY_PATTERN) {
+            // NEW: Use Repository Pattern
+            const dossierRepo = new DossierRepository();
+            const kindRepo = new KindRepository();
+
+            // Check dossier access
+            const hasAccess = await dossierRepo.checkAccess(dossierId, userId);
+            if (!hasAccess) {
+                return createErrorResponse('Access denied to this dossier', 403);
+            }
+
+            // Check if the kind relation exists
+            const existingKind = await kindRepo.findById(dossierId, dossierKindId);
+            if (!existingKind) {
+                return createErrorResponse('Kind not found in this dossier', 404);
+            }
+
+            // Remove kind from dossier (only the link, not the person)
+            success = await kindRepo.removeFromDossier(dossierId, dossierKindId);
+        } else {
+            // LEGACY: Use old DossierDatabaseService
+            await dbService!.initialize();
+
+            // Check dossier access
+            const hasAccess = await dbService!.checkDossierAccess(dossierId, userId);
+            if (!hasAccess) {
+                return createErrorResponse('Access denied to this dossier', 403);
+            }
+
+            // Check if the kind relation exists
+            const existingKind = await dbService!.getKindWithOudersById(dossierKindId);
+            if (!existingKind) {
+                return createErrorResponse('Kind not found in this dossier', 404);
+            }
+
+            // Remove kind from dossier (only the link, not the person)
+            success = await dbService!.removeKindFromDossier(dossierId, dossierKindId);
         }
 
-        // Check if the kind relation exists (kindId here is actually the dossiers_kinderen.id)
-        const existingKind = await dbService.getKindWithOudersById(kindId);
-        if (!existingKind) {
-            return createErrorResponse('Kind not found in this dossier', 404);
-        }
-
-        // Remove kind from dossier (only the link, not the person)
-        const success = await dbService.removeKindFromDossier(dossierId, kindId);
-        
         if (!success) {
             return createErrorResponse('Failed to remove kind from dossier', 500);
         }
 
-        context.log(`Kind ${kindId} removed from dossier ${dossierId}`);
+        context.log(`Kind ${dossierKindId} removed from dossier ${dossierId}`);
         return createSuccessResponse({ success: true });
 
     } catch (error) {
         context.error('Error in removeKindFromDossier:', error);
         return createErrorResponse('Internal server error', 500);
     } finally {
-        await dbService.close();
+        if (dbService) {
+            await dbService.close();
+        }
     }
 }
 

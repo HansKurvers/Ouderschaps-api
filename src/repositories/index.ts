@@ -8,7 +8,7 @@
  * - ✅ DossierRepository (COMPLETE - 14 tests passing)
  * - ✅ PersoonRepository (COMPLETE - 23 tests passing)
  * - ✅ PartijRepository (COMPLETE - 19 tests passing)
- * - 🔄 KindRepository (TODO)
+ * - ✅ KindRepository (COMPLETE - 25 tests passing)
  * - 🔄 OmgangRepository (TODO)
  * - 🔄 ZorgRepository (TODO)
  * - 🔄 AlimentatieRepository (TODO)
@@ -23,9 +23,10 @@ export { DossierRepository } from './DossierRepository';
 export { PersoonRepository } from './PersoonRepository';
 export { PartijRepository } from './PartijRepository';
 export type { PartijResult } from './PartijRepository';
+export { KindRepository } from './KindRepository';
+export type { KindWithOuders, OuderRelatie } from './KindRepository';
 
 // Export other repositories as they are implemented
-// export { KindRepository } from './KindRepository';
 // export { OmgangRepository } from './OmgangRepository';
 // export { ZorgRepository } from './ZorgRepository';
 // export { AlimentatieRepository } from './AlimentatieRepository';
