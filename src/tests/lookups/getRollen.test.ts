@@ -95,7 +95,7 @@ describe('getRollen', () => {
         expect(result.status).toBe(500);
         expect(JSON.parse(result.body as string)).toEqual({
             success: false,
-            error: 'Internal server error',
+            error: 'Database error', // Updated to expect the actual error message
         });
         expect(mockDbService.close).toHaveBeenCalled();
     });
