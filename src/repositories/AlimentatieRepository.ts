@@ -13,7 +13,7 @@ import { DbMappers } from '../utils/db-mappers';
  * Manages child support/alimony records in dossiers.
  *
  * Database Structure:
- * - dbo.alimentatie: Main table storing alimentatie records
+ * - dbo.alimentaties: Main table storing alimentatie records
  * - betaler_id → dbo.personen: Person paying alimentatie
  * - ontvanger_id → dbo.personen: Person receiving alimentatie
  * - dossier_id → dbo.dossiers: Associated dossier
@@ -77,7 +77,7 @@ export class AlimentatieRepository extends BaseRepository implements IAlimentati
                 ontvanger.telefoon as ontvanger_telefoon,
                 ontvanger.email as ontvanger_email,
                 ontvanger.beroep as ontvanger_beroep
-            FROM dbo.alimentatie a
+            FROM dbo.alimentaties a
             INNER JOIN dbo.personen betaler ON a.betaler_id = betaler.id
             INNER JOIN dbo.personen ontvanger ON a.ontvanger_id = ontvanger.id
             WHERE a.dossier_id = @dossierId
@@ -143,7 +143,7 @@ export class AlimentatieRepository extends BaseRepository implements IAlimentati
                 ontvanger.telefoon as ontvanger_telefoon,
                 ontvanger.email as ontvanger_email,
                 ontvanger.beroep as ontvanger_beroep
-            FROM dbo.alimentatie a
+            FROM dbo.alimentaties a
             INNER JOIN dbo.personen betaler ON a.betaler_id = betaler.id
             INNER JOIN dbo.personen ontvanger ON a.ontvanger_id = ontvanger.id
             WHERE a.id = @alimentatieId
@@ -170,7 +170,7 @@ export class AlimentatieRepository extends BaseRepository implements IAlimentati
      */
     async create(data: CreateAlimentatieDto): Promise<Alimentatie> {
         const query = `
-            INSERT INTO dbo.alimentatie (
+            INSERT INTO dbo.alimentaties (
                 dossier_id, betaler_id, ontvanger_id, bedrag, frequentie,
                 ingangsdatum, einddatum, opmerkingen
             )
@@ -241,7 +241,7 @@ export class AlimentatieRepository extends BaseRepository implements IAlimentati
         updates.push('gewijzigd_op = GETDATE()');
 
         const query = `
-            UPDATE dbo.alimentatie
+            UPDATE dbo.alimentaties
             SET ${updates.join(', ')}
             OUTPUT INSERTED.*
             WHERE id = @alimentatieId
@@ -265,7 +265,7 @@ export class AlimentatieRepository extends BaseRepository implements IAlimentati
      */
     async delete(alimentatieId: number): Promise<boolean> {
         const query = `
-            DELETE FROM dbo.alimentatie
+            DELETE FROM dbo.alimentaties
             WHERE id = @alimentatieId
         `;
 
@@ -282,7 +282,7 @@ export class AlimentatieRepository extends BaseRepository implements IAlimentati
     async alimentatieExists(alimentatieId: number): Promise<boolean> {
         const query = `
             SELECT COUNT(*) as count
-            FROM dbo.alimentatie
+            FROM dbo.alimentaties
             WHERE id = @alimentatieId
         `;
 
@@ -299,7 +299,7 @@ export class AlimentatieRepository extends BaseRepository implements IAlimentati
     async count(dossierId: number): Promise<number> {
         const query = `
             SELECT COUNT(*) as total
-            FROM dbo.alimentatie
+            FROM dbo.alimentaties
             WHERE dossier_id = @dossierId
         `;
 

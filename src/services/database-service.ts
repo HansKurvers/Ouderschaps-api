@@ -1450,9 +1450,9 @@ export class DossierDatabaseService {
             const pool = await this.getPool();
             const request = pool.request();
             const result = await request.query(`
-                SELECT id, naam 
-                FROM dbo.schoolvakanties 
-                ORDER BY naam
+                SELECT id, omschrijving as naam
+                FROM dbo.vakantie_regelingen
+                ORDER BY omschrijving
             `);
             return result.recordset.map(row => ({
                 id: row.id,
