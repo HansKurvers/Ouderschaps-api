@@ -1,14 +1,20 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { DossierRepository, PersoonRepository, PartijRepository } from '../../repositories';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { validateAddPartij } from '../../validators/persoon-validator';
 import { requireAuthentication } from '../../utils/auth-helper';
+
+// Feature flag: Use new Repository Pattern or legacy DossierDatabaseService
+const USE_REPOSITORY_PATTERN = process.env.USE_REPOSITORY_PATTERN === 'true';
 
 export async function addPartijToDossier(
     request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
-    const dbService = new DossierDatabaseService();
+    context.log(`Using ${USE_REPOSITORY_PATTERN ? 'Repository Pattern' : 'Legacy Service'}`);
+
+    const dbService = USE_REPOSITORY_PATTERN ? null : new DossierDatabaseService();
 
     try {
         // Get user ID from auth
@@ -48,49 +54,99 @@ export async function addPartijToDossier(
             );
         }
 
-        // Initialize database
-        await dbService.initialize();
+        let newPartij;
 
-        // Check dossier access
-        const hasAccess = await dbService.checkDossierAccess(dossierId, userId);
-        if (!hasAccess) {
-            return createErrorResponse('Access denied', 403);
-        }
+        if (USE_REPOSITORY_PATTERN) {
+            // NEW: Use Repository Pattern
+            const dossierRepo = new DossierRepository();
+            const persoonRepo = new PersoonRepository();
+            const partijRepo = new PartijRepository();
 
-        let persoonId: number;
-
-        // Handle existing person vs new person
-        if (value.persoonId) {
-            // Check if person exists
-            const existingPersoon = await dbService.getPersoonById(value.persoonId);
-            if (!existingPersoon) {
-                return createErrorResponse('Persoon not found', 404);
+            // Check dossier access
+            const hasAccess = await dossierRepo.checkAccess(dossierId, userId);
+            if (!hasAccess) {
+                return createErrorResponse('Access denied', 403);
             }
-            persoonId = value.persoonId;
-        } else {
-            // Create new person
-            const persoonData = value.persoonData;
-            
-            // Check email uniqueness if provided
-            if (persoonData.email) {
-                const isEmailUnique = await dbService.checkEmailUnique(persoonData.email);
-                if (!isEmailUnique) {
-                    return createErrorResponse('Email address already exists', 409);
+
+            let persoonId: number;
+
+            // Handle existing person vs new person
+            if (value.persoonId) {
+                // Check if person exists
+                const existingPersoon = await persoonRepo.findById(value.persoonId);
+                if (!existingPersoon) {
+                    return createErrorResponse('Persoon not found', 404);
                 }
+                persoonId = value.persoonId;
+            } else {
+                // Create new person
+                const persoonData = value.persoonData;
+
+                // Check email uniqueness if provided
+                if (persoonData.email) {
+                    const isEmailUnique = await persoonRepo.checkEmailUnique(persoonData.email);
+                    if (!isEmailUnique) {
+                        return createErrorResponse('Email address already exists', 409);
+                    }
+                }
+
+                const createdPersoon = await persoonRepo.create(persoonData);
+                persoonId = createdPersoon.id;
             }
 
-            const newPersoon = await dbService.createOrUpdatePersoon(persoonData);
-            persoonId = newPersoon.id;
-        }
+            // Check if partij combination already exists
+            const partijExists = await partijRepo.partijExists(dossierId, persoonId, value.rolId);
+            if (partijExists) {
+                return createErrorResponse('This person already has this role in this dossier', 409);
+            }
 
-        // Check if partij combination already exists
-        const partijExists = await dbService.checkPartijExists(dossierId, persoonId, value.rolId);
-        if (partijExists) {
-            return createErrorResponse('This person already has this role in this dossier', 409);
-        }
+            // Add partij to dossier
+            newPartij = await partijRepo.create(dossierId, persoonId, value.rolId);
+        } else {
+            // LEGACY: Use old DossierDatabaseService
+            await dbService!.initialize();
 
-        // Add partij to dossier
-        const newPartij = await dbService.linkPersoonToDossierWithReturn(dossierId, persoonId, value.rolId);
+            // Check dossier access
+            const hasAccess = await dbService!.checkDossierAccess(dossierId, userId);
+            if (!hasAccess) {
+                return createErrorResponse('Access denied', 403);
+            }
+
+            let persoonId: number;
+
+            // Handle existing person vs new person
+            if (value.persoonId) {
+                // Check if person exists
+                const existingPersoon = await dbService!.getPersoonById(value.persoonId);
+                if (!existingPersoon) {
+                    return createErrorResponse('Persoon not found', 404);
+                }
+                persoonId = value.persoonId;
+            } else {
+                // Create new person
+                const persoonData = value.persoonData;
+
+                // Check email uniqueness if provided
+                if (persoonData.email) {
+                    const isEmailUnique = await dbService!.checkEmailUnique(persoonData.email);
+                    if (!isEmailUnique) {
+                        return createErrorResponse('Email address already exists', 409);
+                    }
+                }
+
+                const createdPersoon = await dbService!.createOrUpdatePersoon(persoonData);
+                persoonId = createdPersoon.id;
+            }
+
+            // Check if partij combination already exists
+            const partijExists = await dbService!.checkPartijExists(dossierId, persoonId, value.rolId);
+            if (partijExists) {
+                return createErrorResponse('This person already has this role in this dossier', 409);
+            }
+
+            // Add partij to dossier
+            newPartij = await dbService!.linkPersoonToDossierWithReturn(dossierId, persoonId, value.rolId);
+        }
 
         context.log(`Added partij ${newPartij.id} to dossier ${dossierId}`);
         return createSuccessResponse(newPartij);
@@ -99,7 +155,9 @@ export async function addPartijToDossier(
         context.error('Error in addPartijToDossier:', error);
         return createErrorResponse('Internal server error', 500);
     } finally {
-        await dbService.close();
+        if (dbService) {
+            await dbService.close();
+        }
     }
 }
 

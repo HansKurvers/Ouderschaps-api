@@ -1,13 +1,19 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { DossierRepository, PartijRepository } from '../../repositories';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { requireAuthentication } from '../../utils/auth-helper';
+
+// Feature flag: Use new Repository Pattern or legacy DossierDatabaseService
+const USE_REPOSITORY_PATTERN = process.env.USE_REPOSITORY_PATTERN === 'true';
 
 export async function removePartijFromDossier(
     request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
-    const dbService = new DossierDatabaseService();
+    context.log(`Using ${USE_REPOSITORY_PATTERN ? 'Repository Pattern' : 'Legacy Service'}`);
+
+    const dbService = USE_REPOSITORY_PATTERN ? null : new DossierDatabaseService();
 
     try {
         // Get user ID from auth
@@ -22,33 +28,56 @@ export async function removePartijFromDossier(
         // Get dossier ID and partij ID from route
         const dossierId = parseInt(request.params.dossierId || '');
         const partijId = parseInt(request.params.partijId || '');
-        
+
         if (!dossierId || isNaN(dossierId)) {
             return createErrorResponse('Invalid dossier ID', 400);
         }
-        
+
         if (!partijId || isNaN(partijId)) {
             return createErrorResponse('Invalid partij ID', 400);
         }
 
-        // Initialize database
-        await dbService.initialize();
+        let success;
 
-        // Check dossier access
-        const hasAccess = await dbService.checkDossierAccess(dossierId, userId);
-        if (!hasAccess) {
-            return createErrorResponse('Access denied', 403);
+        if (USE_REPOSITORY_PATTERN) {
+            // NEW: Use Repository Pattern
+            const dossierRepo = new DossierRepository();
+            const partijRepo = new PartijRepository();
+
+            // Check dossier access
+            const hasAccess = await dossierRepo.checkAccess(dossierId, userId);
+            if (!hasAccess) {
+                return createErrorResponse('Access denied', 403);
+            }
+
+            // Check if partij exists in this dossier
+            const partijData = await partijRepo.findById(dossierId, partijId);
+            if (!partijData) {
+                return createErrorResponse('Partij not found in this dossier', 404);
+            }
+
+            // Remove partij from dossier
+            success = await partijRepo.delete(dossierId, partijId);
+        } else {
+            // LEGACY: Use old DossierDatabaseService
+            await dbService!.initialize();
+
+            // Check dossier access
+            const hasAccess = await dbService!.checkDossierAccess(dossierId, userId);
+            if (!hasAccess) {
+                return createErrorResponse('Access denied', 403);
+            }
+
+            // Check if partij exists in this dossier
+            const partijData = await dbService!.getPartijById(dossierId, partijId);
+            if (!partijData) {
+                return createErrorResponse('Partij not found in this dossier', 404);
+            }
+
+            // Remove partij from dossier
+            success = await dbService!.removePartijFromDossier(dossierId, partijId);
         }
 
-        // Check if partij exists in this dossier
-        const partijData = await dbService.getPartijById(dossierId, partijId);
-        if (!partijData) {
-            return createErrorResponse('Partij not found in this dossier', 404);
-        }
-
-        // Remove partij from dossier
-        const success = await dbService.removePartijFromDossier(dossierId, partijId);
-        
         if (!success) {
             return createErrorResponse('Failed to remove partij from dossier', 500);
         }
@@ -60,7 +89,9 @@ export async function removePartijFromDossier(
         context.error('Error in removePartijFromDossier:', error);
         return createErrorResponse('Internal server error', 500);
     } finally {
-        await dbService.close();
+        if (dbService) {
+            await dbService.close();
+        }
     }
 }
 

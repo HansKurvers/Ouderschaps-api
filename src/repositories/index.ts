@@ -7,7 +7,7 @@
  * Migration Status:
  * - ✅ DossierRepository (COMPLETE - 14 tests passing)
  * - ✅ PersoonRepository (COMPLETE - 23 tests passing)
- * - 🔄 PartijRepository (TODO)
+ * - ✅ PartijRepository (COMPLETE - 19 tests passing)
  * - 🔄 KindRepository (TODO)
  * - 🔄 OmgangRepository (TODO)
  * - 🔄 ZorgRepository (TODO)
@@ -21,9 +21,10 @@
 export { BaseRepository } from './base/BaseRepository';
 export { DossierRepository } from './DossierRepository';
 export { PersoonRepository } from './PersoonRepository';
+export { PartijRepository } from './PartijRepository';
+export type { PartijResult } from './PartijRepository';
 
 // Export other repositories as they are implemented
-// export { PartijRepository } from './PartijRepository';
 // export { KindRepository } from './KindRepository';
 // export { OmgangRepository } from './OmgangRepository';
 // export { ZorgRepository } from './ZorgRepository';
