@@ -11,9 +11,11 @@
  * - ✅ KindRepository (COMPLETE - 32 tests passing)
  * - ✅ AlimentatieRepository (COMPLETE - 27 tests passing)
  * - 🔄 OmgangRepository (TODO)
- * - 🔄 ZorgRepository (TODO)
+ * - ✅ ZorgRepository (COMPLETE - 28 tests passing)
  * - 🔄 OuderschapsplanRepository (TODO)
  * - 🔄 LookupRepository (TODO)
+ *
+ * Total: 143 tests passing across 6 repositories
  *
  * See: REPOSITORY_MIGRATION_GUIDE.md for migration strategy
  */
@@ -27,9 +29,10 @@ export { KindRepository } from './KindRepository';
 export type { KindWithOuders, OuderRelatie } from './KindRepository';
 export { AlimentatieRepository } from './AlimentatieRepository';
 export type { IAlimentatieRepository, CreateAlimentatieDto, UpdateAlimentatieDto } from './interfaces/IAlimentatieRepository';
+export { ZorgRepository } from './ZorgRepository';
+export type { IZorgRepository, CreateZorgDto, UpdateZorgDto } from './interfaces/IZorgRepository';
 
 // Export other repositories as they are implemented
 // export { OmgangRepository } from './OmgangRepository';
-// export { ZorgRepository } from './ZorgRepository';
 // export { OuderschapsplanRepository } from './OuderschapsplanRepository';
 // export { LookupRepository } from './LookupRepository';

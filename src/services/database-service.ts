@@ -19,7 +19,7 @@ import {
     UpdateOmgangDto,
     UpdateZorgDto,
     WeekRegeling,
-    Zorg,
+    ZorgLegacy,
     ZorgCategorie,
     ZorgSituatie,
 } from '../models/Dossier';
@@ -1967,7 +1967,7 @@ export class DossierDatabaseService {
     }
 
     // Zorg CRUD methods
-    async getZorgByDossier(dossierId: number): Promise<Zorg[]> {
+    async getZorgByDossier(dossierId: number): Promise<ZorgLegacy[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
@@ -2018,7 +2018,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async getZorgByDossierAndCategorie(dossierId: number, zorgCategorieId: number): Promise<Zorg[]> {
+    async getZorgByDossierAndCategorie(dossierId: number, zorgCategorieId: number): Promise<ZorgLegacy[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
@@ -2070,7 +2070,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async createZorg(data: CreateZorgDto & {aangemaaktDoor: number}): Promise<Zorg> {
+    async createZorg(data: CreateZorgDto & {aangemaaktDoor: number}): Promise<ZorgLegacy> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
@@ -2111,7 +2111,7 @@ export class DossierDatabaseService {
         }
     }
 
-    async updateZorg(zorgId: number, data: UpdateZorgDto & {gewijzigdDoor: number}): Promise<Zorg> {
+    async updateZorg(zorgId: number, data: UpdateZorgDto & {gewijzigdDoor: number}): Promise<ZorgLegacy> {
         try {
             const pool = await this.getPool();
             const request = pool.request();

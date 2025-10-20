@@ -1,6 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { ZorgRepository } from '../../repositories/ZorgRepository';
 import { DossierDatabaseService } from '../../services/database-service';
-import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
+import { createSuccessResponse, createErrorResponse } from '../../utils/response-helper';
 
 // In-memory cache for zorg categorieën
 let zorgCategorieenCache: Array<{id: number, naam: string}> | null = null;
@@ -13,10 +14,29 @@ export function clearZorgCategorieenCache(): void {
     cacheTimestamp = null;
 }
 
+/**
+ * HTTP function to get all zorg categoriën (lookup data)
+ *
+ * Route: GET /api/lookups/zorg-categorieen
+ *
+ * Business Logic:
+ * 1. Check cache for valid data
+ * 2. If cache miss, get all zorg categoriën from database
+ * 3. Cache results for 5 minutes
+ *
+ * Returns:
+ * - 200: Array of ZorgCategorie
+ * - 500: Server error
+ *
+ * Note: This is lookup/reference data for dropdown lists
+ * Feature Flag: USE_REPOSITORY_PATTERN to switch between legacy and new implementation
+ */
 export async function getZorgCategorieen(
     _request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
+    const useRepository = process.env.USE_REPOSITORY_PATTERN === 'true';
+
     // Check if we have valid cached data
     const now = Date.now();
     if (zorgCategorieenCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
@@ -24,27 +44,37 @@ export async function getZorgCategorieen(
         return createSuccessResponse(zorgCategorieenCache);
     }
 
-    const dbService = new DossierDatabaseService();
-
     try {
-        // Initialize database connection
-        await dbService.initialize();
+        let zorgCategorieen: Array<{id: number, naam: string}>;
 
-        // Get zorg categorieën from database
-        const zorgCategorieen = await dbService.getZorgCategorieen();
+        if (useRepository) {
+            context.log('Using ZorgRepository pattern');
+            const zorgRepo = new ZorgRepository();
+            zorgCategorieen = await zorgRepo.getAllCategorieen();
+        } else {
+            context.log('Using Legacy DossierDatabaseService');
+            const dbService = new DossierDatabaseService();
+            try {
+                await dbService.initialize();
+                zorgCategorieen = await dbService.getZorgCategorieen();
+            } finally {
+                await dbService.close();
+            }
+        }
 
         // Update cache
         zorgCategorieenCache = zorgCategorieen;
         cacheTimestamp = now;
 
-        context.log(`Retrieved ${zorgCategorieen.length} zorg categorieën from database`);
+        context.log(`Retrieved ${zorgCategorieen.length} zorg categorieën`);
         return createSuccessResponse(zorgCategorieen);
 
     } catch (error) {
         context.error('Error in getZorgCategorieen:', error);
-        return createErrorResponse('Internal server error', 500);
-    } finally {
-        await dbService.close();
+        return createErrorResponse(
+            error instanceof Error ? error.message : 'Internal server error',
+            500
+        );
     }
 }
 

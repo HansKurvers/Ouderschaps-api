@@ -56,11 +56,11 @@ import './functions/dossiers/createOmgangBatch';
 import './functions/dossiers/upsertOmgangWeek';
 import './functions/dossiers/getOmgangWeek';
 
-// Zorg functions (FASE 4)
-import './functions/dossiers/getDossierZorg';
-import './functions/dossiers/createZorg';
-import './functions/dossiers/updateZorg';
-import './functions/dossiers/deleteZorg';
+// Zorg functions (FASE 4) - Migrated to repository pattern
+import './functions/zorg/getDossierZorg';
+import './functions/zorg/createZorg';
+import './functions/zorg/updateZorg';
+import './functions/zorg/deleteZorg';
 
 // Alimentatie functions (FASE 5)
 import './functions/alimentatie/getAlimentatieByDossierId';

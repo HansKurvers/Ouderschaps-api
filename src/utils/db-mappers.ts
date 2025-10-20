@@ -6,6 +6,9 @@ import {
     OuderschapsplanInfo,
     OuderschapsplanInfoDbDto,
     Alimentatie,
+    Zorg,
+    ZorgCategorie,
+    ZorgSituatie,
 } from '../models/Dossier';
 
 export class DbMappers {
@@ -180,6 +183,36 @@ export class DbMappers {
             opmerkingen: row.opmerkingen || undefined,
             aangemaaktOp: new Date(row.aangemaakt_op),
             gewijzigdOp: new Date(row.gewijzigd_op)
+        };
+    }
+
+    static toZorg(row: any): Zorg {
+        return {
+            id: row.id,
+            dossierId: row.dossier_id,
+            zorgCategorieId: row.zorg_categorie_id,
+            zorgSituatieId: row.zorg_situatie_id,
+            overeenkomst: row.overeenkomst,
+            situatieAnders: row.situatie_anders || undefined,
+            aangemaaktOp: new Date(row.aangemaakt_op),
+            aangemaaktDoor: row.aangemaakt_door,
+            gewijzigdOp: new Date(row.gewijzigd_op),
+            gewijzigdDoor: row.gewijzigd_door || undefined
+        };
+    }
+
+    static toZorgCategorie(row: any): ZorgCategorie {
+        return {
+            id: row.id,
+            naam: row.naam
+        };
+    }
+
+    static toZorgSituatie(row: any): ZorgSituatie {
+        return {
+            id: row.id,
+            naam: row.naam,
+            zorgCategorieId: row.zorg_categorie_id || undefined
         };
     }
 

@@ -102,7 +102,7 @@ export interface ZorgCategorie {
 export interface ZorgSituatie {
     id: number;
     naam: string;
-    zorgCategorieId: number;
+    zorgCategorieId?: number;
 }
 
 export interface Omgang {
@@ -118,6 +118,26 @@ export interface Omgang {
 }
 
 export interface Zorg {
+    id: number;
+    dossierId: number;
+    zorgCategorieId: number;
+    zorgSituatieId: number;
+    overeenkomst: string;
+    situatieAnders?: string;
+    aangemaaktOp: Date;
+    aangemaaktDoor: number;
+    gewijzigdOp: Date;
+    gewijzigdDoor?: number;
+}
+
+export interface ZorgWithLookups {
+    zorg: Zorg;
+    categorie: ZorgCategorie;
+    situatie: ZorgSituatie;
+}
+
+// Legacy Zorg interface for backward compatibility with DossierDatabaseService
+export interface ZorgLegacy {
     id: number;
     zorgCategorie: ZorgCategorie;
     zorgSituatie: ZorgSituatie;
@@ -187,15 +207,17 @@ export interface CreateZorgDto {
     dossierId: number;
     zorgCategorieId: number;
     zorgSituatieId: number;
-    situatieAnders?: string;
     overeenkomst: string;
+    situatieAnders?: string;
+    aangemaaktDoor: number;
 }
 
 export interface UpdateZorgDto {
     zorgCategorieId?: number;
     zorgSituatieId?: number;
-    situatieAnders?: string;
     overeenkomst?: string;
+    situatieAnders?: string;
+    gewijzigdDoor: number;
 }
 
 // FASE 5: Alimentatie interfaces
