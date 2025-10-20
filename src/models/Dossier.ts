@@ -297,6 +297,59 @@ export interface CompleteDossierData {
     }>;
 }
 
+// Ouderschapsplan interfaces (for repository pattern)
+export interface PlanVolledigheid {
+    heeftPartijen: boolean;
+    heeftKinderen: boolean;
+    heeftOmgang: boolean;
+    heeftZorg: boolean;
+    heeftAlimentatie: boolean;
+    isCompleet: boolean;
+    percentageCompleet: number;
+}
+
+export interface PlanMetadata {
+    volledigheid: PlanVolledigheid;
+    laatstGewijzigd: Date;
+    aantalSectiesCompleet: number;
+    totaalSecties: number;
+}
+
+export interface CompletePlan {
+    dossier: Dossier;
+    partijen: Array<{
+        id: number;
+        persoon: Persoon;
+        rol: Rol;
+    }>;
+    kinderen: Array<{
+        kind: Persoon;
+        ouders: Array<{
+            ouder: Persoon;
+            relatieType: RelatieType;
+        }>;
+    }>;
+    omgang: {
+        schedule: OmgangSchedule;
+        entries: OmgangWithLookups[];
+    };
+    zorg: ZorgWithLookups[];
+    alimentatie: AlimentatieWithPersonen[];
+    metadata: PlanMetadata;
+}
+
+export interface PlanSummary {
+    dossierId: number;
+    dossierNummer: string;
+    aantalPartijen: number;
+    aantalKinderen: number;
+    aantalOmgangRegelingen: number;
+    aantalZorgRegelingen: number;
+    aantalAlimentatieRegelingen: number;
+    volledigheid: PlanVolledigheid;
+    laatstGewijzigd: Date;
+}
+
 // Type aliases for better readability
 export type DossierId = number;
 export type GebruikerId = number;

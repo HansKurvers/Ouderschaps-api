@@ -13,9 +13,9 @@
  * - ✅ OmgangRepository (COMPLETE - 33 tests passing)
  * - ✅ ZorgRepository (COMPLETE - 28 tests passing)
  * - ✅ LookupRepository (COMPLETE - 33 tests passing)
- * - 🔄 OuderschapsplanRepository (TODO)
+ * - ✅ OuderschapsplanRepository (COMPLETE - 35 tests passing)
  *
- * Total: 209 tests passing across 8 repositories
+ * Total: 254 tests passing across 9 repositories
  *
  * See: REPOSITORY_MIGRATION_GUIDE.md for migration strategy
  */
@@ -35,6 +35,5 @@ export { ZorgRepository } from './ZorgRepository';
 export type { IZorgRepository, CreateZorgDto, UpdateZorgDto } from './interfaces/IZorgRepository';
 export { LookupRepository } from './LookupRepository';
 export type { ILookupRepository } from './interfaces/ILookupRepository';
-
-// Export other repositories as they are implemented
-// export { OuderschapsplanRepository } from './OuderschapsplanRepository';
+export { OuderschapsplanRepository } from './OuderschapsplanRepository';
+export type { IOuderschapsplanRepository } from './interfaces/IOuderschapsplanRepository';

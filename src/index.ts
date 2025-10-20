@@ -88,6 +88,12 @@ import './functions/ouderschapsplan/updateOuderschapsplanInfo';
 import './functions/ouderschapsplan/deleteOuderschapsplanInfo';
 import './functions/ouderschapsplan/upsertOuderschapsplanInfo';
 
+// Ouderschapsplan repository functions (FASE 6 - THE FINALE!)
+import './functions/ouderschapsplan/getCompletePlan';
+import './functions/ouderschapsplan/getPlanSummary';
+import './functions/ouderschapsplan/validatePlan';
+import './functions/ouderschapsplan/getPlanMetadata';
+
 // Debug functions
 import './functions/debug/inspectDossier';
 
