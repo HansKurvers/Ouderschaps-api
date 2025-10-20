@@ -351,4 +351,278 @@ export class PersoonRepository extends BaseRepository {
         const result = await this.querySingle<{ total: number }>(query);
         return result?.total || 0;
     }
+
+    // ==========================================
+    // USER-SCOPED METHODS
+    // Methods for multi-tenant person management
+    // ==========================================
+
+    /**
+     * Finds a person by ID scoped to specific user
+     *
+     * @param id - Person identifier
+     * @param userId - User identifier for access control
+     * @returns Person object or null if not found or no access
+     *
+     * @example
+     * ```typescript
+     * const person = await repo.findByIdForUser(123, userId);
+     * ```
+     */
+    async findByIdForUser(id: number, userId: number): Promise<Persoon | null> {
+        const query = `
+            SELECT
+                p.*,
+                r.naam as rol_naam
+            FROM dbo.personen p
+            LEFT JOIN dbo.rollen r ON p.rol_id = r.id
+            WHERE p.id = @id AND p.gebruiker_id = @userId
+        `;
+
+        const record = await this.querySingle(query, { id, userId });
+        return record ? DbMappers.toPersoon(record) : null;
+    }
+
+    /**
+     * Creates a new person for specific user
+     *
+     * @param data - Person data
+     * @param userId - User identifier who owns this person
+     * @returns Newly created person with generated ID
+     * @throws Error if achternaam is missing
+     *
+     * @example
+     * ```typescript
+     * const person = await repo.createForUser(data, userId);
+     * ```
+     */
+    async createForUser(data: Partial<Persoon>, userId: number): Promise<Persoon> {
+        if (!data.achternaam) {
+            throw new Error('Achternaam is required to create a person');
+        }
+
+        const dto = DbMappers.toPersoonDto(data as Persoon);
+
+        const query = `
+            INSERT INTO dbo.personen (
+                voorletters, voornamen, roepnaam, geslacht, tussenvoegsel, achternaam,
+                adres, postcode, plaats, geboorteplaats, geboorte_datum,
+                nationaliteit_1, nationaliteit_2, telefoon, email, beroep, gebruiker_id
+            )
+            OUTPUT INSERTED.*
+            VALUES (
+                @voorletters, @voornamen, @roepnaam, @geslacht, @tussenvoegsel, @achternaam,
+                @adres, @postcode, @plaats, @geboorteplaats, @geboorteDatum,
+                @nationaliteit1, @nationaliteit2, @telefoon, @email, @beroep, @gebruikerId
+            )
+        `;
+
+        const params = {
+            voorletters: dto.voorletters,
+            voornamen: dto.voornamen,
+            roepnaam: dto.roepnaam,
+            geslacht: dto.geslacht,
+            tussenvoegsel: dto.tussenvoegsel,
+            achternaam: dto.achternaam,
+            adres: dto.adres,
+            postcode: dto.postcode,
+            plaats: dto.plaats,
+            geboorteplaats: dto.geboorteplaats,
+            geboorteDatum: dto.geboorte_datum,
+            nationaliteit1: dto.nationaliteit_1,
+            nationaliteit2: dto.nationaliteit_2,
+            telefoon: dto.telefoon,
+            email: dto.email,
+            beroep: dto.beroep,
+            gebruikerId: userId,
+        };
+
+        const record = await this.querySingle(query, params);
+
+        if (!record) {
+            throw new Error('Failed to create person');
+        }
+
+        return DbMappers.toPersoon(record);
+    }
+
+    /**
+     * Updates a person scoped to specific user
+     *
+     * @param id - Person ID to update
+     * @param data - Partial person data to update
+     * @param userId - User identifier for access control
+     * @returns Updated person object
+     * @throws Error if person not found or no access
+     *
+     * @example
+     * ```typescript
+     * const updated = await repo.updateForUser(123, { email: 'new@example.com' }, userId);
+     * ```
+     */
+    async updateForUser(id: number, data: Partial<Persoon>, userId: number): Promise<Persoon> {
+        // Check if person exists and belongs to user
+        const existing = await this.findByIdForUser(id, userId);
+        if (!existing) {
+            throw new Error(`Person with ID ${id} not found or access denied`);
+        }
+
+        const dto = DbMappers.toPersoonDto({ ...existing, ...data } as Persoon);
+
+        const query = `
+            UPDATE dbo.personen
+            SET
+                voorletters = @voorletters,
+                voornamen = @voornamen,
+                roepnaam = @roepnaam,
+                geslacht = @geslacht,
+                tussenvoegsel = @tussenvoegsel,
+                achternaam = @achternaam,
+                adres = @adres,
+                postcode = @postcode,
+                plaats = @plaats,
+                geboorteplaats = @geboorteplaats,
+                geboorte_datum = @geboorteDatum,
+                nationaliteit_1 = @nationaliteit1,
+                nationaliteit_2 = @nationaliteit2,
+                telefoon = @telefoon,
+                email = @email,
+                beroep = @beroep
+            OUTPUT INSERTED.*
+            WHERE id = @id AND gebruiker_id = @userId
+        `;
+
+        const params = {
+            id,
+            userId,
+            voorletters: dto.voorletters,
+            voornamen: dto.voornamen,
+            roepnaam: dto.roepnaam,
+            geslacht: dto.geslacht,
+            tussenvoegsel: dto.tussenvoegsel,
+            achternaam: dto.achternaam,
+            adres: dto.adres,
+            postcode: dto.postcode,
+            plaats: dto.plaats,
+            geboorteplaats: dto.geboorteplaats,
+            geboorteDatum: dto.geboorte_datum,
+            nationaliteit1: dto.nationaliteit_1,
+            nationaliteit2: dto.nationaliteit_2,
+            telefoon: dto.telefoon,
+            email: dto.email,
+            beroep: dto.beroep,
+        };
+
+        const record = await this.querySingle(query, params);
+
+        if (!record) {
+            throw new Error(`Failed to update person with ID ${id}`);
+        }
+
+        return DbMappers.toPersoon(record);
+    }
+
+    /**
+     * Deletes a person scoped to specific user
+     *
+     * @param id - Person ID to delete
+     * @param userId - User identifier for access control
+     * @returns True if deletion successful, false if person not found or no access
+     *
+     * @example
+     * ```typescript
+     * const deleted = await repo.deleteForUser(123, userId);
+     * ```
+     */
+    async deleteForUser(id: number, userId: number): Promise<boolean> {
+        const query = `
+            DELETE FROM dbo.personen
+            WHERE id = @id AND gebruiker_id = @userId
+        `;
+
+        const result = await this.executeQuery(query, { id, userId });
+        return result.rowsAffected[0] > 0;
+    }
+
+    /**
+     * Checks if email is unique within user's persons
+     *
+     * @param email - Email address to check
+     * @param userId - User identifier for scoping
+     * @param excludeId - Optional person ID to exclude from check
+     * @returns True if email is unique within user scope
+     *
+     * @example
+     * ```typescript
+     * const isUnique = await repo.checkEmailUniqueForUser('test@example.com', userId, 123);
+     * ```
+     */
+    async checkEmailUniqueForUser(email: string, userId: number, excludeId?: number): Promise<boolean> {
+        let query = `
+            SELECT COUNT(*) as count
+            FROM dbo.personen
+            WHERE email = @email AND gebruiker_id = @userId
+        `;
+
+        const params: Record<string, any> = { email, userId };
+
+        if (excludeId !== undefined) {
+            query += ' AND id != @excludeId';
+            params.excludeId = excludeId;
+        }
+
+        const result = await this.querySingle<{ count: number }>(query, params);
+        return result ? result.count === 0 : true;
+    }
+
+    /**
+     * Finds all persons for specific user with pagination
+     *
+     * @param userId - User identifier
+     * @param filters - Optional pagination filters
+     * @returns Array of persons belonging to user
+     *
+     * @example
+     * ```typescript
+     * const persons = await repo.findAllForUser(userId, { limit: 50, offset: 0 });
+     * ```
+     */
+    async findAllForUser(userId: number, filters?: { limit?: number; offset?: number }): Promise<Persoon[]> {
+        const limit = Math.min(filters?.limit || 50, 100);
+        const offset = filters?.offset || 0;
+
+        const query = `
+            SELECT *
+            FROM dbo.personen
+            WHERE gebruiker_id = @userId
+            ORDER BY id
+            OFFSET @offset ROWS
+            FETCH NEXT @limit ROWS ONLY
+        `;
+
+        const records = await this.queryMany(query, { userId, limit, offset });
+        return records.map(DbMappers.toPersoon);
+    }
+
+    /**
+     * Counts persons for specific user
+     *
+     * @param userId - User identifier
+     * @returns Count of persons belonging to user
+     *
+     * @example
+     * ```typescript
+     * const total = await repo.countForUser(userId);
+     * ```
+     */
+    async countForUser(userId: number): Promise<number> {
+        const query = `
+            SELECT COUNT(*) as total
+            FROM dbo.personen
+            WHERE gebruiker_id = @userId
+        `;
+
+        const result = await this.querySingle<{ total: number }>(query, { userId });
+        return result?.total || 0;
+    }
 }

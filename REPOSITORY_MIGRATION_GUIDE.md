@@ -123,9 +123,14 @@ export async function createDossier(request: HttpRequest, context: InvocationCon
 - [x] Write comprehensive tests for `DossierRepository` (14 tests)
 - [x] Document migration strategy
 
-### Phase 2: Core Domains ✅ IN PROGRESS
+### Phase 2: Core Domains ✅ COMPLETED
 - [x] Implement `PersoonRepository` (23 tests passing)
-- [ ] Migrate person-related functions with feature flags
+- [x] Extended with user-scoped methods (findByIdForUser, createForUser, updateForUser, deleteForUser, etc.)
+- [x] Migrate person-related functions with feature flags:
+  - [x] createPersoon.ts
+  - [x] getPersoonById.ts
+  - [x] updatePersoon.ts
+  - [x] deletePersoon.ts
 - [ ] Implement `PartijRepository` (dossier-persoon linking)
 - [ ] Implement `KindRepository` (children + parent-child relations)
 - [ ] Write tests for each repository
@@ -155,7 +160,7 @@ export async function createDossier(request: HttpRequest, context: InvocationCon
 | Repository | Methods | Lines (est.) |
 |------------|---------|--------------|
 | **DossierRepository** ✅ | `findByUserId`, `findById`, `checkAccess`, `create`, `updateStatus`, `updateAnonymity`, `delete`, `generateNextDossierNumber` | 330 |
-| **PersoonRepository** ✅ | `findById`, `findAll`, `findByEmail`, `findByAchternaam`, `checkEmailUnique`, `create`, `update`, `delete`, `count` | 320 |
+| **PersoonRepository** ✅ | `findById`, `findAll`, `findByEmail`, `findByAchternaam`, `checkEmailUnique`, `create`, `update`, `delete`, `count`, **USER-SCOPED:** `findByIdForUser`, `createForUser`, `updateForUser`, `deleteForUser`, `checkEmailUniqueForUser`, `findAllForUser`, `countForUser` | 628 |
 | **PartijRepository** | `findByDossierId`, `create`, `delete`, `exists`, `updateRol` | ~150 |
 | **KindRepository** | `findByDossierId`, `addToDossier`, `removeFromDossier`, `getOuders`, `addOuder`, `updateOuderRelatie`, `removeOuder` | ~250 |
 | **OmgangRepository** | `findByDossierId`, `create`, `update`, `delete`, `createBatch`, `upsertWeek` | ~200 |
@@ -370,11 +375,47 @@ If issues arise:
 - ✅ Clear Ownership: One repository per domain
 - ✅ Easier Code Review: Smaller, focused PRs
 
+## Multi-Tenant Architecture
+
+During the migration of person functions, we discovered that the `personen` table has a `gebruiker_id` column for multi-tenant support. This means:
+
+- Each user's data is isolated by `gebruiker_id`
+- All person operations must be scoped to a specific user
+- The repository provides **both** global methods (for admin/system operations) and user-scoped methods (for normal operations)
+
+### User-Scoped Methods Pattern
+
+All user-scoped methods follow this naming convention:
+```typescript
+// Global method (admin/system use)
+async findById(id: number): Promise<Persoon | null>
+
+// User-scoped method (normal operations)
+async findByIdForUser(id: number, userId: number): Promise<Persoon | null>
+```
+
+User-scoped methods automatically add `WHERE gebruiker_id = @userId` to their queries, ensuring:
+1. ✅ Data isolation between users
+2. ✅ Automatic access control
+3. ✅ No accidental cross-user data access
+4. ✅ Simplified business logic in functions
+
+### Migrated Functions
+
+All person functions now support both legacy service and new repository pattern via `USE_REPOSITORY_PATTERN` feature flag:
+
+| Function | Route | Method | Status |
+|----------|-------|--------|--------|
+| createPersoon | POST /personen | Uses `createForUser()` | ✅ MIGRATED |
+| getPersoonById | GET /personen/{id} | Uses `findByIdForUser()` | ✅ MIGRATED |
+| updatePersoon | PUT /personen/{id} | Uses `updateForUser()` | ✅ MIGRATED |
+| deletePersoon | DELETE /personen/{id} | Uses `deleteForUser()` | ✅ MIGRATED |
+
 ## Next Steps
 
-1. **Implement PersoonRepository** (next priority)
-2. **Migrate person-related functions** (createPersoon, getPersonen, etc.)
-3. **Continue with PartijRepository** (dossier-person linking)
+1. ✅ **PersoonRepository** - COMPLETED (628 lines, 23 tests, all functions migrated)
+2. **Implement PartijRepository** (dossier-person linking)
+3. **Continue with KindRepository** (children + parent-child relations)
 4. **Rinse and repeat** for remaining domains
 
 ## Questions?

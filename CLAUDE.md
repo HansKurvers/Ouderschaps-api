@@ -119,9 +119,10 @@ const newDossier = await repository.create(userId);
 ```
 
 **Available Repositories**:
-- ✅ `DossierRepository` - Dossier CRUD, status updates, cascade deletion
-- 🔄 `PersoonRepository` - TODO
+- ✅ `DossierRepository` - Dossier CRUD, status updates, cascade deletion (14 tests)
+- ✅ `PersoonRepository` - Person CRUD with user-scoped methods (23 tests, 4 functions migrated)
 - 🔄 `PartijRepository` - TODO
+- 🔄 `KindRepository` - TODO
 - 🔄 Other repositories - See `REPOSITORY_MIGRATION_GUIDE.md`
 
 **BaseRepository**: All repositories extend `BaseRepository` which provides:
@@ -131,6 +132,16 @@ const newDossier = await repository.create(userId);
 - `exists()` - Check if record exists
 - `beginTransaction()` - Start transaction
 - `executeInTransaction()` - Execute within transaction
+
+**Multi-Tenant Architecture**: Repositories support user-scoped methods:
+```typescript
+// Global method (admin/system use)
+await repository.findById(id);
+
+// User-scoped method (normal operations - PREFERRED)
+await repository.findByIdForUser(id, userId);
+```
+User-scoped methods automatically add `WHERE gebruiker_id = @userId` for data isolation and access control.
 
 #### Legacy Approach: DossierDatabaseService (DEPRECATED) ⚠️
 
@@ -150,7 +161,8 @@ try {
 
 **Migration Status**:
 - Feature flag: `USE_REPOSITORY_PATTERN=true` in `.env`
-- Currently: `createDossier` function supports both approaches
+- Migrated functions: `createDossier`, `createPersoon`, `getPersoonById`, `updatePersoon`, `deletePersoon`
+- All migrated functions support both legacy and new approaches via feature flag
 - Goal: Migrate all functions, then remove legacy service
 
 **See**: `REPOSITORY_MIGRATION_GUIDE.md` for complete migration strategy

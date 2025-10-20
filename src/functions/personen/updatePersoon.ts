@@ -1,14 +1,20 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { PersoonRepository } from '../../repositories/PersoonRepository';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { validateUpdatePersoon } from '../../validators/persoon-validator';
 import { requireAuthentication } from '../../utils/auth-helper';
 
+// Feature flag: Use new Repository Pattern or legacy DossierDatabaseService
+const USE_REPOSITORY_PATTERN = process.env.USE_REPOSITORY_PATTERN === 'true';
+
 export async function updatePersoon(
     request: HttpRequest,
-    _context: InvocationContext
+    context: InvocationContext
 ): Promise<HttpResponseInit> {
-    const dbService = new DossierDatabaseService();
+    context.log(`Using ${USE_REPOSITORY_PATTERN ? 'Repository Pattern' : 'Legacy Service'}`);
+
+    const dbService = USE_REPOSITORY_PATTERN ? null : new DossierDatabaseService();
     let updateData: any = null;
 
     try {
@@ -47,36 +53,62 @@ export async function updatePersoon(
             );
         }
 
-        // Initialize database
-        await dbService.initialize();
+        let updatedPersoon;
 
-        // Check if persoon exists and belongs to this user
-        const existingPersoon = await dbService.getPersoonByIdForUser(persoonId, userId);
-        if (!existingPersoon) {
-            return createErrorResponse('Persoon not found', 404);
-        }
+        if (USE_REPOSITORY_PATTERN) {
+            // NEW: Use Repository Pattern
+            const repository = new PersoonRepository();
 
-        // Check email uniqueness if provided and changed (scoped to user)
-        if (value.email && value.email !== existingPersoon.email) {
-            const isEmailUnique = await dbService.checkEmailUniqueForUser(value.email, userId, persoonId);
-            if (!isEmailUnique) {
-                return createErrorResponse('Email address already exists', 409);
+            // Check if persoon exists and belongs to this user
+            const existingPersoon = await repository.findByIdForUser(persoonId, userId);
+            if (!existingPersoon) {
+                return createErrorResponse('Persoon not found', 404);
             }
-        }
 
-        // Update persoon (maintaining gebruiker_id)
-        const updatedPersoon = await dbService.updatePersoonForUser({
-            ...existingPersoon,
-            ...value,
-            id: persoonId
-        }, userId);
+            // Check email uniqueness if provided and changed (scoped to user)
+            if (value.email && value.email !== existingPersoon.email) {
+                const isEmailUnique = await repository.checkEmailUniqueForUser(value.email, userId, persoonId);
+                if (!isEmailUnique) {
+                    return createErrorResponse('Email address already exists', 409);
+                }
+            }
+
+            // Update persoon (maintaining gebruiker_id)
+            updatedPersoon = await repository.updateForUser(persoonId, value, userId);
+        } else {
+            // LEGACY: Use old DossierDatabaseService
+            await dbService!.initialize();
+
+            // Check if persoon exists and belongs to this user
+            const existingPersoon = await dbService!.getPersoonByIdForUser(persoonId, userId);
+            if (!existingPersoon) {
+                return createErrorResponse('Persoon not found', 404);
+            }
+
+            // Check email uniqueness if provided and changed (scoped to user)
+            if (value.email && value.email !== existingPersoon.email) {
+                const isEmailUnique = await dbService!.checkEmailUniqueForUser(value.email, userId, persoonId);
+                if (!isEmailUnique) {
+                    return createErrorResponse('Email address already exists', 409);
+                }
+            }
+
+            // Update persoon (maintaining gebruiker_id)
+            updatedPersoon = await dbService!.updatePersoonForUser({
+                ...existingPersoon,
+                ...value,
+                id: persoonId
+            }, userId);
+        }
 
         return createSuccessResponse(updatedPersoon);
 
     } catch (error) {
         return createErrorResponse(`Internal server error: ${error instanceof Error ? error.message : String(error)}`, 500);
     } finally {
-        await dbService.close();
+        if (dbService) {
+            await dbService.close();
+        }
     }
 }
 
