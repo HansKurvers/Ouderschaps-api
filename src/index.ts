@@ -27,6 +27,7 @@ import './functions/personen/getPersonen';
 import './functions/personen/getPersoonById';
 import './functions/personen/updatePersoon';
 import './functions/personen/deletePersoon';
+import './functions/personen/checkPersoonDependencies';
 
 // Kinderen functions (FASE 3)
 import './functions/kinderen/getKindOuders';

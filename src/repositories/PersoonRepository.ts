@@ -523,11 +523,104 @@ export class PersoonRepository extends BaseRepository {
     }
 
     /**
+     * Checks if a person has dependencies in other tables
+     *
+     * @param id - Person ID to check
+     * @returns Object with dependency information
+     *
+     * @example
+     * ```typescript
+     * const deps = await repo.checkDependencies(123);
+     * if (deps.hasDependencies) {
+     *   console.log('Cannot delete:', deps.message);
+     * }
+     * ```
+     */
+    async checkDependencies(id: number): Promise<{
+        hasDependencies: boolean;
+        message: string;
+        dependencies: {
+            dossiers_partijen: number;
+            dossiers_kinderen: number;
+            kinderen_ouders_als_kind: number;
+            kinderen_ouders_als_ouder: number;
+            omgang: number;
+            ouderschapsplan_partij1: number;
+            ouderschapsplan_partij2: number;
+            financiele_afspraken: number;
+            bijdragen_kosten: number;
+        };
+    }> {
+        // Check all foreign key references
+        const [
+            dossiersPartijen,
+            dossiersKinderen,
+            kinderenOudersKind,
+            kinderenOudersOuder,
+            omgang,
+            ouderschapsPlan1,
+            ouderschapsPlan2,
+            financieleAfspraken,
+            bijdragenKosten
+        ] = await Promise.all([
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.dossiers_partijen WHERE persoon_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.dossiers_kinderen WHERE kind_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.kinderen_ouders WHERE kind_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.kinderen_ouders WHERE ouder_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.omgang WHERE verzorger_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.ouderschapsplan_info WHERE partij_1_persoon_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.ouderschapsplan_info WHERE partij_2_persoon_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.financiele_afspraken_kinderen WHERE kind_id = @id`, { id }),
+            this.querySingle<{ count: number }>(`SELECT COUNT(*) as count FROM dbo.bijdragen_kosten_kinderen WHERE personen_id = @id`, { id })
+        ]);
+
+        const dependencies = {
+            dossiers_partijen: dossiersPartijen?.count || 0,
+            dossiers_kinderen: dossiersKinderen?.count || 0,
+            kinderen_ouders_als_kind: kinderenOudersKind?.count || 0,
+            kinderen_ouders_als_ouder: kinderenOudersOuder?.count || 0,
+            omgang: omgang?.count || 0,
+            ouderschapsplan_partij1: ouderschapsPlan1?.count || 0,
+            ouderschapsplan_partij2: ouderschapsPlan2?.count || 0,
+            financiele_afspraken: financieleAfspraken?.count || 0,
+            bijdragen_kosten: bijdragenKosten?.count || 0
+        };
+
+        const totalDependencies = Object.values(dependencies).reduce((sum, count) => sum + count, 0);
+        const hasDependencies = totalDependencies > 0;
+
+        let message = '';
+        if (hasDependencies) {
+            const parts: string[] = [];
+            if (dependencies.dossiers_partijen > 0) parts.push(`${dependencies.dossiers_partijen} dossier(s) as partij`);
+            if (dependencies.dossiers_kinderen > 0) parts.push(`${dependencies.dossiers_kinderen} dossier(s) as kind`);
+            if (dependencies.kinderen_ouders_als_kind > 0) parts.push(`${dependencies.kinderen_ouders_als_kind} ouder relatie(s)`);
+            if (dependencies.kinderen_ouders_als_ouder > 0) parts.push(`${dependencies.kinderen_ouders_als_ouder} kind relatie(s)`);
+            if (dependencies.omgang > 0) parts.push(`${dependencies.omgang} omgang regeling(en)`);
+            if (dependencies.ouderschapsplan_partij1 > 0 || dependencies.ouderschapsplan_partij2 > 0) {
+                parts.push(`${dependencies.ouderschapsplan_partij1 + dependencies.ouderschapsplan_partij2} ouderschapsplan(nen)`);
+            }
+            if (dependencies.financiele_afspraken > 0) parts.push(`${dependencies.financiele_afspraken} financiele afspraak/afspraken`);
+            if (dependencies.bijdragen_kosten > 0) parts.push(`${dependencies.bijdragen_kosten} bijdrage(n)`);
+
+            message = `Deze persoon kan niet worden verwijderd omdat deze nog is gekoppeld aan: ${parts.join(', ')}. Verwijder eerst deze koppelingen.`;
+        }
+
+        return {
+            hasDependencies,
+            message,
+            dependencies
+        };
+    }
+
+    /**
      * Deletes a person scoped to specific user
+     * Checks for dependencies first and throws error if found
      *
      * @param id - Person ID to delete
      * @param userId - User identifier for access control
      * @returns True if deletion successful, false if person not found or no access
+     * @throws Error if person has dependencies
      *
      * @example
      * ```typescript
@@ -535,6 +628,12 @@ export class PersoonRepository extends BaseRepository {
      * ```
      */
     async deleteForUser(id: number, userId: number): Promise<boolean> {
+        // Check for dependencies first
+        const dependencyCheck = await this.checkDependencies(id);
+        if (dependencyCheck.hasDependencies) {
+            throw new Error(dependencyCheck.message);
+        }
+
         const query = `
             DELETE FROM dbo.personen
             WHERE id = @id AND gebruiker_id = @userId

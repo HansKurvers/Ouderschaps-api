@@ -514,4 +514,157 @@ describe('PersoonRepository', () => {
             expect(result).toBe(0);
         });
     });
+
+    describe('checkDependencies', () => {
+        it('should return no dependencies when person is not linked anywhere', async () => {
+            // Arrange
+            const personId = 1;
+            mockRequest.query.mockResolvedValue({ recordset: [{ count: 0 }] });
+
+            // Act
+            const result = await repository.checkDependencies(personId);
+
+            // Assert
+            expect(result.hasDependencies).toBe(false);
+            expect(result.message).toBe('');
+            expect(result.dependencies).toEqual({
+                dossiers_partijen: 0,
+                dossiers_kinderen: 0,
+                kinderen_ouders_als_kind: 0,
+                kinderen_ouders_als_ouder: 0,
+                omgang: 0,
+                ouderschapsplan_partij1: 0,
+                ouderschapsplan_partij2: 0,
+                financiele_afspraken: 0,
+                bijdragen_kosten: 0
+            });
+        });
+
+        it('should return dependencies when person is linked as partij', async () => {
+            // Arrange
+            const personId = 1;
+            mockRequest.query
+                .mockResolvedValueOnce({ recordset: [{ count: 2 }] }) // dossiers_partijen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // dossiers_kinderen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders kind
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders ouder
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // omgang
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p1
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p2
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // financiele_afspraken
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }); // bijdragen_kosten
+
+            // Act
+            const result = await repository.checkDependencies(personId);
+
+            // Assert
+            expect(result.hasDependencies).toBe(true);
+            expect(result.message).toContain('2 dossier(s) as partij');
+            expect(result.dependencies.dossiers_partijen).toBe(2);
+        });
+
+        it('should return multiple dependencies with combined message', async () => {
+            // Arrange
+            const personId = 1;
+            mockRequest.query
+                .mockResolvedValueOnce({ recordset: [{ count: 1 }] }) // dossiers_partijen
+                .mockResolvedValueOnce({ recordset: [{ count: 1 }] }) // dossiers_kinderen
+                .mockResolvedValueOnce({ recordset: [{ count: 2 }] }) // kinderen_ouders kind
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders ouder
+                .mockResolvedValueOnce({ recordset: [{ count: 3 }] }) // omgang
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p1
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p2
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // financiele_afspraken
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }); // bijdragen_kosten
+
+            // Act
+            const result = await repository.checkDependencies(personId);
+
+            // Assert
+            expect(result.hasDependencies).toBe(true);
+            expect(result.message).toContain('1 dossier(s) as partij');
+            expect(result.message).toContain('1 dossier(s) as kind');
+            expect(result.message).toContain('2 ouder relatie(s)');
+            expect(result.message).toContain('3 omgang regeling(en)');
+        });
+    });
+
+    describe('deleteForUser', () => {
+        it('should delete person when no dependencies exist', async () => {
+            // Arrange
+            const personId = 1;
+            const userId = 10;
+
+            // Mock checkDependencies to return no dependencies
+            mockRequest.query
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // dossiers_partijen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // dossiers_kinderen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders kind
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders ouder
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // omgang
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p1
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p2
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // financiele_afspraken
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }); // bijdragen_kosten
+
+            // Mock delete
+            mockRequest.query.mockResolvedValueOnce({ rowsAffected: [1] });
+
+            // Act
+            const result = await repository.deleteForUser(personId, userId);
+
+            // Assert
+            expect(result).toBe(true);
+        });
+
+        it('should throw error when person has dependencies', async () => {
+            // Arrange
+            const personId = 1;
+            const userId = 10;
+
+            // Mock checkDependencies to return dependencies
+            mockRequest.query
+                .mockResolvedValueOnce({ recordset: [{ count: 2 }] }) // dossiers_partijen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // dossiers_kinderen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders kind
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders ouder
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // omgang
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p1
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p2
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // financiele_afspraken
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }); // bijdragen_kosten
+
+            // Act & Assert
+            await expect(repository.deleteForUser(personId, userId)).rejects.toThrow(
+                'Deze persoon kan niet worden verwijderd omdat deze nog is gekoppeld aan'
+            );
+        });
+
+        it('should return false when person not found or no access', async () => {
+            // Arrange
+            const personId = 1;
+            const userId = 10;
+
+            // Mock checkDependencies to return no dependencies
+            mockRequest.query
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // dossiers_partijen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // dossiers_kinderen
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders kind
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // kinderen_ouders ouder
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // omgang
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p1
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // ouderschapsplan p2
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }) // financiele_afspraken
+                .mockResolvedValueOnce({ recordset: [{ count: 0 }] }); // bijdragen_kosten
+
+            // Mock delete - no rows affected
+            mockRequest.query.mockResolvedValueOnce({ rowsAffected: [0] });
+
+            // Act
+            const result = await repository.deleteForUser(personId, userId);
+
+            // Assert
+            expect(result).toBe(false);
+        });
+    });
 });

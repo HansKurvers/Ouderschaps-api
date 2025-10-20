@@ -68,6 +68,15 @@ export async function deletePersoon(
 
     } catch (error) {
         context.error('Error in deletePersoon:', error);
+
+        // Check if it's a dependency error (foreign key constraint)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (errorMessage.includes('kan niet worden verwijderd') || errorMessage.includes('gekoppeld aan')) {
+            // This is a dependency error - return 400 with clear message
+            return createErrorResponse(errorMessage, 400);
+        }
+
+        // Other errors return 500
         return createErrorResponse('Internal server error', 500);
     } finally {
         if (dbService) {
