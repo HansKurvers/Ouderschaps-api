@@ -1556,6 +1556,12 @@ export class DossierDatabaseService {
             //TODO Pooling verbeteren
             return result.recordset.map(row => ({
                 id: row.omgang_id,
+                // Flat ID fields for easy access (frontend compatibility)
+                dagId: row.dag_id,
+                dagdeelId: row.dagdeel_id,
+                verzorgerId: row.persoon_id,
+                weekRegelingId: row.week_regeling_id,
+                // Nested objects for display/detailed info
                 dag: {
                     id: row.dag_id,
                     naam: row.dag_naam
@@ -1924,6 +1930,12 @@ export class DossierDatabaseService {
 
             return result.recordset.map(row => ({
                 id: row.omgang_id,
+                // Flat ID fields for easy frontend access
+                dagId: row.dag_id,
+                dagdeelId: row.dagdeel_id,
+                verzorgerId: row.verzorger_id,
+                weekRegelingId: row.week_regeling_id,
+                // Nested objects for display/detailed info
                 dag: {
                     id: row.dag_id,
                     naam: row.dag_naam

@@ -139,6 +139,12 @@ export interface OmgangSchedule {
 // Legacy Omgang interface for backward compatibility with DossierDatabaseService
 export interface OmgangLegacy {
     id: number;
+    // Flat ID fields for easy frontend access
+    dagId: number;
+    dagdeelId: number;
+    verzorgerId: number;
+    weekRegelingId: number;
+    // Nested objects for display/detailed info
     dag: Dag;
     dagdeel: Dagdeel;
     verzorger: Persoon;
