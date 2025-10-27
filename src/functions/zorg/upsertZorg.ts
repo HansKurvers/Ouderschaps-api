@@ -4,6 +4,7 @@ import { DossierRepository } from '../../repositories/DossierRepository';
 import { createErrorResponse, createSuccessResponse, createUnauthorizedResponse } from '../../utils/response-helper';
 import { requireAuthentication } from '../../utils/auth-helper';
 import Joi from 'joi';
+import sql from 'mssql';
 
 
 // Validation schema for upsert
@@ -58,39 +59,38 @@ export async function upsertZorg(
             return createErrorResponse('Access denied to this dossier', 403);
         }
 
-        // Process each zorg record
+        // Process each zorg record - prevent duplicates by checking dossier + situatie
         const results: any[] = [];
         
         for (const zorgData of value.zorgregelingen) {
-            if (zorgData.id) {
-                // Update existing record
-                try {
-                    const updated = await zorgRepository.update(zorgData.id, {
-                        zorgCategorieId: zorgData.zorgCategorieId,
-                        zorgSituatieId: zorgData.zorgSituatieId,
-                        overeenkomst: zorgData.overeenkomst,
-                        situatieAnders: zorgData.situatieAnders,
-                        gewijzigdDoor: userId
-                    });
-                    results.push(updated);
-                } catch (updateError: any) {
-                    // If record not found, create new one
-                    if (updateError.message?.includes('not found')) {
-                        const created = await zorgRepository.create({
-                            dossierId,
-                            zorgCategorieId: zorgData.zorgCategorieId,
-                            zorgSituatieId: zorgData.zorgSituatieId,
-                            overeenkomst: zorgData.overeenkomst,
-                            situatieAnders: zorgData.situatieAnders,
-                            aangemaaktDoor: userId
-                        });
-                        results.push(created);
-                    } else {
-                        throw updateError;
-                    }
-                }
+            // First check if a record exists for this dossier + situatie combination
+            const existingQuery = `
+                SELECT id 
+                FROM dbo.zorg 
+                WHERE dossier_id = @dossierId 
+                AND zorg_situatie_id = @situatieId
+            `;
+            
+            const pool = await zorgRepository['getPool']();
+            const existingResult = await pool.request()
+                .input('dossierId', sql.Int, dossierId)
+                .input('situatieId', sql.Int, zorgData.zorgSituatieId)
+                .query(existingQuery);
+            
+            const existingId = existingResult.recordset[0]?.id;
+            
+            if (existingId) {
+                // Update existing record (use found ID, not the one from frontend)
+                const updated = await zorgRepository.update(existingId, {
+                    zorgCategorieId: zorgData.zorgCategorieId,
+                    zorgSituatieId: zorgData.zorgSituatieId,
+                    overeenkomst: zorgData.overeenkomst,
+                    situatieAnders: zorgData.situatieAnders,
+                    gewijzigdDoor: userId
+                });
+                results.push(updated);
             } else {
-                // Create new record
+                // Create new record only if none exists
                 const created = await zorgRepository.create({
                     dossierId,
                     zorgCategorieId: zorgData.zorgCategorieId,
