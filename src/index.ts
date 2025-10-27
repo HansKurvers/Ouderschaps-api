@@ -64,6 +64,7 @@ import './functions/zorg/getDossierZorg';
 import './functions/zorg/createZorg';
 import './functions/zorg/updateZorg';
 import './functions/zorg/deleteZorg';
+import './functions/zorg/upsertZorg';
 
 // Alimentatie functions (FASE 5)
 import './functions/alimentatie/getAlimentatieByDossierId';
