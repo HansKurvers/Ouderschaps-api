@@ -124,6 +124,11 @@ export interface OmgangWithLookups {
     dagdeel: Dagdeel;
     verzorger: Persoon;
     weekRegeling: WeekRegeling;
+    // Flat ID fields for frontend compatibility
+    dagId: number;
+    dagdeelId: number;
+    verzorgerId: number;
+    weekRegelingId: number;
 }
 
 export interface OmgangSchedule {

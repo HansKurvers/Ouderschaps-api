@@ -187,7 +187,6 @@ export class DossierRepository extends BaseRepository {
         const transaction = await this.beginTransaction();
 
         try {
-            console.log(`Starting cascade delete for dossier ID: ${dossierId}`);
 
             // Log related data for debugging
             await this.logRelatedData(transaction, dossierId);
@@ -253,7 +252,6 @@ export class DossierRepository extends BaseRepository {
 
             await transaction.commit();
 
-            console.log(`Successfully deleted dossier ID: ${dossierId}`);
             return result.rowsAffected[0] > 0;
 
         } catch (error) {
@@ -308,31 +306,28 @@ export class DossierRepository extends BaseRepository {
             ];
 
             for (const table of tables) {
-                const result = await this.executeInTransaction<{ count: number }>(
+                await this.executeInTransaction<{ count: number }>(
                     transaction,
                     `SELECT COUNT(*) as count FROM ${table} WHERE dossier_id = @dossierId`,
                     { dossierId }
                 );
-                console.log(`${table}: ${result.recordset[0].count} records`);
             }
 
             // Check for bijdragen_kosten_kinderen via alimentaties
-            const bkkResult = await this.executeInTransaction<{ count: number }>(transaction, `
+            await this.executeInTransaction<{ count: number }>(transaction, `
                 SELECT COUNT(*) as count
                 FROM dbo.bijdragen_kosten_kinderen bkk
                 INNER JOIN dbo.alimentaties a ON bkk.alimentatie_id = a.id
                 WHERE a.dossier_id = @dossierId
             `, { dossierId });
-            console.log(`bijdragen_kosten_kinderen (via alimentaties): ${bkkResult.recordset[0].count} records`);
 
             // Check for financiele_afspraken_kinderen via alimentaties
-            const fakResult = await this.executeInTransaction<{ count: number }>(transaction, `
+            await this.executeInTransaction<{ count: number }>(transaction, `
                 SELECT COUNT(*) as count
                 FROM dbo.financiele_afspraken_kinderen fak
                 INNER JOIN dbo.alimentaties a ON fak.alimentatie_id = a.id
                 WHERE a.dossier_id = @dossierId
             `, { dossierId });
-            console.log(`financiele_afspraken_kinderen (via alimentaties): ${fakResult.recordset[0].count} records`);
 
         } catch (error) {
             console.warn('Could not log related data:', error);

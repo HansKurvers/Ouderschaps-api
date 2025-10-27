@@ -65,7 +65,6 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
                 dd.id as dagdeel_id,
                 dd.naam as dagdeel_naam,
                 -- Verzorger (Persoon) fields
-                p.id as verzorger_id,
                 p.voorletters as verzorger_voorletters,
                 p.voornamen as verzorger_voornamen,
                 p.roepnaam as verzorger_roepnaam,
@@ -123,7 +122,6 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
                 dd.id as dagdeel_id,
                 dd.naam as dagdeel_naam,
                 -- Verzorger (Persoon) fields
-                p.id as verzorger_id,
                 p.voorletters as verzorger_voorletters,
                 p.voornamen as verzorger_voornamen,
                 p.roepnaam as verzorger_roepnaam,
@@ -448,7 +446,12 @@ export class OmgangRepository extends BaseRepository implements IOmgangRepositor
             dag: this.mapDag(record),
             dagdeel: this.mapDagdeel(record),
             verzorger: this.mapVerzorger(record),
-            weekRegeling: this.mapWeekRegeling(record)
+            weekRegeling: this.mapWeekRegeling(record),
+            // Add flat ID fields for frontend compatibility
+            dagId: record.dag_id,
+            dagdeelId: record.dagdeel_id,
+            verzorgerId: record.verzorger_id,
+            weekRegelingId: record.week_regeling_id
         };
     }
 

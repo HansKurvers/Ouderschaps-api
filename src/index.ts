@@ -97,6 +97,7 @@ import './functions/ouderschapsplan/getPlanMetadata';
 
 // Debug functions
 import './functions/debug/inspectDossier';
+import './functions/debug/debugOmgang';
 
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports

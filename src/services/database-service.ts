@@ -156,16 +156,15 @@ export class DossierDatabaseService {
             ];
 
             for (const table of tables) {
-                const result = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query(`SELECT COUNT(*) as count FROM ${table} WHERE dossier_id = @DossierID`);
 
-                console.log(`${table}: ${result.recordset[0].count} records`);
             }
 
             // Check for bijdragen_kosten_kinderen via alimentaties
-            const bkkResult = await transaction
+            await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query(`
@@ -174,10 +173,9 @@ export class DossierDatabaseService {
                     INNER JOIN dbo.alimentaties a ON bkk.alimentatie_id = a.id
                     WHERE a.dossier_id = @DossierID
                 `);
-            console.log(`bijdragen_kosten_kinderen (via alimentaties): ${bkkResult.recordset[0].count} records`);
 
             // Check for financiele_afspraken_kinderen via alimentaties
-            const fakResult = await transaction
+            await transaction
                 .request()
                 .input('DossierID', sql.Int, dossierID)
                 .query(`
@@ -186,7 +184,6 @@ export class DossierDatabaseService {
                     INNER JOIN dbo.alimentaties a ON fak.alimentatie_id = a.id
                     WHERE a.dossier_id = @DossierID
                 `);
-            console.log(`financiele_afspraken_kinderen (via alimentaties): ${fakResult.recordset[0].count} records`);
 
         } catch (error) {
             console.warn('Could not log related data:', error);
@@ -200,7 +197,6 @@ export class DossierDatabaseService {
         try {
             await transaction.begin();
 
-            console.log(`Starting cascade delete for dossier ID: ${dossierID}`);
 
             // First, let's check what related data exists
             await this.logRelatedData(transaction, dossierID);
@@ -210,7 +206,7 @@ export class DossierDatabaseService {
             // 1. Delete alimentatie related tables first (most dependent)
             // First, set alimentaties.bijdrage_kosten_kinderen to NULL to break the FK constraint
             try {
-                const nullifyBijdrageResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query(`
@@ -218,7 +214,6 @@ export class DossierDatabaseService {
                         SET bijdrage_kosten_kinderen = NULL
                         WHERE dossier_id = @DossierID
                     `);
-                console.log(`Nullified ${nullifyBijdrageResult.rowsAffected[0]} alimentaties.bijdrage_kosten_kinderen references`);
             } catch (error) {
                 console.error('Error nullifying alimentaties.bijdrage_kosten_kinderen:', error);
                 throw error;
@@ -226,7 +221,7 @@ export class DossierDatabaseService {
 
             // Now delete bijdragen_kosten_kinderen
             try {
-                const bijdragenKostenResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query(`
@@ -235,7 +230,6 @@ export class DossierDatabaseService {
                         INNER JOIN dbo.alimentaties a ON bkk.alimentatie_id = a.id
                         WHERE a.dossier_id = @DossierID
                     `);
-                console.log(`Deleted ${bijdragenKostenResult.rowsAffected[0]} bijdragen_kosten_kinderen records`);
             } catch (error) {
                 console.error('Error deleting bijdragen_kosten_kinderen records:', error);
                 throw error;
@@ -243,7 +237,7 @@ export class DossierDatabaseService {
 
             // Delete financiele_afspraken_kinderen second
             try {
-                const financieleAfsprakenResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query(`
@@ -252,7 +246,6 @@ export class DossierDatabaseService {
                         INNER JOIN dbo.alimentaties a ON fak.alimentatie_id = a.id
                         WHERE a.dossier_id = @DossierID
                     `);
-                console.log(`Deleted ${financieleAfsprakenResult.rowsAffected[0]} financiele_afspraken_kinderen records`);
             } catch (error) {
                 console.error('Error deleting financiele_afspraken_kinderen records:', error);
                 throw error;
@@ -260,11 +253,10 @@ export class DossierDatabaseService {
 
             // Delete alimentaties third
             try {
-                const alimentatiesResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query('DELETE FROM dbo.alimentaties WHERE dossier_id = @DossierID');
-                console.log(`Deleted ${alimentatiesResult.rowsAffected[0]} alimentaties records`);
             } catch (error) {
                 console.error('Error deleting alimentaties records:', error);
                 throw error;
@@ -272,11 +264,10 @@ export class DossierDatabaseService {
 
             // 2. Delete ouderschapsplan info
             try {
-                const ouderschapsplanResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query('DELETE FROM dbo.ouderschapsplan_info WHERE dossier_id = @DossierID');
-                console.log(`Deleted ${ouderschapsplanResult.rowsAffected[0]} ouderschapsplan_info records`);
             } catch (error) {
                 console.error('Error deleting ouderschapsplan_info records:', error);
                 throw error;
@@ -284,11 +275,10 @@ export class DossierDatabaseService {
 
             // 3. Delete omgang records
             try {
-                const omgangResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query('DELETE FROM dbo.omgang WHERE dossier_id = @DossierID');
-                console.log(`Deleted ${omgangResult.rowsAffected[0]} omgang records`);
             } catch (error) {
                 console.error('Error deleting omgang records:', error);
                 throw error;
@@ -296,11 +286,10 @@ export class DossierDatabaseService {
 
             // 4. Delete zorg records
             try {
-                const zorgResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query('DELETE FROM dbo.zorg WHERE dossier_id = @DossierID');
-                console.log(`Deleted ${zorgResult.rowsAffected[0]} zorg records`);
             } catch (error) {
                 console.error('Error deleting zorg records:', error);
                 throw error;
@@ -308,11 +297,10 @@ export class DossierDatabaseService {
 
             // 5. Delete dossier-child relationships
             try {
-                const kinderenResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query('DELETE FROM dbo.dossiers_kinderen WHERE dossier_id = @DossierID');
-                console.log(`Deleted ${kinderenResult.rowsAffected[0]} dossiers_kinderen records`);
             } catch (error) {
                 console.error('Error deleting dossiers_kinderen records:', error);
                 throw error;
@@ -320,11 +308,10 @@ export class DossierDatabaseService {
 
             // 6. Delete dossier-party relationships
             try {
-                const partijenResult = await transaction
+                await transaction
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query('DELETE FROM dbo.dossiers_partijen WHERE dossier_id = @DossierID');
-                console.log(`Deleted ${partijenResult.rowsAffected[0]} dossiers_partijen records`);
             } catch (error) {
                 console.error('Error deleting dossiers_partijen records:', error);
                 throw error;
@@ -336,10 +323,8 @@ export class DossierDatabaseService {
                     .request()
                     .input('DossierID', sql.Int, dossierID)
                     .query('DELETE FROM dbo.dossiers WHERE id = @DossierID');
-                console.log(`Deleted ${dossierResult.rowsAffected[0]} dossier records`);
 
                 await transaction.commit();
-                console.log(`Successfully completed cascade delete for dossier ID: ${dossierID}`);
 
                 return dossierResult.rowsAffected[0] > 0;
             } catch (error) {
@@ -2550,39 +2535,34 @@ export class DossierDatabaseService {
             // Delete related data in correct order (from most dependent to least)
 
             // 1. Delete from kinderen_ouders where person is a child
-            const deleteKindRelaties = await transaction
+            await transaction
                 .request()
                 .input('PersoonId', sql.Int, persoonId)
                 .query('DELETE FROM dbo.kinderen_ouders WHERE kind_id = @PersoonId');
-            console.log(`Deleted ${deleteKindRelaties.rowsAffected[0]} kinderen_ouders records (as kind)`);
 
             // 2. Delete from kinderen_ouders where person is a parent
-            const deleteOuderRelaties = await transaction
+            await transaction
                 .request()
                 .input('PersoonId', sql.Int, persoonId)
                 .query('DELETE FROM dbo.kinderen_ouders WHERE ouder_id = @PersoonId');
-            console.log(`Deleted ${deleteOuderRelaties.rowsAffected[0]} kinderen_ouders records (as ouder)`);
 
             // 3. Delete from dossiers_kinderen
-            const deleteDossiersKinderen = await transaction
+            await transaction
                 .request()
                 .input('PersoonId', sql.Int, persoonId)
                 .query('DELETE FROM dbo.dossiers_kinderen WHERE kind_id = @PersoonId');
-            console.log(`Deleted ${deleteDossiersKinderen.rowsAffected[0]} dossiers_kinderen records`);
 
             // 4. Delete from dossiers_partijen
-            const deleteDossiersPartijen = await transaction
+            await transaction
                 .request()
                 .input('PersoonId', sql.Int, persoonId)
                 .query('DELETE FROM dbo.dossiers_partijen WHERE persoon_id = @PersoonId');
-            console.log(`Deleted ${deleteDossiersPartijen.rowsAffected[0]} dossiers_partijen records`);
 
             // 5. Delete from omgang where person is verzorger
-            const deleteOmgang = await transaction
+            await transaction
                 .request()
                 .input('PersoonId', sql.Int, persoonId)
                 .query('DELETE FROM dbo.omgang WHERE verzorger_id = @PersoonId');
-            console.log(`Deleted ${deleteOmgang.rowsAffected[0]} omgang records`);
 
             // 6. Finally, delete the person
             const deletePersoon = await transaction
@@ -2592,7 +2572,6 @@ export class DossierDatabaseService {
                 .query('DELETE FROM dbo.personen WHERE id = @PersoonId AND gebruiker_id = @UserId');
 
             await transaction.commit();
-            console.log(`Persoon with ID ${persoonId} deleted successfully`);
 
             return deletePersoon.rowsAffected[0] > 0;
         } catch (error) {

@@ -38,20 +38,13 @@ export class JwtValidator {
         }
 
         try {
-            console.log('Decoding token...');
             const decoded = jwt.decode(token, { complete: true });
             if (!decoded || !decoded.header.kid) {
-                console.log('Failed to decode token or missing kid');
                 return { isValid: false, error: 'Invalid token format' };
             }
 
-            console.log('Token kid:', decoded.header.kid);
-            console.log('Config - Audience:', this.config.audience);
-            console.log('Config - Issuer:', this.config.issuer);
-            console.log('Config - JWKS URI:', this.config.jwksUri);
 
             const key = await this.getSigningKey(decoded.header.kid);
-            console.log('Got signing key, verifying token...');
             
             const payload = jwt.verify(token, key, {
                 audience: this.config.audience,
@@ -59,12 +52,10 @@ export class JwtValidator {
                 algorithms: this.config.algorithms as jwt.Algorithm[]
             });
 
-            console.log('Token verified successfully');
             // jwt.verify already checks the audience, no need for additional check
             // The audience can be a string or array, and jwt.verify handles both cases
 
             const userId = this.extractUserId(payload);
-            console.log('Extracted user ID:', userId);
             return { 
                 isValid: true, 
                 payload, 

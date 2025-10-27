@@ -1,13 +1,19 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { OmgangRepository } from '../../repositories/OmgangRepository';
+import { DossierRepository } from '../../repositories/DossierRepository';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { requireAuthentication } from '../../utils/auth-helper';
+import { OmgangLegacy } from '../../models/Dossier';
 
 export async function getDossierOmgang(
     request: HttpRequest,
     context: InvocationContext
 ): Promise<HttpResponseInit> {
-    const dbService = new DossierDatabaseService();
+    const useRepositoryPattern = process.env.USE_REPOSITORY_PATTERN === 'true';
+    const dbService = useRepositoryPattern ? null : new DossierDatabaseService();
+    const omgangRepository = useRepositoryPattern ? new OmgangRepository() : null;
+    const dossierRepository = useRepositoryPattern ? new DossierRepository() : null;
 
     try {
         let userId: number;
@@ -23,23 +29,56 @@ export async function getDossierOmgang(
             return createErrorResponse('Invalid dossier ID', 400);
         }
 
-        try {
-            await dbService.initialize();
-            context.log('Database connection initialized successfully');
-        } catch (dbError) {
-            context.error('Database initialization failed in getDossierOmgang:', dbError);
-            return createErrorResponse('Database connection failed', 500);
+        if (!useRepositoryPattern && dbService) {
+            try {
+                await dbService.initialize();
+                context.log('Database connection initialized successfully');
+            } catch (dbError) {
+                context.error('Database initialization failed in getDossierOmgang:', dbError);
+                return createErrorResponse('Database connection failed', 500);
+            }
         }
 
-        context.log(`Checking access for user ${userId} to dossier ${dossierId}`);
-        const hasAccess = await dbService.checkDossierAccess(dossierId, userId);
+        // Check dossier access
+        let hasAccess = false;
+        if (useRepositoryPattern && dossierRepository) {
+            const dossier = await dossierRepository.findById(dossierId);
+            hasAccess = dossier !== null && dossier.gebruikerId === userId;
+        } else if (dbService) {
+            hasAccess = await dbService.checkDossierAccess(dossierId, userId);
+        }
+
         context.log(`Dossier access check result: ${hasAccess}`);
         if (!hasAccess) {
             context.warn(`Access denied for user ${userId} to dossier ${dossierId}`);
             return createErrorResponse('Access denied to this dossier', 403);
         }
 
-        const omgang = await dbService.getOmgangByDossier(dossierId);
+        let omgang: OmgangLegacy[] = [];
+        if (useRepositoryPattern && omgangRepository) {
+            const omgangWithLookups = await omgangRepository.findByDossierId(dossierId);
+            
+            // Convert OmgangWithLookups to OmgangLegacy format
+            omgang = omgangWithLookups.map(item => ({
+                id: item.omgang.id,
+                // Flat ID fields for frontend compatibility
+                dagId: item.dagId,
+                dagdeelId: item.dagdeelId,
+                verzorgerId: item.verzorgerId,
+                weekRegelingId: item.weekRegelingId,
+                // Nested objects for display
+                dag: item.dag,
+                dagdeel: item.dagdeel,
+                verzorger: item.verzorger,
+                wisselTijd: item.omgang.wisselTijd,
+                weekRegeling: item.weekRegeling,
+                weekRegelingAnders: item.omgang.weekRegelingAnders,
+                aangemaaktOp: item.omgang.aangemaaktOp,
+                gewijzigdOp: item.omgang.gewijzigdOp
+            }));
+        } else if (dbService) {
+            omgang = await dbService.getOmgangByDossier(dossierId);
+        }
 
         context.log(`Retrieved ${omgang.length} omgang entries for dossier ${dossierId}`);
         return createSuccessResponse(omgang);
@@ -48,7 +87,9 @@ export async function getDossierOmgang(
         context.error('Error in getDossierOmgang:', error);
         return createErrorResponse('Internal server error', 500);
     } finally {
-        await dbService.close();
+        if (!useRepositoryPattern && dbService) {
+            await dbService.close();
+        }
     }
 }
 
