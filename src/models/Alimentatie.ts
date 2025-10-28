@@ -6,6 +6,14 @@ export interface Alimentatie {
     kostenKinderen: number | null;
     bijdrageKostenKinderenId: number | null;
     bijdrageTemplateId: number | null;
+    // V2: Kinderrekening fields (applies to all children)
+    stortingOuder1Kinderrekening?: number | null;
+    stortingOuder2Kinderrekening?: number | null;
+    kinderrekeningKostensoorten?: string[];  // JSON array of kostensoorten
+    kinderrekeningMaximumOpname?: boolean | null;
+    kinderrekeningMaximumOpnameBedrag?: number | null;
+    kinderbijslagStortenOpKinderrekening?: boolean | null;
+    kindgebondenBudgetStortenOpKinderrekening?: boolean | null;
 }
 
 // Bijdrage templates
@@ -33,6 +41,7 @@ export interface FinancieleAfsprakenKinderen {
     zorgkortingPercentage?: number;  // INTEGER percentage
     inschrijving?: string;  // NVARCHAR - personen name/identifier
     kindgebondenBudget?: string;  // NVARCHAR - personen name/identifier
+    // NOTE: kinderrekening fields are on Alimentatie level, not here
 }
 
 // DTOs for creating and updating
@@ -40,12 +49,28 @@ export interface CreateAlimentatieDto {
     nettoBesteedbaarGezinsinkomen?: number;
     kostenKinderen?: number;
     bijdrageTemplateId?: number;
+    // V2: Kinderrekening fields
+    stortingOuder1Kinderrekening?: number;
+    stortingOuder2Kinderrekening?: number;
+    kinderrekeningKostensoorten?: string[];
+    kinderrekeningMaximumOpname?: boolean;
+    kinderrekeningMaximumOpnameBedrag?: number;
+    kinderbijslagStortenOpKinderrekening?: boolean;
+    kindgebondenBudgetStortenOpKinderrekening?: boolean;
 }
 
 export interface UpdateAlimentatieDto {
     nettoBesteedbaarGezinsinkomen?: number;
     kostenKinderen?: number;
     bijdrageTemplateId?: number;
+    // V2: Kinderrekening fields
+    stortingOuder1Kinderrekening?: number;
+    stortingOuder2Kinderrekening?: number;
+    kinderrekeningKostensoorten?: string[];
+    kinderrekeningMaximumOpname?: boolean;
+    kinderrekeningMaximumOpnameBedrag?: number;
+    kinderbijslagStortenOpKinderrekening?: boolean;
+    kindgebondenBudgetStortenOpKinderrekening?: boolean;
 }
 
 export interface CreateBijdrageKostenKinderenDto {
@@ -61,6 +86,7 @@ export interface CreateFinancieleAfsprakenKinderenDto {
     zorgkortingPercentage?: number;
     inschrijving?: string;
     kindgebondenBudget?: string;
+    // NOTE: kinderrekening fields moved to Alimentatie level in V2
 }
 
 export interface UpdateFinancieleAfsprakenKinderenDto {
@@ -70,6 +96,7 @@ export interface UpdateFinancieleAfsprakenKinderenDto {
     zorgkortingPercentage?: number;
     inschrijving?: string;
     kindgebondenBudget?: string;
+    // NOTE: kinderrekening fields moved to Alimentatie level in V2
 }
 
 // Complete data structure for API responses

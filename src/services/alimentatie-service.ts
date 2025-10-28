@@ -17,23 +17,58 @@ export class AlimentatieService {
         return await getPool();
     }
 
+    /**
+     * Parse JSON string to array of strings
+     * Returns empty array if null, undefined, or invalid JSON
+     */
+    private parseJsonArray(jsonString: string | null | undefined): string[] {
+        if (!jsonString) {
+            return [];
+        }
+        try {
+            const parsed = JSON.parse(jsonString);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.warn('Failed to parse JSON array:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Stringify array of strings to JSON
+     * Returns null if array is null, undefined, or empty
+     */
+    private stringifyJsonArray(arr: string[] | null | undefined): string | null {
+        if (!arr || arr.length === 0) {
+            return null;
+        }
+        return JSON.stringify(arr);
+    }
+
     // Get alimentatie by dossier ID
     async getAlimentatieByDossierId(dossierId: number): Promise<CompleteAlimentatieData | null> {
         try {
             const pool = await this.getPool();
-            
+
             // Get main alimentatie record
             const alimentatieResult = await pool.request()
                 .input('DossierId', sql.Int, dossierId)
                 .query(`
-                    SELECT 
+                    SELECT
                         id,
                         dossier_id as dossierId,
                         netto_besteedbaar_gezinsinkomen as nettoBesteedbaarGezinsinkomen,
                         kosten_kinderen as kostenKinderen,
                         bijdrage_kosten_kinderen as bijdrageKostenKinderenId,
-                        bijdrage_template as bijdrageTemplateId
-                    FROM dbo.alimentaties 
+                        bijdrage_template as bijdrageTemplateId,
+                        storting_ouder1_kinderrekening as stortingOuder1Kinderrekening,
+                        storting_ouder2_kinderrekening as stortingOuder2Kinderrekening,
+                        kinderrekening_kostensoorten as kinderrekeningKostensoortenJson,
+                        kinderrekening_maximum_opname as kinderrekeningMaximumOpname,
+                        kinderrekening_maximum_opname_bedrag as kinderrekeningMaximumOpnameBedrag,
+                        kinderbijslag_storten_op_kinderrekening as kinderbijslagStortenOpKinderrekening,
+                        kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening
+                    FROM dbo.alimentaties
                     WHERE dossier_id = @DossierId
                 `);
 
@@ -41,7 +76,12 @@ export class AlimentatieService {
                 return null;
             }
 
-            const alimentatie = alimentatieResult.recordset[0];
+            const alimentatieRaw = alimentatieResult.recordset[0];
+            const alimentatie = {
+                ...alimentatieRaw,
+                kinderrekeningKostensoorten: this.parseJsonArray(alimentatieRaw.kinderrekeningKostensoortenJson),
+                kinderrekeningKostensoortenJson: undefined
+            };
 
             // Get bijdrage template if exists
             let bijdrageTemplate = null;
@@ -73,7 +113,7 @@ export class AlimentatieService {
             const afsprakenResult = await pool.request()
                 .input('AlimentatieId', sql.Int, alimentatie.id)
                 .query(`
-                    SELECT 
+                    SELECT
                         id,
                         alimentatie_id as alimentatieId,
                         kind_id as kindId,
@@ -108,20 +148,44 @@ export class AlimentatieService {
                 .input('NettoInkomen', sql.Decimal(10, 2), data.nettoBesteedbaarGezinsinkomen || null)
                 .input('KostenKinderen', sql.Decimal(10, 2), data.kostenKinderen || null)
                 .input('BijdrageTemplateId', sql.Int, data.bijdrageTemplateId || null)
+                .input('StortingOuder1', sql.Decimal(10, 2), data.stortingOuder1Kinderrekening || null)
+                .input('StortingOuder2', sql.Decimal(10, 2), data.stortingOuder2Kinderrekening || null)
+                .input('Kostensoorten', sql.NVarChar(sql.MAX), this.stringifyJsonArray(data.kinderrekeningKostensoorten))
+                .input('MaximumOpname', sql.Bit, data.kinderrekeningMaximumOpname ?? null)
+                .input('MaximumOpnameBedrag', sql.Decimal(10, 2), data.kinderrekeningMaximumOpnameBedrag || null)
+                .input('KinderbijslagStorten', sql.Bit, data.kinderbijslagStortenOpKinderrekening ?? null)
+                .input('KindgebondenBudgetStorten', sql.Bit, data.kindgebondenBudgetStortenOpKinderrekening ?? null)
                 .query(`
-                    INSERT INTO dbo.alimentaties 
-                    (dossier_id, netto_besteedbaar_gezinsinkomen, kosten_kinderen, bijdrage_template)
-                    OUTPUT 
+                    INSERT INTO dbo.alimentaties
+                    (dossier_id, netto_besteedbaar_gezinsinkomen, kosten_kinderen, bijdrage_template,
+                     storting_ouder1_kinderrekening, storting_ouder2_kinderrekening, kinderrekening_kostensoorten,
+                     kinderrekening_maximum_opname, kinderrekening_maximum_opname_bedrag,
+                     kinderbijslag_storten_op_kinderrekening, kindgebonden_budget_storten_op_kinderrekening)
+                    OUTPUT
                         inserted.id,
                         inserted.dossier_id as dossierId,
                         inserted.netto_besteedbaar_gezinsinkomen as nettoBesteedbaarGezinsinkomen,
                         inserted.kosten_kinderen as kostenKinderen,
                         inserted.bijdrage_kosten_kinderen as bijdrageKostenKinderenId,
-                        inserted.bijdrage_template as bijdrageTemplateId
-                    VALUES (@DossierId, @NettoInkomen, @KostenKinderen, @BijdrageTemplateId)
+                        inserted.bijdrage_template as bijdrageTemplateId,
+                        inserted.storting_ouder1_kinderrekening as stortingOuder1Kinderrekening,
+                        inserted.storting_ouder2_kinderrekening as stortingOuder2Kinderrekening,
+                        inserted.kinderrekening_kostensoorten as kinderrekeningKostensoortenJson,
+                        inserted.kinderrekening_maximum_opname as kinderrekeningMaximumOpname,
+                        inserted.kinderrekening_maximum_opname_bedrag as kinderrekeningMaximumOpnameBedrag,
+                        inserted.kinderbijslag_storten_op_kinderrekening as kinderbijslagStortenOpKinderrekening,
+                        inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening
+                    VALUES (@DossierId, @NettoInkomen, @KostenKinderen, @BijdrageTemplateId,
+                            @StortingOuder1, @StortingOuder2, @Kostensoorten,
+                            @MaximumOpname, @MaximumOpnameBedrag, @KinderbijslagStorten, @KindgebondenBudgetStorten)
                 `);
 
-            return result.recordset[0] as Alimentatie;
+            const newRecord = result.recordset[0];
+            return {
+                ...newRecord,
+                kinderrekeningKostensoorten: this.parseJsonArray(newRecord.kinderrekeningKostensoortenJson),
+                kinderrekeningKostensoortenJson: undefined
+            } as Alimentatie;
         } catch (error) {
             console.error('Error creating alimentatie:', error);
             throw error;
@@ -132,12 +196,12 @@ export class AlimentatieService {
     async updateAlimentatie(id: number, data: UpdateAlimentatieDto): Promise<Alimentatie> {
         try {
             const pool = await this.getPool();
-            
+
             // Build update query dynamically based on provided fields
             const updateFields = [];
             const request = pool.request();
             request.input('Id', sql.Int, id);
-            
+
             if (data.nettoBesteedbaarGezinsinkomen !== undefined) {
                 updateFields.push('netto_besteedbaar_gezinsinkomen = @NettoInkomen');
                 request.input('NettoInkomen', sql.Decimal(10, 2), data.nettoBesteedbaarGezinsinkomen);
@@ -150,21 +214,57 @@ export class AlimentatieService {
                 updateFields.push('bijdrage_template = @BijdrageTemplateId');
                 request.input('BijdrageTemplateId', sql.Int, data.bijdrageTemplateId);
             }
-            
+            // V2: Kinderrekening fields
+            if (data.stortingOuder1Kinderrekening !== undefined) {
+                updateFields.push('storting_ouder1_kinderrekening = @StortingOuder1');
+                request.input('StortingOuder1', sql.Decimal(10, 2), data.stortingOuder1Kinderrekening);
+            }
+            if (data.stortingOuder2Kinderrekening !== undefined) {
+                updateFields.push('storting_ouder2_kinderrekening = @StortingOuder2');
+                request.input('StortingOuder2', sql.Decimal(10, 2), data.stortingOuder2Kinderrekening);
+            }
+            if (data.kinderrekeningKostensoorten !== undefined) {
+                updateFields.push('kinderrekening_kostensoorten = @Kostensoorten');
+                request.input('Kostensoorten', sql.NVarChar(sql.MAX), this.stringifyJsonArray(data.kinderrekeningKostensoorten));
+            }
+            if (data.kinderrekeningMaximumOpname !== undefined) {
+                updateFields.push('kinderrekening_maximum_opname = @MaximumOpname');
+                request.input('MaximumOpname', sql.Bit, data.kinderrekeningMaximumOpname);
+            }
+            if (data.kinderrekeningMaximumOpnameBedrag !== undefined) {
+                updateFields.push('kinderrekening_maximum_opname_bedrag = @MaximumOpnameBedrag');
+                request.input('MaximumOpnameBedrag', sql.Decimal(10, 2), data.kinderrekeningMaximumOpnameBedrag);
+            }
+            if (data.kinderbijslagStortenOpKinderrekening !== undefined) {
+                updateFields.push('kinderbijslag_storten_op_kinderrekening = @KinderbijslagStorten');
+                request.input('KinderbijslagStorten', sql.Bit, data.kinderbijslagStortenOpKinderrekening);
+            }
+            if (data.kindgebondenBudgetStortenOpKinderrekening !== undefined) {
+                updateFields.push('kindgebonden_budget_storten_op_kinderrekening = @KindgebondenBudgetStorten');
+                request.input('KindgebondenBudgetStorten', sql.Bit, data.kindgebondenBudgetStortenOpKinderrekening);
+            }
+
             if (updateFields.length === 0) {
                 throw new Error('No fields to update');
             }
-            
+
             const result = await request.query(`
-                UPDATE dbo.alimentaties 
+                UPDATE dbo.alimentaties
                 SET ${updateFields.join(', ')}
-                OUTPUT 
+                OUTPUT
                     inserted.id,
                     inserted.dossier_id as dossierId,
                     inserted.netto_besteedbaar_gezinsinkomen as nettoBesteedbaarGezinsinkomen,
                     inserted.kosten_kinderen as kostenKinderen,
                     inserted.bijdrage_kosten_kinderen as bijdrageKostenKinderenId,
-                    inserted.bijdrage_template as bijdrageTemplateId
+                    inserted.bijdrage_template as bijdrageTemplateId,
+                    inserted.storting_ouder1_kinderrekening as stortingOuder1Kinderrekening,
+                    inserted.storting_ouder2_kinderrekening as stortingOuder2Kinderrekening,
+                    inserted.kinderrekening_kostensoorten as kinderrekeningKostensoortenJson,
+                    inserted.kinderrekening_maximum_opname as kinderrekeningMaximumOpname,
+                    inserted.kinderrekening_maximum_opname_bedrag as kinderrekeningMaximumOpnameBedrag,
+                    inserted.kinderbijslag_storten_op_kinderrekening as kinderbijslagStortenOpKinderrekening,
+                    inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening
                 WHERE id = @Id
             `);
 
@@ -172,7 +272,12 @@ export class AlimentatieService {
                 throw new Error('Alimentatie not found');
             }
 
-            return result.recordset[0] as Alimentatie;
+            const updatedRecord = result.recordset[0];
+            return {
+                ...updatedRecord,
+                kinderrekeningKostensoorten: this.parseJsonArray(updatedRecord.kinderrekeningKostensoortenJson),
+                kinderrekeningKostensoortenJson: undefined
+            } as Alimentatie;
         } catch (error) {
             console.error('Error updating alimentatie:', error);
             throw error;
@@ -343,10 +448,10 @@ export class AlimentatieService {
                 .input('Inschrijving', sql.NVarChar(255), toStringOrNull(data.inschrijving))
                 .input('KindgebondenBudget', sql.NVarChar(255), toStringOrNull(data.kindgebondenBudget))
                 .query(`
-                    INSERT INTO dbo.financiele_afspraken_kinderen 
-                    (alimentatie_id, kind_id, alimentatie_bedrag, hoofdverblijf, 
+                    INSERT INTO dbo.financiele_afspraken_kinderen
+                    (alimentatie_id, kind_id, alimentatie_bedrag, hoofdverblijf,
                      kinderbijslag_ontvanger, zorgkorting_percentage, inschrijving, kindgebonden_budget)
-                    OUTPUT 
+                    OUTPUT
                         inserted.id,
                         inserted.alimentatie_id as alimentatieId,
                         inserted.kind_id as kindId,
@@ -356,7 +461,7 @@ export class AlimentatieService {
                         inserted.zorgkorting_percentage as zorgkortingPercentage,
                         inserted.inschrijving,
                         inserted.kindgebonden_budget as kindgebondenBudget
-                    VALUES (@AlimentatieId, @KindId, @AlimentatieBedrag, @Hoofdverblijf, 
+                    VALUES (@AlimentatieId, @KindId, @AlimentatieBedrag, @Hoofdverblijf,
                             @KinderbijslagOntvanger, @ZorgkortingPercentage, @Inschrijving, @KindgebondenBudget)
                 `);
 
@@ -430,7 +535,7 @@ export class AlimentatieService {
                             zorgkorting_percentage = @ZorgkortingPercentage,
                             inschrijving = @Inschrijving,
                             kindgebonden_budget = @KindgebondenBudget
-                        OUTPUT 
+                        OUTPUT
                             inserted.id,
                             inserted.alimentatie_id as alimentatieId,
                             inserted.kind_id as kindId,
@@ -518,7 +623,7 @@ export class AlimentatieService {
             const result = await pool.request()
                 .input('AlimentatieId', sql.Int, alimentatieId)
                 .query(`
-                    SELECT 
+                    SELECT
                         id,
                         alimentatie_id as alimentatieId,
                         kind_id as kindId,
