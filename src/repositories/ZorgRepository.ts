@@ -251,6 +251,33 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
     }
 
     /**
+     * Delete all zorg records for a specific categorie within a dossier
+     * Performs bulk hard delete from database
+     * Useful for "reset" functionality when user wants to clear all arrangements of a specific type
+     *
+     * @param dossierId - The dossier ID to delete from
+     * @param categorieId - The categorie ID to filter by (e.g., 6 for "Vakanties")
+     * @returns Number of records deleted (0 if no records found)
+     *
+     * @example
+     * // Delete all vacation arrangements for dossier 123
+     * const deleted = await zorgRepo.deleteByCategorie(123, 6);
+     * console.log(`Deleted ${deleted} vacation records`);
+     */
+    async deleteByCategorie(dossierId: number, categorieId: number): Promise<number> {
+        const query = `
+            DELETE FROM dbo.zorg
+            WHERE dossier_id = @dossierId
+              AND zorg_categorie_id = @categorieId
+        `;
+
+        const result = await this.executeQuery(query, { dossierId, categorieId });
+        return result.rowsAffected && result.rowsAffected[0] > 0
+            ? result.rowsAffected[0]
+            : 0;
+    }
+
+    /**
      * Check if a zorg record exists
      */
     async zorgExists(zorgId: number): Promise<boolean> {

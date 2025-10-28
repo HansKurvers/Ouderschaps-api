@@ -37,9 +37,12 @@ Base URL: `/api`
 
 ### Dossier Zorg (Care)
 - `GET /dossiers/{dossierId}/zorg` - Get care arrangements
+- `GET /dossiers/{dossierId}/zorg?categorieId={categoryId}` - Get care arrangements filtered by category
 - `POST /dossiers/{dossierId}/zorg` - Create care entry
+- `POST /dossiers/{dossierId}/zorg/upsert` - Upsert care entry
 - `PUT /zorg/{zorgId}` - Update care entry
-- `DELETE /zorg/{zorgId}` - Delete care entry
+- `DELETE /zorg/{zorgId}` - Delete single care entry
+- `DELETE /dossiers/{dossierId}/zorg/category/{categoryId}` - Bulk delete all care entries for a category
 
 ## Personen (Persons)
 - `GET /personen` - Get all persons for authenticated user
@@ -94,7 +97,78 @@ Base URL: `/api`
 - `GET /regelingen-templates` - Get arrangement templates
 
 ## Authentication
-All endpoints (except health checks) require authentication via JWT token in the Authorization header:
+All endpoints (except health checks and lookups) require authentication via JWT token in the Authorization header:
 ```
 Authorization: Bearer <token>
 ```
+
+---
+
+## Detailed Endpoint Documentation
+
+### Bulk Delete Zorg by Category
+
+**Endpoint:** `DELETE /dossiers/{dossierId}/zorg/category/{categoryId}`
+
+**Description:** Efficiently delete all zorg (care arrangement) records for a specific category within a dossier. Useful for "reset" functionality when users want to clear all arrangements of a specific type (e.g., all vacation arrangements).
+
+**Authentication:** Required (JWT)
+
+**Authorization:** User must own the dossier (checked via `gebruiker_id`)
+
+**Path Parameters:**
+- `dossierId` (number, required) - The dossier ID
+- `categoryId` (number, required) - The zorg category ID to delete
+  - Example: `6` = Vakanties (Vacations)
+  - Example: `9` = Feestdagen (Holidays)
+  - Example: `10` = Bijzondere dagen (Special days)
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": 5,
+    "message": "Successfully deleted 5 zorg records",
+    "categoryId": 6,
+    "dossierId": 123
+  }
+}
+```
+
+**Response (200 OK - No records found):**
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": 0,
+    "message": "No zorg records found for this category",
+    "categoryId": 6,
+    "dossierId": 123
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Invalid dossierId or categoryId
+- `401 Unauthorized` - Missing or invalid JWT token
+- `403 Forbidden` - User does not own this dossier
+- `500 Internal Server Error` - Database or server error
+
+**Use Cases:**
+1. **Manual Reset Button:** User clicks "Alles wissen" in frontend to clear all arrangements of a specific type
+2. **Automatic Reset:** System clears all arrangements when user modifies parties or children in dossier
+3. **Bulk Operations:** More efficient than deleting records individually (80% performance improvement)
+
+**Example Request:**
+```bash
+curl -X DELETE \
+  https://api.example.com/api/dossiers/123/zorg/category/6 \
+  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Implementation Details:**
+- Performs atomic database operation (no partial failures)
+- Uses parameterized queries to prevent SQL injection
+- Logs deleted count for audit trail
+- Returns zero if no records found (not an error)

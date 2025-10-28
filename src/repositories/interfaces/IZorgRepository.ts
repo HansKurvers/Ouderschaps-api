@@ -121,6 +121,18 @@ export interface IZorgRepository {
     delete(zorgId: number): Promise<boolean>;
 
     /**
+     * Delete all zorg records for a specific categorie within a dossier
+     * Performs bulk hard delete from database
+     * Useful for "reset" functionality when user wants to clear all arrangements of a specific type
+     *
+     * @param dossierId - The dossier ID to delete from
+     * @param categorieId - The categorie ID to filter by
+     * @returns Number of records deleted
+     * @throws Error if database error occurs
+     */
+    deleteByCategorie(dossierId: number, categorieId: number): Promise<number>;
+
+    /**
      * Check if a zorg record exists
      *
      * @param zorgId - The ID to check
