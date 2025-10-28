@@ -67,7 +67,10 @@ export class AlimentatieService {
                         kinderrekening_maximum_opname as kinderrekeningMaximumOpname,
                         kinderrekening_maximum_opname_bedrag as kinderrekeningMaximumOpnameBedrag,
                         kinderbijslag_storten_op_kinderrekening as kinderbijslagStortenOpKinderrekening,
-                        kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening
+                        kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening,
+                        bedragen_alle_kinderen_gelijk as bedragenAlleKinderenGelijk,
+                        alimentatiebedrag_per_kind as alimentatiebedragPerKind,
+                        alimentatiegerechtigde
                     FROM dbo.alimentaties
                     WHERE dossier_id = @DossierId
                 `);
@@ -155,12 +158,16 @@ export class AlimentatieService {
                 .input('MaximumOpnameBedrag', sql.Decimal(10, 2), data.kinderrekeningMaximumOpnameBedrag || null)
                 .input('KinderbijslagStorten', sql.Bit, data.kinderbijslagStortenOpKinderrekening ?? null)
                 .input('KindgebondenBudgetStorten', sql.Bit, data.kindgebondenBudgetStortenOpKinderrekening ?? null)
+                .input('BedragenGelijk', sql.Bit, data.bedragenAlleKinderenGelijk ?? null)
+                .input('BedragPerKind', sql.Decimal(10, 2), data.alimentatiebedragPerKind || null)
+                .input('Alimentatiegerechtigde', sql.VarChar(255), data.alimentatiegerechtigde || null)
                 .query(`
                     INSERT INTO dbo.alimentaties
                     (dossier_id, netto_besteedbaar_gezinsinkomen, kosten_kinderen, bijdrage_template,
                      storting_ouder1_kinderrekening, storting_ouder2_kinderrekening, kinderrekening_kostensoorten,
                      kinderrekening_maximum_opname, kinderrekening_maximum_opname_bedrag,
-                     kinderbijslag_storten_op_kinderrekening, kindgebonden_budget_storten_op_kinderrekening)
+                     kinderbijslag_storten_op_kinderrekening, kindgebonden_budget_storten_op_kinderrekening,
+                     bedragen_alle_kinderen_gelijk, alimentatiebedrag_per_kind, alimentatiegerechtigde)
                     OUTPUT
                         inserted.id,
                         inserted.dossier_id as dossierId,
@@ -174,10 +181,14 @@ export class AlimentatieService {
                         inserted.kinderrekening_maximum_opname as kinderrekeningMaximumOpname,
                         inserted.kinderrekening_maximum_opname_bedrag as kinderrekeningMaximumOpnameBedrag,
                         inserted.kinderbijslag_storten_op_kinderrekening as kinderbijslagStortenOpKinderrekening,
-                        inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening
+                        inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening,
+                        inserted.bedragen_alle_kinderen_gelijk as bedragenAlleKinderenGelijk,
+                        inserted.alimentatiebedrag_per_kind as alimentatiebedragPerKind,
+                        inserted.alimentatiegerechtigde
                     VALUES (@DossierId, @NettoInkomen, @KostenKinderen, @BijdrageTemplateId,
                             @StortingOuder1, @StortingOuder2, @Kostensoorten,
-                            @MaximumOpname, @MaximumOpnameBedrag, @KinderbijslagStorten, @KindgebondenBudgetStorten)
+                            @MaximumOpname, @MaximumOpnameBedrag, @KinderbijslagStorten, @KindgebondenBudgetStorten,
+                            @BedragenGelijk, @BedragPerKind, @Alimentatiegerechtigde)
                 `);
 
             const newRecord = result.recordset[0];
@@ -243,6 +254,19 @@ export class AlimentatieService {
                 updateFields.push('kindgebonden_budget_storten_op_kinderrekening = @KindgebondenBudgetStorten');
                 request.input('KindgebondenBudgetStorten', sql.Bit, data.kindgebondenBudgetStortenOpKinderrekening);
             }
+            // V3: Alimentatie settings fields
+            if (data.bedragenAlleKinderenGelijk !== undefined) {
+                updateFields.push('bedragen_alle_kinderen_gelijk = @BedragenGelijk');
+                request.input('BedragenGelijk', sql.Bit, data.bedragenAlleKinderenGelijk);
+            }
+            if (data.alimentatiebedragPerKind !== undefined) {
+                updateFields.push('alimentatiebedrag_per_kind = @BedragPerKind');
+                request.input('BedragPerKind', sql.Decimal(10, 2), data.alimentatiebedragPerKind);
+            }
+            if (data.alimentatiegerechtigde !== undefined) {
+                updateFields.push('alimentatiegerechtigde = @Alimentatiegerechtigde');
+                request.input('Alimentatiegerechtigde', sql.VarChar(255), data.alimentatiegerechtigde);
+            }
 
             if (updateFields.length === 0) {
                 throw new Error('No fields to update');
@@ -264,7 +288,10 @@ export class AlimentatieService {
                     inserted.kinderrekening_maximum_opname as kinderrekeningMaximumOpname,
                     inserted.kinderrekening_maximum_opname_bedrag as kinderrekeningMaximumOpnameBedrag,
                     inserted.kinderbijslag_storten_op_kinderrekening as kinderbijslagStortenOpKinderrekening,
-                    inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening
+                    inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening,
+                    inserted.bedragen_alle_kinderen_gelijk as bedragenAlleKinderenGelijk,
+                    inserted.alimentatiebedrag_per_kind as alimentatiebedragPerKind,
+                    inserted.alimentatiegerechtigde
                 WHERE id = @Id
             `);
 

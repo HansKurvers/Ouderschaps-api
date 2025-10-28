@@ -6,7 +6,7 @@ export interface Alimentatie {
     kostenKinderen: number | null;
     bijdrageKostenKinderenId: number | null;
     bijdrageTemplateId: number | null;
-    // V2: Kinderrekening fields (applies to all children)
+    // V2: Kinderrekening fields (applies to all children) - 7 velden
     stortingOuder1Kinderrekening?: number | null;
     stortingOuder2Kinderrekening?: number | null;
     kinderrekeningKostensoorten?: string[];  // JSON array of kostensoorten
@@ -14,6 +14,10 @@ export interface Alimentatie {
     kinderrekeningMaximumOpnameBedrag?: number | null;
     kinderbijslagStortenOpKinderrekening?: boolean | null;
     kindgebondenBudgetStortenOpKinderrekening?: boolean | null;
+    // V3: Alimentatie settings fields - 3 velden (for document generation)
+    bedragenAlleKinderenGelijk?: boolean | null;
+    alimentatiebedragPerKind?: number | null;
+    alimentatiegerechtigde?: string | null;
 }
 
 // Bijdrage templates
@@ -57,6 +61,10 @@ export interface CreateAlimentatieDto {
     kinderrekeningMaximumOpnameBedrag?: number;
     kinderbijslagStortenOpKinderrekening?: boolean;
     kindgebondenBudgetStortenOpKinderrekening?: boolean;
+    // V3: Alimentatie settings fields
+    bedragenAlleKinderenGelijk?: boolean;
+    alimentatiebedragPerKind?: number;
+    alimentatiegerechtigde?: string;
 }
 
 export interface UpdateAlimentatieDto {
@@ -71,6 +79,10 @@ export interface UpdateAlimentatieDto {
     kinderrekeningMaximumOpnameBedrag?: number;
     kinderbijslagStortenOpKinderrekening?: boolean;
     kindgebondenBudgetStortenOpKinderrekening?: boolean;
+    // V3: Alimentatie settings fields
+    bedragenAlleKinderenGelijk?: boolean;
+    alimentatiebedragPerKind?: number;
+    alimentatiegerechtigde?: string;
 }
 
 export interface CreateBijdrageKostenKinderenDto {
