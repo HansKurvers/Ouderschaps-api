@@ -2649,6 +2649,10 @@ export class DossierDatabaseService {
             request.input('BetrokkenheidKind', sql.NVarChar, dto.betrokkenheidKind);
             request.input('Kiesplan', sql.NVarChar, dto.kiesplan);
             request.input('GezagPartij', sql.TinyInt, dto.gezagPartij);
+            request.input('GezagTermijnWeken', sql.Int, dto.gezagTermijnWeken);
+            request.input('WoonplaatsOptie', sql.TinyInt, dto.woonplaatsOptie);
+            request.input('WoonplaatsPartij1', sql.NVarChar, dto.woonplaatsPartij1);
+            request.input('WoonplaatsPartij2', sql.NVarChar, dto.woonplaatsPartij2);
             request.input('WaOpNaamVanPartij', sql.TinyInt, dto.waOpNaamVanPartij);
             request.input('KeuzeDevices', sql.NVarChar, dto.keuzeDevices);
             request.input('ZorgverzekeringOpNaamVanPartij', sql.TinyInt, dto.zorgverzekeringOpNaamVanPartij);
@@ -2676,6 +2680,10 @@ export class DossierDatabaseService {
                     betrokkenheid_kind,
                     kiesplan,
                     gezag_partij,
+                    gezag_termijn_weken,
+                    woonplaats_optie,
+                    woonplaats_partij1,
+                    woonplaats_partij2,
                     wa_op_naam_van_partij,
                     keuze_devices,
                     zorgverzekering_op_naam_van_partij,
@@ -2703,6 +2711,10 @@ export class DossierDatabaseService {
                     @BetrokkenheidKind,
                     @Kiesplan,
                     @GezagPartij,
+                    @GezagTermijnWeken,
+                    @WoonplaatsOptie,
+                    @WoonplaatsPartij1,
+                    @WoonplaatsPartij2,
                     @WaOpNaamVanPartij,
                     @KeuzeDevices,
                     @ZorgverzekeringOpNaamVanPartij,
@@ -2828,6 +2840,22 @@ export class DossierDatabaseService {
             if (dto.gezagPartij !== undefined) {
                 request.input('GezagPartij', sql.TinyInt, dto.gezagPartij);
                 updateFields.push('gezag_partij = @GezagPartij');
+            }
+            if (dto.gezagTermijnWeken !== undefined) {
+                request.input('GezagTermijnWeken', sql.Int, dto.gezagTermijnWeken);
+                updateFields.push('gezag_termijn_weken = @GezagTermijnWeken');
+            }
+            if (dto.woonplaatsOptie !== undefined) {
+                request.input('WoonplaatsOptie', sql.TinyInt, dto.woonplaatsOptie);
+                updateFields.push('woonplaats_optie = @WoonplaatsOptie');
+            }
+            if (dto.woonplaatsPartij1 !== undefined) {
+                request.input('WoonplaatsPartij1', sql.NVarChar, dto.woonplaatsPartij1);
+                updateFields.push('woonplaats_partij1 = @WoonplaatsPartij1');
+            }
+            if (dto.woonplaatsPartij2 !== undefined) {
+                request.input('WoonplaatsPartij2', sql.NVarChar, dto.woonplaatsPartij2);
+                updateFields.push('woonplaats_partij2 = @WoonplaatsPartij2');
             }
             if (dto.waOpNaamVanPartij !== undefined) {
                 request.input('WaOpNaamVanPartij', sql.TinyInt, dto.waOpNaamVanPartij);

@@ -1,6 +1,6 @@
 # Database Schema Documentation
 
-**Last Updated:** 2025-10-21 (Verified against live Azure SQL Database)
+**Last Updated:** 2025-10-30 (Verified against live Azure SQL Database - Added gezag_termijn_weken and woonplaats fields)
 
 ## Overview
 This document contains the **complete and verified** database schema for the SQL Server database on Azure. All tables use snake_case naming convention and are properly normalized with foreign key relationships.
@@ -213,7 +213,7 @@ Financial agreements per child.
 ## Parenting Plan Information
 
 ### dbo.ouderschapsplan_info
-Comprehensive parenting plan information (27 columns).
+Comprehensive parenting plan information (31 columns).
 - **id** (int, PK, Identity, NOT NULL) - Primary key
 - **dossier_id** (int, NULL, FK → dbo.dossiers.id) - Related dossier
 - **partij_1_persoon_id** (int, NOT NULL, FK → dbo.personen.id) - First party
@@ -224,7 +224,11 @@ Comprehensive parenting plan information (27 columns).
 - **soort_relatie_verbreking** (nvarchar(100), NULL) - Type of relationship breakdown
 - **betrokkenheid_kind** (nvarchar(255), NULL) - Child involvement
 - **kiesplan** (nvarchar(255), NULL) - Choice plan
-- **gezag_partij** (tinyint, NULL) - Authority party (1 or 2)
+- **gezag_partij** (tinyint, NULL) - Parental authority arrangement (1-5): 1=Joint custody, 2=Party 1 sole custody (permanent), 3=Party 2 sole custody (permanent), 4=Party 1 sole custody (joint arrangement planned), 5=Party 2 sole custody (joint arrangement planned)
+- **gezag_termijn_weken** (int, NULL) - Number of weeks to arrange joint parental authority (only used when gezag_partij = 4 or 5)
+- **woonplaats_optie** (tinyint, NULL) - Residence arrangement after separation (1-5): 1=Stays the same, 2=Party 1 moves to different place, 3=Party 2 moves to different place, 4=Both move to different places, 5=Still unclear
+- **woonplaats_partij1** (nvarchar(100), NULL) - Future residence of party 1 (only relevant when woonplaats_optie = 2 or 4)
+- **woonplaats_partij2** (nvarchar(100), NULL) - Future residence of party 2 (only relevant when woonplaats_optie = 3 or 4)
 - **wa_op_naam_van_partij** (tinyint, NULL) - Car insurance in name of party
 - **keuze_devices** (nvarchar(MAX), NULL) - Device choices
 - **zorgverzekering_op_naam_van_partij** (tinyint, NULL) - Health insurance in name of party

@@ -420,7 +420,11 @@ export interface OuderschapsplanInfo {
     soortRelatieVerbreking?: string;
     betrokkenheidKind?: string;
     kiesplan?: string;
-    gezagPartij?: 1 | 2;
+    gezagPartij?: 1 | 2 | 3 | 4 | 5;
+    gezagTermijnWeken?: number;
+    woonplaatsOptie?: 1 | 2 | 3 | 4 | 5;
+    woonplaatsPartij1?: string;
+    woonplaatsPartij2?: string;
     waOpNaamVanPartij?: 1 | 2;
     keuzeDevices?: string;
     zorgverzekeringOpNaamVanPartij?: 1 | 2;
@@ -451,6 +455,10 @@ export interface OuderschapsplanInfoDbDto {
     betrokkenheid_kind?: string;
     kiesplan?: string;
     gezag_partij?: number;
+    gezag_termijn_weken?: number;
+    woonplaats_optie?: number;
+    woonplaats_partij1?: string;
+    woonplaats_partij2?: string;
     wa_op_naam_van_partij?: number;
     keuze_devices?: string;
     zorgverzekering_op_naam_van_partij?: number;
