@@ -82,6 +82,7 @@ export interface RegelingTemplate {
     templateTekst: string;
     meervoudKinderen: boolean;
     type: string;
+    sortOrder: number;
 }
 
 export interface Dagdeel {

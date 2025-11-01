@@ -1455,27 +1455,27 @@ export class DossierDatabaseService {
             const request = pool.request();
             
             let query = `
-                SELECT id, template_naam, template_tekst, meervoud_kinderen, type 
-                FROM dbo.regelingen_templates 
+                SELECT id, template_naam, template_tekst, meervoud_kinderen, type, sort_order
+                FROM dbo.regelingen_templates
             `;
-            
+
             const whereClauses = [];
-            
+
             if (filters?.meervoudKinderen !== undefined) {
                 whereClauses.push('meervoud_kinderen = @MeervoudKinderen');
                 request.input('MeervoudKinderen', sql.Bit, filters.meervoudKinderen);
             }
-            
+
             if (filters?.type) {
                 whereClauses.push('type = @Type');
                 request.input('Type', sql.NVarChar, filters.type);
             }
-            
+
             if (whereClauses.length > 0) {
                 query += ' WHERE ' + whereClauses.join(' AND ');
             }
-            
-            query += ' ORDER BY type, template_naam';
+
+            query += ' ORDER BY sort_order ASC, template_naam ASC';
             
             const result = await request.query(query);
             return result.recordset.map(row => ({
@@ -1483,7 +1483,8 @@ export class DossierDatabaseService {
                 templateNaam: row.template_naam,
                 templateTekst: row.template_tekst,
                 meervoudKinderen: row.meervoud_kinderen,
-                type: row.type
+                type: row.type,
+                sortOrder: row.sort_order
             }));
         } catch (error) {
             console.error('Error getting regelingen templates:', error);
