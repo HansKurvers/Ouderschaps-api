@@ -110,8 +110,8 @@ export class DbMappers {
         };
     }
 
-    static toOuderschapsplanInfo(dto: OuderschapsplanInfoDbDto): OuderschapsplanInfo {
-        return {
+    static toOuderschapsplanInfo(dto: OuderschapsplanInfoDbDto, partij1Naam?: string, partij2Naam?: string): OuderschapsplanInfo {
+        const info: OuderschapsplanInfo = {
             id: dto.id!,
             dossierId: dto.dossier_id,
             partij1PersoonId: dto.partij_1_persoon_id,
@@ -144,6 +144,17 @@ export class DbMappers {
             createdAt: dto.created_at,
             updatedAt: dto.updated_at,
         };
+
+        // Generate computed placeholder fields for document generation
+        // Import is done dynamically to avoid circular dependencies
+        const { generateAllPlaceholders } = require('./ouderschapsplan-text-generator');
+        const placeholders = generateAllPlaceholders(info, partij1Naam, partij2Naam);
+
+        info.gezagZin = placeholders.gezagZin;
+        info.relatieAanvangZin = placeholders.relatieAanvangZin;
+        info.ouderschapsplanDoelZin = placeholders.ouderschapsplanDoelZin;
+
+        return info;
     }
 
     static toOuderschapsplanInfoDto(info: OuderschapsplanInfo): OuderschapsplanInfoDbDto {

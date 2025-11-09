@@ -2750,11 +2750,22 @@ export class DossierDatabaseService {
             request.input('Id', sql.Int, id);
 
             const result = await request.query(`
-                SELECT * FROM dbo.ouderschapsplan_info 
-                WHERE id = @Id
+                SELECT
+                    opi.*,
+                    p1.voornamen + ' ' + ISNULL(p1.tussenvoegsel + ' ', '') + p1.achternaam AS partij_1_naam,
+                    p2.voornamen + ' ' + ISNULL(p2.tussenvoegsel + ' ', '') + p2.achternaam AS partij_2_naam
+                FROM dbo.ouderschapsplan_info opi
+                LEFT JOIN dbo.personen p1 ON opi.partij_1_persoon_id = p1.id
+                LEFT JOIN dbo.personen p2 ON opi.partij_2_persoon_id = p2.id
+                WHERE opi.id = @Id
             `);
 
-            return result.recordset[0] ? DbMappers.toOuderschapsplanInfo(result.recordset[0]) : null;
+            if (!result.recordset[0]) {
+                return null;
+            }
+
+            const row = result.recordset[0];
+            return DbMappers.toOuderschapsplanInfo(row, row.partij_1_naam, row.partij_2_naam);
         } catch (error) {
             console.error('Error getting ouderschapsplan info by ID:', error);
             throw error;
@@ -2769,13 +2780,19 @@ export class DossierDatabaseService {
             request.input('PersoonId', sql.Int, persoonId);
 
             const result = await request.query(`
-                SELECT * FROM dbo.ouderschapsplan_info 
-                WHERE partij_1_persoon_id = @PersoonId 
-                   OR partij_2_persoon_id = @PersoonId
-                ORDER BY updated_at DESC
+                SELECT
+                    opi.*,
+                    p1.voornamen + ' ' + ISNULL(p1.tussenvoegsel + ' ', '') + p1.achternaam AS partij_1_naam,
+                    p2.voornamen + ' ' + ISNULL(p2.tussenvoegsel + ' ', '') + p2.achternaam AS partij_2_naam
+                FROM dbo.ouderschapsplan_info opi
+                LEFT JOIN dbo.personen p1 ON opi.partij_1_persoon_id = p1.id
+                LEFT JOIN dbo.personen p2 ON opi.partij_2_persoon_id = p2.id
+                WHERE opi.partij_1_persoon_id = @PersoonId
+                   OR opi.partij_2_persoon_id = @PersoonId
+                ORDER BY opi.updated_at DESC
             `);
 
-            return result.recordset.map(DbMappers.toOuderschapsplanInfo);
+            return result.recordset.map(row => DbMappers.toOuderschapsplanInfo(row, row.partij_1_naam, row.partij_2_naam));
         } catch (error) {
             console.error('Error getting ouderschapsplan info by persoon ID:', error);
             throw error;
@@ -2790,11 +2807,25 @@ export class DossierDatabaseService {
             request.input('DossierId', sql.Int, dossierId);
 
             const result = await request.query(`
-                SELECT * FROM dbo.ouderschapsplan_info 
-                WHERE dossier_id = @DossierId
+                SELECT
+                    opi.*,
+                    p1.voornamen + ' ' + ISNULL(p1.tussenvoegsel + ' ', '') + p1.achternaam AS partij_1_naam,
+                    p2.voornamen + ' ' + ISNULL(p2.tussenvoegsel + ' ', '') + p2.achternaam AS partij_2_naam
+                FROM dbo.ouderschapsplan_info opi
+                LEFT JOIN dbo.personen p1 ON opi.partij_1_persoon_id = p1.id
+                LEFT JOIN dbo.personen p2 ON opi.partij_2_persoon_id = p2.id
+                WHERE opi.dossier_id = @DossierId
             `);
 
-            return result.recordset[0] ? DbMappers.toOuderschapsplanInfo(result.recordset[0]) : null;
+            if (!result.recordset[0]) {
+                return null;
+            }
+
+            const row = result.recordset[0];
+            const partij1Naam = row.partij_1_naam;
+            const partij2Naam = row.partij_2_naam;
+
+            return DbMappers.toOuderschapsplanInfo(row, partij1Naam, partij2Naam);
         } catch (error) {
             console.error('Error getting ouderschapsplan info by dossier ID:', error);
             throw error;
@@ -2969,7 +3000,7 @@ export class DossierDatabaseService {
     async getAllOuderschapsplanInfo(limit: number = 100, offset: number = 0): Promise<{ data: OuderschapsplanInfo[], total: number }> {
         try {
             const pool = await this.getPool();
-            
+
             // Get total count
             const countRequest = pool.request();
             const countResult = await countRequest.query(`
@@ -2977,20 +3008,26 @@ export class DossierDatabaseService {
             `);
             const total = countResult.recordset[0].total;
 
-            // Get paginated data
+            // Get paginated data with party names
             const request = pool.request();
             request.input('Limit', sql.Int, limit);
             request.input('Offset', sql.Int, offset);
 
             const result = await request.query(`
-                SELECT * FROM dbo.ouderschapsplan_info
-                ORDER BY updated_at DESC
+                SELECT
+                    opi.*,
+                    p1.voornamen + ' ' + ISNULL(p1.tussenvoegsel + ' ', '') + p1.achternaam AS partij_1_naam,
+                    p2.voornamen + ' ' + ISNULL(p2.tussenvoegsel + ' ', '') + p2.achternaam AS partij_2_naam
+                FROM dbo.ouderschapsplan_info opi
+                LEFT JOIN dbo.personen p1 ON opi.partij_1_persoon_id = p1.id
+                LEFT JOIN dbo.personen p2 ON opi.partij_2_persoon_id = p2.id
+                ORDER BY opi.updated_at DESC
                 OFFSET @Offset ROWS
                 FETCH NEXT @Limit ROWS ONLY
             `);
 
             return {
-                data: result.recordset.map(DbMappers.toOuderschapsplanInfo),
+                data: result.recordset.map(row => DbMappers.toOuderschapsplanInfo(row, row.partij_1_naam, row.partij_2_naam)),
                 total
             };
         } catch (error) {

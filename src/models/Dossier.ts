@@ -444,6 +444,10 @@ export interface OuderschapsplanInfo {
     plaatsRelatie?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    // Computed fields (generated placeholders for document generation)
+    gezagZin?: string;
+    relatieAanvangZin?: string;
+    ouderschapsplanDoelZin?: string;
 }
 
 export interface OuderschapsplanInfoDbDto {
