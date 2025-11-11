@@ -70,6 +70,7 @@ export class AlimentatieService {
                         kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening,
                         bedragen_alle_kinderen_gelijk as bedragenAlleKinderenGelijk,
                         alimentatiebedrag_per_kind as alimentatiebedragPerKind,
+                        zorgkorting_percentage_alle_kinderen as zorgkortingPercentageAlleKinderen,
                         alimentatiegerechtigde
                     FROM dbo.alimentaties
                     WHERE dossier_id = @DossierId
@@ -160,6 +161,7 @@ export class AlimentatieService {
                 .input('KindgebondenBudgetStorten', sql.Bit, data.kindgebondenBudgetStortenOpKinderrekening ?? null)
                 .input('BedragenGelijk', sql.Bit, data.bedragenAlleKinderenGelijk ?? null)
                 .input('BedragPerKind', sql.Decimal(10, 2), data.alimentatiebedragPerKind || null)
+                .input('ZorgkortingPercentage', sql.Decimal(5, 2), data.zorgkortingPercentageAlleKinderen || null)
                 .input('Alimentatiegerechtigde', sql.VarChar(255), data.alimentatiegerechtigde || null)
                 .query(`
                     INSERT INTO dbo.alimentaties
@@ -167,7 +169,8 @@ export class AlimentatieService {
                      storting_ouder1_kinderrekening, storting_ouder2_kinderrekening, kinderrekening_kostensoorten,
                      kinderrekening_maximum_opname, kinderrekening_maximum_opname_bedrag,
                      kinderbijslag_storten_op_kinderrekening, kindgebonden_budget_storten_op_kinderrekening,
-                     bedragen_alle_kinderen_gelijk, alimentatiebedrag_per_kind, alimentatiegerechtigde)
+                     bedragen_alle_kinderen_gelijk, alimentatiebedrag_per_kind,
+                     zorgkorting_percentage_alle_kinderen, alimentatiegerechtigde)
                     OUTPUT
                         inserted.id,
                         inserted.dossier_id as dossierId,
@@ -184,11 +187,12 @@ export class AlimentatieService {
                         inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening,
                         inserted.bedragen_alle_kinderen_gelijk as bedragenAlleKinderenGelijk,
                         inserted.alimentatiebedrag_per_kind as alimentatiebedragPerKind,
+                        inserted.zorgkorting_percentage_alle_kinderen as zorgkortingPercentageAlleKinderen,
                         inserted.alimentatiegerechtigde
                     VALUES (@DossierId, @NettoInkomen, @KostenKinderen, @BijdrageTemplateId,
                             @StortingOuder1, @StortingOuder2, @Kostensoorten,
                             @MaximumOpname, @MaximumOpnameBedrag, @KinderbijslagStorten, @KindgebondenBudgetStorten,
-                            @BedragenGelijk, @BedragPerKind, @Alimentatiegerechtigde)
+                            @BedragenGelijk, @BedragPerKind, @ZorgkortingPercentage, @Alimentatiegerechtigde)
                 `);
 
             const newRecord = result.recordset[0];
@@ -263,6 +267,10 @@ export class AlimentatieService {
                 updateFields.push('alimentatiebedrag_per_kind = @BedragPerKind');
                 request.input('BedragPerKind', sql.Decimal(10, 2), data.alimentatiebedragPerKind);
             }
+            if (data.zorgkortingPercentageAlleKinderen !== undefined) {
+                updateFields.push('zorgkorting_percentage_alle_kinderen = @ZorgkortingPercentage');
+                request.input('ZorgkortingPercentage', sql.Decimal(5, 2), data.zorgkortingPercentageAlleKinderen);
+            }
             if (data.alimentatiegerechtigde !== undefined) {
                 updateFields.push('alimentatiegerechtigde = @Alimentatiegerechtigde');
                 request.input('Alimentatiegerechtigde', sql.VarChar(255), data.alimentatiegerechtigde);
@@ -291,6 +299,7 @@ export class AlimentatieService {
                     inserted.kindgebonden_budget_storten_op_kinderrekening as kindgebondenBudgetStortenOpKinderrekening,
                     inserted.bedragen_alle_kinderen_gelijk as bedragenAlleKinderenGelijk,
                     inserted.alimentatiebedrag_per_kind as alimentatiebedragPerKind,
+                    inserted.zorgkorting_percentage_alle_kinderen as zorgkortingPercentageAlleKinderen,
                     inserted.alimentatiegerechtigde
                 WHERE id = @Id
             `);

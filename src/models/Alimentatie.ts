@@ -17,6 +17,7 @@ export interface Alimentatie {
     // V3: Alimentatie settings fields - 3 velden (for document generation)
     bedragenAlleKinderenGelijk?: boolean | null;
     alimentatiebedragPerKind?: number | null;
+    zorgkortingPercentageAlleKinderen?: number | null;
     alimentatiegerechtigde?: string | null;
 }
 
@@ -64,6 +65,7 @@ export interface CreateAlimentatieDto {
     // V3: Alimentatie settings fields
     bedragenAlleKinderenGelijk?: boolean;
     alimentatiebedragPerKind?: number;
+    zorgkortingPercentageAlleKinderen?: number;
     alimentatiegerechtigde?: string;
 }
 
@@ -82,6 +84,7 @@ export interface UpdateAlimentatieDto {
     // V3: Alimentatie settings fields
     bedragenAlleKinderenGelijk?: boolean;
     alimentatiebedragPerKind?: number;
+    zorgkortingPercentageAlleKinderen?: number;
     alimentatiegerechtigde?: string;
 }
 
