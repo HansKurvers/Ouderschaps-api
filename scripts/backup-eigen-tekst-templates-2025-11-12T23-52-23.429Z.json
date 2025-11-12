@@ -1,0 +1,128 @@
+[
+  {
+    "id": 200,
+    "template_naam": "beslissing_eigen_tekst",
+    "type": "Algemeen",
+    "template_subtype": "beslissing",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 201,
+    "template_naam": "beslissing_eigen_tekst_meervoud",
+    "type": "Algemeen",
+    "template_subtype": "beslissing",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 198,
+    "template_naam": "bijzonder_jubileum_eigen_tekst",
+    "type": "Bijzondere dag",
+    "template_subtype": "bijzonder_jubileum",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 199,
+    "template_naam": "bijzonder_jubileum_eigen_tekst_meervoud",
+    "type": "Bijzondere dag",
+    "template_subtype": "bijzonder_jubileum",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 190,
+    "template_naam": "moederdag_eigen_tekst",
+    "type": "Bijzondere dag",
+    "template_subtype": "moederdag",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 191,
+    "template_naam": "moederdag_eigen_tekst_meervoud",
+    "type": "Bijzondere dag",
+    "template_subtype": "moederdag",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 188,
+    "template_naam": "vaderdag_eigen_tekst",
+    "type": "Bijzondere dag",
+    "template_subtype": "vaderdag",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 189,
+    "template_naam": "vaderdag_eigen_tekst_meervoud",
+    "type": "Bijzondere dag",
+    "template_subtype": "vaderdag",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 192,
+    "template_naam": "verjaardag_kind_eigen_tekst",
+    "type": "Bijzondere dag",
+    "template_subtype": "verjaardag_kind",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 193,
+    "template_naam": "verjaardag_kind_eigen_tekst_meervoud",
+    "type": "Bijzondere dag",
+    "template_subtype": "verjaardag_kind",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 194,
+    "template_naam": "verjaardag_partij1_eigen_tekst",
+    "type": "Bijzondere dag",
+    "template_subtype": "verjaardag_partij1",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 195,
+    "template_naam": "verjaardag_partij1_eigen_tekst_meervoud",
+    "type": "Bijzondere dag",
+    "template_subtype": "verjaardag_partij1",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 196,
+    "template_naam": "verjaardag_partij2_eigen_tekst",
+    "type": "Bijzondere dag",
+    "template_subtype": "verjaardag_partij2",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 197,
+    "template_naam": "verjaardag_partij2_eigen_tekst_meervoud",
+    "type": "Bijzondere dag",
+    "template_subtype": "verjaardag_partij2",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 184,
+    "template_naam": "feestdag_eigen_tekst",
+    "type": "Feestdag",
+    "template_subtype": "algemeen",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 185,
+    "template_naam": "feestdag_eigen_tekst_meervoud",
+    "type": "Feestdag",
+    "template_subtype": "algemeen",
+    "meervoud_kinderen": true
+  },
+  {
+    "id": 186,
+    "template_naam": "vakantie_eigen_tekst",
+    "type": "Vakantie",
+    "template_subtype": "vakantie",
+    "meervoud_kinderen": false
+  },
+  {
+    "id": 187,
+    "template_naam": "vakantie_eigen_tekst_meervoud",
+    "type": "Vakantie",
+    "template_subtype": "vakantie",
+    "meervoud_kinderen": true
+  }
+]
