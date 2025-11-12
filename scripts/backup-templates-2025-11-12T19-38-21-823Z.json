@@ -1,0 +1,1022 @@
+[
+  {
+    "id": 4,
+    "template_naam": "partij1",
+    "template_tekst": "Op {FEESTDAG} verblijft {KIND} bij {PARTIJ1}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 15,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 5,
+    "template_naam": "partij1",
+    "template_tekst": "Op {FEESTDAG} verblijven {KIND} bij {PARTIJ1}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 15,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 6,
+    "template_naam": "partij2",
+    "template_tekst": "Op {FEESTDAG} verblijft {KIND} bij {PARTIJ2}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 20,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 8,
+    "template_naam": "partij2",
+    "template_tekst": "Op {FEESTDAG} verblijven {KIND} bij {PARTIJ2}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 20,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 9,
+    "template_naam": "partij1_even",
+    "template_tekst": "Op {FEESTDAG} verblijft {KIND} in de even jaren bij {PARTIJ1} en in de oneven jaren bij {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 25,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 10,
+    "template_naam": "partij1_even",
+    "template_tekst": "Op {FEESTDAG} verblijven {KIND} in de even jaren bij {PARTIJ1} en in de oneven jaren bij {PARTIJ2}",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 25,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 11,
+    "template_naam": "partij1_oneven",
+    "template_tekst": "Op {FEESTDAG} verblijft {KIND} in de oneven jaren bij {PARTIJ1} en in de even jaren bij {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 26,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 12,
+    "template_naam": "partij1_oneven",
+    "template_tekst": "Op {FEESTDAG} verblijven {KIND} in de oneven jaren bij {PARTIJ1} en in de even jaren bij {PARTIJ2}",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 26,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 13,
+    "template_naam": "partij1_eerste_helft",
+    "template_tekst": "De eerste helft van {FEESTDAG} verblijft {KIND} bij {PARTIJ1} en de andere helft bij {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 30,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 15,
+    "template_naam": "partij1_eerste_helft",
+    "template_tekst": "De eerste helft van {FEESTDAG} verblijven {KIND} bij {PARTIJ1} en de andere helft bij {PARTIJ2}",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 30,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 16,
+    "template_naam": "partij1",
+    "template_tekst": "In de {VAKANTIE} verblijft {KIND} bij {PARTIJ1}",
+    "meervoud_kinderen": false,
+    "type": "Vakantie",
+    "sort_order": 30,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 17,
+    "template_naam": "partij1",
+    "template_tekst": "In de {VAKANTIE} verblijven {KIND} bij {PARTIJ1}",
+    "meervoud_kinderen": true,
+    "type": "Vakantie",
+    "sort_order": 30,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 18,
+    "template_naam": "partij2",
+    "template_tekst": "In de {VAKANTIE} verblijft {KIND} bij {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Vakantie",
+    "sort_order": 32,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 19,
+    "template_naam": "partij2",
+    "template_tekst": "In de {VAKANTIE} verblijven {KIND} bij {PARTIJ2}",
+    "meervoud_kinderen": true,
+    "type": "Vakantie",
+    "sort_order": 32,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 20,
+    "template_naam": "partij1_even",
+    "template_tekst": "In de {VAKANTIE} verblijft {KIND} in de even jaren bij {PARTIJ1} en in de oneven jaren bij {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Vakantie",
+    "sort_order": 20,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 21,
+    "template_naam": "partij1_even",
+    "template_tekst": "In de {VAKANTIE} verblijven {KIND} in de even jaren bij {PARTIJ1} en in de oneven jaren bij {PARTIJ2}",
+    "meervoud_kinderen": true,
+    "type": "Vakantie",
+    "sort_order": 20,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 22,
+    "template_naam": "partij1_oneven",
+    "template_tekst": "In de {VAKANTIE} verblijft {KIND} in de oneven jaren bij {PARTIJ1} en in de even jaren bij {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Vakantie",
+    "sort_order": 22,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 23,
+    "template_naam": "partij1_oneven",
+    "template_tekst": "In de {VAKANTIE} verblijven {KIND} in de oneven jaren bij {PARTIJ1} en in de even jaren bij {PARTIJ2}",
+    "meervoud_kinderen": true,
+    "type": "Vakantie",
+    "sort_order": 22,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 24,
+    "template_naam": "partij1_eerste_helft",
+    "template_tekst": "De eerste helft van de {VAKANTIE} verblijft {KIND} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Vakantie",
+    "sort_order": 10,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 25,
+    "template_naam": "partij1_eerste_helft",
+    "template_tekst": "De eerste helft van de {VAKANTIE} verblijven {KIND} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}",
+    "meervoud_kinderen": true,
+    "type": "Vakantie",
+    "sort_order": 10,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 26,
+    "template_naam": "partij2_eerste_helft",
+    "template_tekst": "De eerste helft van de {VAKANTIE} verblijft {KIND} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}",
+    "meervoud_kinderen": false,
+    "type": "Vakantie",
+    "sort_order": 12,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 27,
+    "template_naam": "partij2_eerste_helft",
+    "template_tekst": "De eerste helft van de {VAKANTIE} verblijven {KIND} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}",
+    "meervoud_kinderen": true,
+    "type": "Vakantie",
+    "sort_order": 12,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 36,
+    "template_naam": "partij1",
+    "template_tekst": "De ouders beslissen over de {BESLISSING} van {KIND} na overleg en overeenstemming.",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 30,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 37,
+    "template_naam": "partij2",
+    "template_tekst": "De ouders beslissen over de {BESLISSING} van {KIND} overleg is niet nodig.",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 31,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 38,
+    "template_naam": "partij1_zonder_overleg",
+    "template_tekst": "{PARTIJ1} beslist over de {BESLISSING} van {KIND} zonder dat overleg vooraf nodig is",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 20,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 39,
+    "template_naam": "partij2_zonder_overleg",
+    "template_tekst": "{PARTIJ2} beslist over de {BESLISSING} van {KIND} zonder dat overleg vooraf nodig is",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 21,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 40,
+    "template_naam": "partij1_vooraf_overleg",
+    "template_tekst": "{BESLISSING} van {KIND} wordt verzorgt door {PARTIJ1} in overeenstemming met {PARTIJ2}",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 10,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 41,
+    "template_naam": "partij2_vooraf_overleg",
+    "template_tekst": "{BESLISSING} van {KIND} wordt verzorgt door {PARTIJ2} in overeenstemming met {PARTIJ1}",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 11,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 42,
+    "template_naam": "partij1_achteraf_informeren",
+    "template_tekst": "{BESLISSING} van {KIND} wordt verzorgt door {PARTIJ2} zonder overleg met {PARTIJ1}, wel achteraf informeren",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 15,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 43,
+    "template_naam": "partij2_achteraf_informeren",
+    "template_tekst": "{BESLISSING} van {KIND} wordt verzorgt door {PARTIJ1} zonder overleg met {PARTIJ2}, wel achteraf informeren",
+    "meervoud_kinderen": false,
+    "type": "Algemeen",
+    "sort_order": 16,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 44,
+    "template_naam": "partij2_eerste_helft",
+    "template_tekst": "De eerste helft van {FEESTDAG} verblijft {KIND} bij {PARTIJ2} en de andere helft bij {PARTIJ1}",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 31,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 47,
+    "template_naam": "partij2_eerste_helft",
+    "template_tekst": "De eerste helft van {FEESTDAG} verblijven {KIND} bij {PARTIJ2} en de andere helft bij {PARTIJ1}",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 31,
+    "card_tekst": null,
+    "template_subtype": null
+  },
+  {
+    "id": 48,
+    "template_naam": "vaderdag_bij_vader",
+    "template_tekst": "{KIND} is op {FEESTDAG} bij {PARTIJ1}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 41,
+    "card_tekst": "{KIND} is op {FEESTDAG} bij {PARTIJ1}",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 49,
+    "template_naam": "vaderdag_met_avond",
+    "template_tekst": "{KIND} is op {FEESTDAG} en de avond voorafgaand bij {PARTIJ1}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 51,
+    "card_tekst": "{KIND} is op {FEESTDAG} en de avond voorafgaand bij {PARTIJ1}",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 50,
+    "template_naam": "vaderdag_weekend",
+    "template_tekst": "{KIND} is in het weekend van {FEESTDAG} bij {PARTIJ1}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 61,
+    "card_tekst": "{KIND} is in het weekend van {FEESTDAG} bij {PARTIJ1}",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 51,
+    "template_naam": "vaderdag_deel_dag",
+    "template_tekst": "{KIND} krijgt de gelegenheid om op {FEESTDAG} een deel van de dag bij {PARTIJ1} te zijn.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 71,
+    "card_tekst": "{KIND} krijgt gelegenheid om deel van {FEESTDAG} bij {PARTIJ1} te zijn",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 52,
+    "template_naam": "vaderdag_volgens_schema",
+    "template_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 81,
+    "card_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 53,
+    "template_naam": "vaderdag_eigen_tekst",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 91,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 54,
+    "template_naam": "vaderdag_bij_vader_meervoud",
+    "template_tekst": "De kinderen zijn op {FEESTDAG} bij {PARTIJ1}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 101,
+    "card_tekst": "De kinderen zijn op {FEESTDAG} bij {PARTIJ1}",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 55,
+    "template_naam": "vaderdag_met_avond_meervoud",
+    "template_tekst": "De kinderen zijn op {FEESTDAG} en de avond voorafgaand bij {PARTIJ1}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 111,
+    "card_tekst": "De kinderen zijn op {FEESTDAG} en de avond voorafgaand bij {PARTIJ1}",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 56,
+    "template_naam": "vaderdag_weekend_meervoud",
+    "template_tekst": "De kinderen zijn in het weekend van {FEESTDAG} bij {PARTIJ1}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 121,
+    "card_tekst": "De kinderen zijn in het weekend van {FEESTDAG} bij {PARTIJ1}",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 57,
+    "template_naam": "vaderdag_deel_dag_meervoud",
+    "template_tekst": "De kinderen krijgen de gelegenheid om op {FEESTDAG} een deel van de dag bij {PARTIJ1} te zijn.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 131,
+    "card_tekst": "De kinderen krijgen gelegenheid om deel van {FEESTDAG} bij {PARTIJ1} te zijn",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 58,
+    "template_naam": "vaderdag_volgens_schema_meervoud",
+    "template_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 141,
+    "card_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 59,
+    "template_naam": "vaderdag_eigen_tekst_meervoud",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 151,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "vaderdag"
+  },
+  {
+    "id": 60,
+    "template_naam": "moederdag_bij_moeder",
+    "template_tekst": "{KIND} is op {FEESTDAG} bij {PARTIJ2}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 161,
+    "card_tekst": "{KIND} is op {FEESTDAG} bij {PARTIJ2}",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 61,
+    "template_naam": "moederdag_met_avond",
+    "template_tekst": "{KIND} is op {FEESTDAG} en de avond voorafgaand bij {PARTIJ2}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 171,
+    "card_tekst": "{KIND} is op {FEESTDAG} en de avond voorafgaand bij {PARTIJ2}",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 62,
+    "template_naam": "moederdag_weekend",
+    "template_tekst": "{KIND} is in het weekend van {FEESTDAG} bij {PARTIJ2}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 181,
+    "card_tekst": "{KIND} is in het weekend van {FEESTDAG} bij {PARTIJ2}",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 63,
+    "template_naam": "moederdag_deel_dag",
+    "template_tekst": "{KIND} krijgt de gelegenheid om op {FEESTDAG} een deel van de dag bij {PARTIJ2} te zijn.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 191,
+    "card_tekst": "{KIND} krijgt gelegenheid om deel van {FEESTDAG} bij {PARTIJ2} te zijn",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 64,
+    "template_naam": "moederdag_volgens_schema",
+    "template_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 201,
+    "card_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 65,
+    "template_naam": "moederdag_eigen_tekst",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 211,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 66,
+    "template_naam": "moederdag_bij_moeder_meervoud",
+    "template_tekst": "De kinderen zijn op {FEESTDAG} bij {PARTIJ2}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 161,
+    "card_tekst": "De kinderen zijn op {FEESTDAG} bij {PARTIJ2}",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 67,
+    "template_naam": "moederdag_met_avond_meervoud",
+    "template_tekst": "De kinderen zijn op {FEESTDAG} en de avond voorafgaand bij {PARTIJ2}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 171,
+    "card_tekst": "De kinderen zijn op {FEESTDAG} en de avond voorafgaand bij {PARTIJ2}",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 68,
+    "template_naam": "moederdag_weekend_meervoud",
+    "template_tekst": "De kinderen zijn in het weekend van {FEESTDAG} bij {PARTIJ2}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 181,
+    "card_tekst": "De kinderen zijn in het weekend van {FEESTDAG} bij {PARTIJ2}",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 69,
+    "template_naam": "moederdag_deel_dag_meervoud",
+    "template_tekst": "De kinderen krijgen de gelegenheid om op {FEESTDAG} een deel van de dag bij {PARTIJ2} te zijn.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 191,
+    "card_tekst": "De kinderen krijgen gelegenheid om deel van {FEESTDAG} bij {PARTIJ2} te zijn",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 70,
+    "template_naam": "moederdag_volgens_schema_meervoud",
+    "template_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 201,
+    "card_tekst": "Op {FEESTDAG} loopt de zorgregeling volgens schema",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 71,
+    "template_naam": "moederdag_eigen_tekst_meervoud",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 211,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "moederdag"
+  },
+  {
+    "id": 120,
+    "template_naam": "verj_kind_bij_jarige",
+    "template_tekst": "{KIND} viert zijn/haar verjaardag bij degene waar {KIND} op die dag volgens schema is.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 461,
+    "card_tekst": "{KIND} viert verjaardag waar hij/zij volgens schema is",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 121,
+    "template_naam": "verj_kind_beide_vieren",
+    "template_tekst": "{KIND} viert zijn/haar verjaardag met beide ouders samen.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 471,
+    "card_tekst": "{KIND} viert verjaardag met beide ouders",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 122,
+    "template_naam": "verj_kind_wisselend",
+    "template_tekst": "{KIND} viert zijn/haar verjaardag het ene jaar bij {PARTIJ1} en het andere jaar bij {PARTIJ2}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 481,
+    "card_tekst": "{KIND} viert verjaardag wisselend per jaar",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 123,
+    "template_naam": "verj_kind_dubbel_feest",
+    "template_tekst": "{KIND} heeft twee verjaardagsfeestjes: één bij {PARTIJ1} en één bij {PARTIJ2}.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 491,
+    "card_tekst": "{KIND} heeft twee verjaardagsfeestjes",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 124,
+    "template_naam": "verj_kind_overleg",
+    "template_tekst": "De verjaardag van {KIND} wordt in onderling overleg gevierd.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 501,
+    "card_tekst": "Verjaardag {KIND} in onderling overleg",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 125,
+    "template_naam": "verj_kind_eigen_tekst",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 511,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 127,
+    "template_naam": "verj_kind_beide_vieren_meervoud",
+    "template_tekst": "De kinderen vieren hun verjaardag met beide ouders samen.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 531,
+    "card_tekst": "De kinderen vieren verjaardag met beide ouders",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 128,
+    "template_naam": "verj_kind_wisselend_meervoud",
+    "template_tekst": "De kinderen vieren hun verjaardag het ene jaar bij {PARTIJ1} en het andere jaar bij {PARTIJ2}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 541,
+    "card_tekst": "De kinderen vieren verjaardag wisselend per jaar",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 129,
+    "template_naam": "verj_kind_dubbel_feest_meervoud",
+    "template_tekst": "De kinderen hebben twee verjaardagsfeestjes: één bij {PARTIJ1} en één bij {PARTIJ2}.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 551,
+    "card_tekst": "De kinderen hebben twee verjaardagsfeestjes",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 131,
+    "template_naam": "verj_kind_eigen_tekst_meervoud",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 571,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "verjaardag_kind"
+  },
+  {
+    "id": 132,
+    "template_naam": "verj_ouder_bezoek",
+    "template_tekst": "{KIND} mag op de verjaardag van beide ouders op bezoek komen.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 581,
+    "card_tekst": "{KIND} mag beide ouders bezoeken op hun verjaardag",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 133,
+    "template_naam": "verj_ouder_hele_dag",
+    "template_tekst": "{KIND} is op de verjaardag van {PARTIJ1}/{PARTIJ2} de hele dag bij de jarige ouder.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 591,
+    "card_tekst": "{KIND} is hele dag bij jarige ouder",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 134,
+    "template_naam": "verj_ouder_deel_dag",
+    "template_tekst": "{KIND} is een deel van de dag bij de jarige ouder op diens verjaardag.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 601,
+    "card_tekst": "{KIND} is deel van dag bij jarige ouder",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 135,
+    "template_naam": "verj_ouder_volgens_schema",
+    "template_tekst": "Op de verjaardag van de ouders loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 611,
+    "card_tekst": "Op verjaardag ouders loopt zorgregeling door",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 136,
+    "template_naam": "verj_ouder_overleg",
+    "template_tekst": "Voor de verjaardag van de ouders maken partijen in onderling overleg afspraken.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 621,
+    "card_tekst": "Verjaardag ouders in onderling overleg",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 137,
+    "template_naam": "verj_ouder_eigen_tekst",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 631,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 138,
+    "template_naam": "verj_ouder_bezoek_meervoud",
+    "template_tekst": "{KIND} mogen op de verjaardag van beide ouders op bezoek komen.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 641,
+    "card_tekst": "{KIND} mogen beide ouders bezoeken op hun verjaardag",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 139,
+    "template_naam": "verj_ouder_hele_dag_meervoud",
+    "template_tekst": "{KIND} zijn op de verjaardag van {PARTIJ1}/{PARTIJ2} de hele dag bij de jarige ouder.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 651,
+    "card_tekst": "{KIND} zijn hele dag bij jarige ouder",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 140,
+    "template_naam": "verj_ouder_deel_dag_meervoud",
+    "template_tekst": "{KIND} zijn een deel van de dag bij de jarige ouder op diens verjaardag.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 661,
+    "card_tekst": "{KIND} zijn deel van dag bij jarige ouder",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 141,
+    "template_naam": "verj_ouder_volgens_schema_meervoud",
+    "template_tekst": "Op de verjaardag van de ouders loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 671,
+    "card_tekst": "Op verjaardag ouders loopt zorgregeling door",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 142,
+    "template_naam": "verj_ouder_overleg_meervoud",
+    "template_tekst": "Voor de verjaardag van de ouders maken partijen in onderling overleg afspraken.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 681,
+    "card_tekst": "Verjaardag ouders in onderling overleg",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 143,
+    "template_naam": "verj_ouder_eigen_tekst_meervoud",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 691,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "verjaardag_partij1"
+  },
+  {
+    "id": 144,
+    "template_naam": "verj_groot_beide_bezoeken",
+    "template_tekst": "{KIND} bezoekt de grootouders van beide kanten op hun verjaardag.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 701,
+    "card_tekst": "{KIND} bezoekt alle grootouders op verjaardag",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 145,
+    "template_naam": "verj_groot_bij_ouder",
+    "template_tekst": "{KIND} bezoekt grootouders samen met de ouder aan wiens kant zij familie zijn.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 711,
+    "card_tekst": "{KIND} bezoekt grootouders met betreffende ouder",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 146,
+    "template_naam": "verj_groot_volgens_schema",
+    "template_tekst": "Voor verjaardagen van grootouders loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 721,
+    "card_tekst": "Bij verjaardag grootouders loopt zorgregeling door",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 147,
+    "template_naam": "verj_groot_overleg",
+    "template_tekst": "Bezoek aan grootouders op verjaardagen wordt in onderling overleg geregeld.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 731,
+    "card_tekst": "Verjaardag grootouders in onderling overleg",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 148,
+    "template_naam": "verj_groot_eigen_keuze",
+    "template_tekst": "{KIND} mag zelf kiezen of hij/zij de grootouders bezoekt op hun verjaardag.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 741,
+    "card_tekst": "{KIND} kiest zelf over bezoek grootouders",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 149,
+    "template_naam": "verj_groot_eigen_tekst",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 751,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 150,
+    "template_naam": "verj_groot_beide_bezoeken_meervoud",
+    "template_tekst": "{KIND} bezoeken de grootouders van beide kanten op hun verjaardag.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 761,
+    "card_tekst": "{KIND} bezoeken alle grootouders op verjaardag",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 151,
+    "template_naam": "verj_groot_bij_ouder_meervoud",
+    "template_tekst": "{KIND} bezoeken grootouders samen met de ouder aan wiens kant zij familie zijn.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 771,
+    "card_tekst": "{KIND} bezoeken grootouders met betreffende ouder",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 152,
+    "template_naam": "verj_groot_volgens_schema_meervoud",
+    "template_tekst": "Voor verjaardagen van grootouders loopt de zorgregeling volgens schema.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 781,
+    "card_tekst": "Bij verjaardag grootouders loopt zorgregeling door",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 153,
+    "template_naam": "verj_groot_overleg_meervoud",
+    "template_tekst": "Bezoek aan grootouders op verjaardagen wordt in onderling overleg geregeld.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 791,
+    "card_tekst": "Verjaardag grootouders in onderling overleg",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 154,
+    "template_naam": "verj_groot_eigen_keuze_meervoud",
+    "template_tekst": "{KIND} mogen zelf kiezen of zij de grootouders bezoeken op hun verjaardag.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 801,
+    "card_tekst": "De kinderen kiezen zelf over bezoek grootouders",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 155,
+    "template_naam": "verj_groot_eigen_tekst_meervoud",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 811,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "verjaardag_partij2"
+  },
+  {
+    "id": 156,
+    "template_naam": "jubilea_aanwezig",
+    "template_tekst": "{KIND} is aanwezig bij bijzondere jubilea van familieleden.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 821,
+    "card_tekst": "{KIND} is aanwezig bij familiejubilea",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 157,
+    "template_naam": "jubilea_familie_kant",
+    "template_tekst": "{KIND} is bij jubilea aanwezig bij de familie van de betreffende kant.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 831,
+    "card_tekst": "{KIND} bij jubilea van betreffende familiekant",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 158,
+    "template_naam": "jubilea_overleg",
+    "template_tekst": "Voor bijzondere jubilea overleggen partijen per gelegenheid.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 841,
+    "card_tekst": "Bijzondere jubilea in onderling overleg",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 159,
+    "template_naam": "jubilea_schema_uitzondering",
+    "template_tekst": "Bij bijzondere jubilea kan van het reguliere schema worden afgeweken in overleg.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 851,
+    "card_tekst": "Bij jubilea afwijken van schema mogelijk",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 160,
+    "template_naam": "jubilea_informeren",
+    "template_tekst": "Partijen informeren elkaar tijdig over bijzondere jubilea in de familie.",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 861,
+    "card_tekst": "Partijen informeren elkaar over jubilea",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 161,
+    "template_naam": "jubilea_eigen_tekst",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": false,
+    "type": "Feestdag",
+    "sort_order": 871,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 162,
+    "template_naam": "jubilea_aanwezig_meervoud",
+    "template_tekst": "{KIND} zijn aanwezig bij bijzondere jubilea van familieleden.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 881,
+    "card_tekst": "{KIND} zijn aanwezig bij familiejubilea",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 163,
+    "template_naam": "jubilea_familie_kant_meervoud",
+    "template_tekst": "{KIND} zijn bij jubilea aanwezig bij de familie van de betreffende kant.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 891,
+    "card_tekst": "{KIND} bij jubilea van betreffende familiekant",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 164,
+    "template_naam": "jubilea_overleg_meervoud",
+    "template_tekst": "Voor bijzondere jubilea overleggen partijen per gelegenheid.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 901,
+    "card_tekst": "Bijzondere jubilea in onderling overleg",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 165,
+    "template_naam": "jubilea_schema_uitzondering_meervoud",
+    "template_tekst": "Bij bijzondere jubilea kan van het reguliere schema worden afgeweken in overleg.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 911,
+    "card_tekst": "Bij jubilea afwijken van schema mogelijk",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 166,
+    "template_naam": "jubilea_informeren_meervoud",
+    "template_tekst": "Partijen informeren elkaar tijdig over bijzondere jubilea in de familie.",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 921,
+    "card_tekst": "Partijen informeren elkaar over jubilea",
+    "template_subtype": "bijzonder_jubileum"
+  },
+  {
+    "id": 167,
+    "template_naam": "jubilea_eigen_tekst_meervoud",
+    "template_tekst": "Eigen tekst invoeren",
+    "meervoud_kinderen": true,
+    "type": "Feestdag",
+    "sort_order": 931,
+    "card_tekst": "Eigen tekst invoeren",
+    "template_subtype": "bijzonder_jubileum"
+  }
+]

@@ -1449,13 +1449,13 @@ export class DossierDatabaseService {
         }
     }
 
-    async getRegelingenTemplates(filters?: { meervoudKinderen?: boolean; type?: string }): Promise<RegelingTemplate[]> {
+    async getRegelingenTemplates(filters?: { meervoudKinderen?: boolean; type?: string; subtype?: string }): Promise<RegelingTemplate[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
             
             let query = `
-                SELECT id, template_naam, template_tekst, meervoud_kinderen, type, sort_order
+                SELECT id, template_naam, template_tekst, card_tekst, meervoud_kinderen, type, template_subtype, sort_order
                 FROM dbo.regelingen_templates
             `;
 
@@ -1471,6 +1471,11 @@ export class DossierDatabaseService {
                 request.input('Type', sql.NVarChar, filters.type);
             }
 
+            if (filters?.subtype) {
+                whereClauses.push('template_subtype = @Subtype');
+                request.input('Subtype', sql.NVarChar, filters.subtype);
+            }
+
             if (whereClauses.length > 0) {
                 query += ' WHERE ' + whereClauses.join(' AND ');
             }
@@ -1482,8 +1487,10 @@ export class DossierDatabaseService {
                 id: row.id,
                 templateNaam: row.template_naam,
                 templateTekst: row.template_tekst,
+                cardTekst: row.card_tekst,
                 meervoudKinderen: row.meervoud_kinderen,
                 type: row.type,
+                templateSubtype: row.template_subtype,
                 sortOrder: row.sort_order
             }));
         } catch (error) {

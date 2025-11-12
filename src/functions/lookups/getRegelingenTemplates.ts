@@ -23,9 +23,10 @@ export async function getRegelingenTemplates(
     // Parse query parameters
     const meervoudKinderenParam = request.query.get('meervoudKinderen');
     const typeParam = request.query.get('type');
+    const subtypeParam = request.query.get('subtype');
     
     // Convert string parameters to appropriate types
-    const filters: { meervoudKinderen?: boolean; type?: string } = {};
+    const filters: { meervoudKinderen?: boolean; type?: string; subtype?: string } = {};
     
     if (meervoudKinderenParam !== null) {
         // Accept 'true', 'false', '1', '0'
@@ -34,12 +35,16 @@ export async function getRegelingenTemplates(
     
     if (typeParam) {
         // Validate type parameter
-        const validTypes = ['Feestdag', 'Vakantie', 'Algemeen'];
+        const validTypes = ['Feestdag', 'Vakantie', 'Algemeen', 'Bijzondere dag'];
         if (validTypes.includes(typeParam)) {
             filters.type = typeParam;
         } else {
             return createErrorResponse(`Invalid type parameter. Must be one of: ${validTypes.join(', ')}`, 400);
         }
+    }
+    
+    if (subtypeParam) {
+        filters.subtype = subtypeParam;
     }
     
     // Create cache key based on filters
