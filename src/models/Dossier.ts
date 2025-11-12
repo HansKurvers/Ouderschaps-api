@@ -80,7 +80,6 @@ export interface RegelingTemplate {
     id: number;
     templateNaam: string;
     templateTekst: string;
-    cardTekst?: string | null;
     meervoudKinderen: boolean;
     type: string;
     templateSubtype?: string | null;
