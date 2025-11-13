@@ -6,6 +6,16 @@ import { requireAuthentication } from '../../utils/auth-helper';
 import Joi from 'joi';
 import sql from 'mssql';
 
+/**
+ * Upsert zorg records for a dossier
+ * 
+ * Special handling for situatieId 15 ("Anders"):
+ * - Allows multiple "overige afspraken" per dossier
+ * - When no ID provided: always creates new record
+ * - When ID provided: updates that specific record
+ * 
+ * Other situaties maintain unique constraint per dossier
+ */
 
 // Validation schema for upsert
 const upsertZorgSchema = Joi.object({
@@ -64,43 +74,72 @@ export async function upsertZorg(
         const results: any[] = [];
         
         for (const zorgData of value.zorgregelingen) {
-            // First check if a record exists for this dossier + situatie combination
-            const existingQuery = `
-                SELECT id 
-                FROM dbo.zorg 
-                WHERE dossier_id = @dossierId 
-                AND zorg_situatie_id = @situatieId
-            `;
+            // Special handling for "Anders" (situatie 15) - allow multiple custom arrangements
+            const ANDERS_SITUATIE_ID = 15;
             
-            const pool = await zorgRepository['getPool']();
-            const existingResult = await pool.request()
-                .input('dossierId', sql.Int, dossierId)
-                .input('situatieId', sql.Int, zorgData.zorgSituatieId)
-                .query(existingQuery);
-            
-            const existingId = existingResult.recordset[0]?.id;
-            
-            if (existingId) {
-                // Update existing record (use found ID, not the one from frontend)
-                const updated = await zorgRepository.update(existingId, {
-                    zorgCategorieId: zorgData.zorgCategorieId,
-                    zorgSituatieId: zorgData.zorgSituatieId,
-                    overeenkomst: zorgData.overeenkomst,
-                    situatieAnders: zorgData.situatieAnders,
-                    gewijzigdDoor: userId
-                });
-                results.push(updated);
+            if (zorgData.zorgSituatieId === ANDERS_SITUATIE_ID) {
+                // For "Anders": If ID provided, update that specific record. Otherwise, always create new.
+                if (zorgData.id) {
+                    // Update specific "overige afspraak" by ID
+                    const updated = await zorgRepository.update(zorgData.id, {
+                        zorgCategorieId: zorgData.zorgCategorieId,
+                        zorgSituatieId: zorgData.zorgSituatieId,
+                        overeenkomst: zorgData.overeenkomst,
+                        situatieAnders: zorgData.situatieAnders,
+                        gewijzigdDoor: userId
+                    });
+                    results.push(updated);
+                } else {
+                    // Always create new for "Anders" without ID
+                    const created = await zorgRepository.create({
+                        dossierId,
+                        zorgCategorieId: zorgData.zorgCategorieId,
+                        zorgSituatieId: zorgData.zorgSituatieId,
+                        overeenkomst: zorgData.overeenkomst,
+                        situatieAnders: zorgData.situatieAnders,
+                        aangemaaktDoor: userId
+                    });
+                    results.push(created);
+                }
             } else {
-                // Create new record only if none exists
-                const created = await zorgRepository.create({
-                    dossierId,
-                    zorgCategorieId: zorgData.zorgCategorieId,
-                    zorgSituatieId: zorgData.zorgSituatieId,
-                    overeenkomst: zorgData.overeenkomst,
-                    situatieAnders: zorgData.situatieAnders,
-                    aangemaaktDoor: userId
-                });
-                results.push(created);
+                // For other situaties: prevent duplicates by checking dossier + situatie combination
+                const existingQuery = `
+                    SELECT id 
+                    FROM dbo.zorg 
+                    WHERE dossier_id = @dossierId 
+                    AND zorg_situatie_id = @situatieId
+                `;
+                
+                const pool = await zorgRepository['getPool']();
+                const existingResult = await pool.request()
+                    .input('dossierId', sql.Int, dossierId)
+                    .input('situatieId', sql.Int, zorgData.zorgSituatieId)
+                    .query(existingQuery);
+                
+                const existingId = existingResult.recordset[0]?.id;
+                
+                if (existingId) {
+                    // Update existing record (use found ID, not the one from frontend)
+                    const updated = await zorgRepository.update(existingId, {
+                        zorgCategorieId: zorgData.zorgCategorieId,
+                        zorgSituatieId: zorgData.zorgSituatieId,
+                        overeenkomst: zorgData.overeenkomst,
+                        situatieAnders: zorgData.situatieAnders,
+                        gewijzigdDoor: userId
+                    });
+                    results.push(updated);
+                } else {
+                    // Create new record only if none exists
+                    const created = await zorgRepository.create({
+                        dossierId,
+                        zorgCategorieId: zorgData.zorgCategorieId,
+                        zorgSituatieId: zorgData.zorgSituatieId,
+                        overeenkomst: zorgData.overeenkomst,
+                        situatieAnders: zorgData.situatieAnders,
+                        aangemaaktDoor: userId
+                    });
+                    results.push(created);
+                }
             }
         }
 
