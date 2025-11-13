@@ -19,6 +19,12 @@ export interface Alimentatie {
     alimentatiebedragPerKind?: number | null;
     zorgkortingPercentageAlleKinderen?: number | null;
     alimentatiegerechtigde?: string | null;
+    // V4: Afspraken settings fields - 5 velden (arrangements equal for all children)
+    afsprakenAlleKinderenGelijk?: boolean | null;
+    hoofdverblijfAlleKinderen?: string | null;
+    inschrijvingAlleKinderen?: string | null;
+    kinderbijslagOntvangerAlleKinderen?: string | null;
+    kindgebondenBudgetAlleKinderen?: string | null;
 }
 
 // Bijdrage templates
@@ -67,6 +73,12 @@ export interface CreateAlimentatieDto {
     alimentatiebedragPerKind?: number;
     zorgkortingPercentageAlleKinderen?: number;
     alimentatiegerechtigde?: string;
+    // V4: Afspraken settings fields
+    afsprakenAlleKinderenGelijk?: boolean;
+    hoofdverblijfAlleKinderen?: string;
+    inschrijvingAlleKinderen?: string;
+    kinderbijslagOntvangerAlleKinderen?: string;
+    kindgebondenBudgetAlleKinderen?: string;
 }
 
 export interface UpdateAlimentatieDto {
@@ -86,6 +98,12 @@ export interface UpdateAlimentatieDto {
     alimentatiebedragPerKind?: number;
     zorgkortingPercentageAlleKinderen?: number;
     alimentatiegerechtigde?: string;
+    // V4: Afspraken settings fields
+    afsprakenAlleKinderenGelijk?: boolean;
+    hoofdverblijfAlleKinderen?: string;
+    inschrijvingAlleKinderen?: string;
+    kinderbijslagOntvangerAlleKinderen?: string;
+    kindgebondenBudgetAlleKinderen?: string;
 }
 
 export interface CreateBijdrageKostenKinderenDto {
