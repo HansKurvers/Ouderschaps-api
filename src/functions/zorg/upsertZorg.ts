@@ -13,7 +13,8 @@ const upsertZorgSchema = Joi.object({
     zorgCategorieId: Joi.number().integer().positive().required(),
     zorgSituatieId: Joi.number().integer().positive().required(),
     overeenkomst: Joi.string().min(1).max(5000).required(),
-    situatieAnders: Joi.string().max(500).optional().allow('', null)
+    situatieAnders: Joi.string().max(500).optional().allow('', null),
+    _tempId: Joi.any().optional() // Accept but ignore _tempId from frontend
 });
 
 const upsertZorgBatchSchema = Joi.object({
