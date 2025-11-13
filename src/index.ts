@@ -81,6 +81,12 @@ import './functions/alimentatie/getFinancieleAfspraken';
 import './functions/alimentatie/createFinancieleAfspraak';
 import './functions/alimentatie/replaceFinancieleAfspraken';
 
+// Communicatie Afspraken functions (FASE 5B - Step 3: Communication & Agreements)
+import './functions/communicatie-afspraken/getCommunicatieAfsprakenByDossier';
+import './functions/communicatie-afspraken/createCommunicatieAfspraken';
+import './functions/communicatie-afspraken/updateCommunicatieAfspraken';
+import './functions/communicatie-afspraken/deleteCommunicatieAfspraken';
+
 // Ouderschapsplan functions
 import './functions/ouderschapsplan/getAllOuderschapsplanInfo';
 import './functions/ouderschapsplan/getOuderschapsplanInfoById';
