@@ -61,8 +61,8 @@ export async function createSubscription(request: HttpRequest, context: Invocati
 
         // Create first payment to establish mandate
         // Mollie requires a first payment before creating recurring subscriptions
-        const webhookUrl = `${process.env.WEBSITE_HOSTNAME || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net'}/api/subscription/webhook`;
-        const redirectUrl = 'https://app.scheidingsdesk.nl/subscription/return';
+        const webhookUrl = process.env.WEBHOOK_URL || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook';
+        const redirectUrl = process.env.REDIRECT_URL || 'https://app.scheidingsdesk.nl/subscription/return';
 
         const payment = await mollieService.createFirstPayment({
             customerId: customer.id,
