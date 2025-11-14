@@ -189,6 +189,7 @@ export class MollieService {
                 redirectUrl: params.redirectUrl,
                 webhookUrl: params.webhookUrl,
                 sequenceType: 'first' as any, // This creates a mandate
+                method: 'ideal' as any, // Use iDEAL for SEPA Direct Debit mandate (most common in NL)
                 metadata: params.metadata || {},
             });
 
