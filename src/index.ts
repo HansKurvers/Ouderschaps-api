@@ -46,6 +46,12 @@ import './functions/lookups/getZorgSituaties';
 import './functions/lookups/getSchoolvakanties';
 import './functions/lookups/getRegelingenTemplates';
 
+// Subscription functions (Mollie)
+import './functions/subscription/create';
+import './functions/subscription/webhook';
+import './functions/subscription/cancel';
+import './functions/subscription/status';
+
 
 
 // Omgang functions (FASE 4) - Migrated to repository pattern
