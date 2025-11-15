@@ -52,7 +52,9 @@ import './functions/subscription/webhook';
 import './functions/subscription/cancel';
 import './functions/subscription/status';
 
-
+// User Profile functions
+import './functions/user/getUserProfile';
+import './functions/user/updateUserProfile';
 
 // Omgang functions (FASE 4) - Migrated to repository pattern
 import './functions/omgang/createOmgang';
