@@ -57,10 +57,12 @@ export async function subscriptionWebhook(request: HttpRequest, context: Invocat
                 return createSuccessResponse({ message: 'Subscription not found' }, 200);
             }
 
-            // If this was the first payment, activate the subscription
+            // Check if subscription needs to be activated
             const metadata = payment.metadata as any;
-            if (metadata?.type === 'first_payment' && payment.customerId) {
-                context.log('[SubscriptionWebhook] First payment - checking for mandate and activating subscription');
+            const isFirstPayment = metadata?.type === 'first_payment' || subscription.status === 'pending';
+
+            if (isFirstPayment && payment.customerId) {
+                context.log('[SubscriptionWebhook] First/Pending payment - checking for mandate and activating subscription');
 
                 // Get the mandate ID from the first payment
                 const mandates = await mollieService.getMandates(payment.customerId);
@@ -132,6 +134,22 @@ export async function subscriptionWebhook(request: HttpRequest, context: Invocat
                     context.log('[SubscriptionWebhook] Next payment due:', nextPayment.toISOString());
                     context.log('[SubscriptionWebhook] User will receive payment reminder before next payment date');
                 }
+            } else if (subscription.status === 'pending' && !payment.customerId) {
+                // FALLBACK: Subscription is pending but no customerId available
+                // This should not happen, but activate anyway to prevent users being stuck
+                context.warn('[SubscriptionWebhook] FALLBACK: Activating pending subscription without customerId');
+
+                const nextPayment = new Date();
+                nextPayment.setDate(nextPayment.getDate() + 30);
+
+                await subscriptionService.updateSubscription(subscription.id, {
+                    status: 'active',
+                    volgende_betaling: nextPayment
+                });
+
+                await subscriptionService.updateUserSubscriptionStatus(subscription.gebruiker_id, true);
+
+                context.log('[SubscriptionWebhook] FALLBACK: Subscription activated for user:', subscription.gebruiker_id);
             } else if (subscription.mollie_subscription_id) {
                 // This is a recurring payment
                 context.log('[SubscriptionWebhook] Recurring payment processed');
