@@ -51,25 +51,26 @@ export async function subscriptionWebhook(request: HttpRequest, context: Invocat
             });
 
             // Get subscription
-            const subscription = await subscriptionService.getSubscriptionByUserId(dbPayment.abonnement_id);
+            const subscription = await subscriptionService.getSubscriptionById(dbPayment.abonnement_id);
             if (!subscription) {
                 context.error('[SubscriptionWebhook] Subscription not found');
                 return createSuccessResponse({ message: 'Subscription not found' }, 200);
             }
 
-            // If this was the first payment, create the recurring subscription
+            // If this was the first payment, activate the subscription
             const metadata = payment.metadata as any;
             if (metadata?.type === 'first_payment' && payment.customerId) {
-                context.log('[SubscriptionWebhook] First payment - creating recurring subscription');
+                context.log('[SubscriptionWebhook] First payment - checking for mandate and activating subscription');
 
                 // Get the mandate ID from the first payment
                 const mandates = await mollieService.getMandates(payment.customerId);
                 const validMandate = mandates.find(m => m.status === 'valid');
 
                 if (validMandate) {
-                    context.log('[SubscriptionWebhook] Valid mandate found:', validMandate.id);
+                    // RECURRING MODEL: Payment method supports mandates (creditcard, directdebit)
+                    context.log('[SubscriptionWebhook] Valid mandate found - creating recurring subscription:', validMandate.id);
 
-                    // Create recurring subscription
+                    // Create recurring subscription with Mollie
                     const webhookUrl = `${process.env.WEBSITE_HOSTNAME || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net'}/api/subscription/webhook`;
 
                     const mollieSubscription = await mollieService.createSubscription({
@@ -105,9 +106,31 @@ export async function subscriptionWebhook(request: HttpRequest, context: Invocat
                     // Update user's subscription status
                     await subscriptionService.updateUserSubscriptionStatus(subscription.gebruiker_id, true);
 
-                    context.log('[SubscriptionWebhook] Subscription activated for user:', subscription.gebruiker_id);
+                    context.log('[SubscriptionWebhook] Recurring subscription activated for user:', subscription.gebruiker_id);
                 } else {
-                    context.warn('[SubscriptionWebhook] No valid mandate found after payment');
+                    // ONE-TIME PAYMENT MODEL: No mandate (iDEAL, bancontact, etc.)
+                    context.log('[SubscriptionWebhook] No mandate found - activating subscription with one-time payment model');
+                    context.log('[SubscriptionWebhook] User paid with method that does not support recurring (likely iDEAL)');
+
+                    // Calculate next payment date (30 days from now)
+                    // User will need to pay manually next month
+                    const nextPayment = new Date();
+                    nextPayment.setDate(nextPayment.getDate() + 30);
+
+                    // Activate subscription WITHOUT Mollie subscription ID
+                    await subscriptionService.updateSubscription(subscription.id, {
+                        status: 'active',
+                        volgende_betaling: nextPayment
+                        // mollie_subscription_id stays NULL - indicates one-time payment model
+                        // mollie_mandate_id stays NULL - no recurring mandate
+                    });
+
+                    // Update user's subscription status
+                    await subscriptionService.updateUserSubscriptionStatus(subscription.gebruiker_id, true);
+
+                    context.log('[SubscriptionWebhook] One-time subscription activated for user:', subscription.gebruiker_id);
+                    context.log('[SubscriptionWebhook] Next payment due:', nextPayment.toISOString());
+                    context.log('[SubscriptionWebhook] User will receive payment reminder before next payment date');
                 }
             } else if (subscription.mollie_subscription_id) {
                 // This is a recurring payment
@@ -130,7 +153,7 @@ export async function subscriptionWebhook(request: HttpRequest, context: Invocat
             });
 
             // Get subscription
-            const subscription = await subscriptionService.getSubscriptionByUserId(dbPayment.abonnement_id);
+            const subscription = await subscriptionService.getSubscriptionById(dbPayment.abonnement_id);
             if (subscription) {
                 // Suspend subscription on failed payment
                 await subscriptionService.updateSubscription(subscription.id, {

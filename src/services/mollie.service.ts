@@ -170,6 +170,12 @@ export class MollieService {
     /**
      * Create a first payment to establish a mandate
      * Returns the checkout URL for the customer to complete payment
+     *
+     * NOTE: sequenceType 'first' attempts to create a mandate for recurring payments.
+     * This works with creditcard and directdebit, but NOT with iDEAL.
+     * By not specifying a 'method', the customer can choose their preferred payment method.
+     * If they choose iDEAL, no mandate will be created, and the subscription will work
+     * as a one-time payment model (user needs to pay manually each period).
      */
     async createFirstPayment(params: {
         customerId: string;
@@ -188,8 +194,10 @@ export class MollieService {
                 description: params.description,
                 redirectUrl: params.redirectUrl,
                 webhookUrl: params.webhookUrl,
-                sequenceType: 'first' as any, // This creates a mandate
-                method: 'ideal' as any, // Use iDEAL for SEPA Direct Debit mandate (most common in NL)
+                sequenceType: 'first' as any, // This creates a mandate (if payment method supports it)
+                // NOTE: No 'method' specified - user can choose (iDEAL, creditcard, etc.)
+                // For recurring: creditcard and directdebit will create mandates
+                // For one-time: iDEAL and other methods work without mandate
                 metadata: params.metadata || {},
             });
 
