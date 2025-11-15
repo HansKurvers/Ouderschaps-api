@@ -110,6 +110,28 @@ export class SubscriptionService {
     }
 
     /**
+     * Get subscription by ID
+     */
+    async getSubscriptionById(subscriptionId: number): Promise<Abonnement | null> {
+        const pool = await getPool();
+
+        try {
+            const result = await pool.request()
+                .input('id', sql.Int, subscriptionId)
+                .query(`
+                    SELECT *
+                    FROM dbo.abonnementen
+                    WHERE id = @id
+                `);
+
+            return result.recordset[0] || null;
+        } catch (error) {
+            console.error('[SubscriptionService] Error fetching subscription by ID:', error);
+            throw new Error(`Failed to fetch subscription: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
      * Get subscription by Mollie subscription ID
      */
     async getSubscriptionByMollieId(mollieSubscriptionId: string): Promise<Abonnement | null> {
