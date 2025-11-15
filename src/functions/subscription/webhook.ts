@@ -72,43 +72,65 @@ export async function subscriptionWebhook(request: HttpRequest, context: Invocat
                     // RECURRING MODEL: Payment method supports mandates (creditcard, directdebit)
                     context.log('[SubscriptionWebhook] Valid mandate found - creating recurring subscription:', validMandate.id);
 
-                    // Create recurring subscription with Mollie
-                    const webhookUrl = `${process.env.WEBSITE_HOSTNAME || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net'}/api/subscription/webhook`;
+                    try {
+                        // Create recurring subscription with Mollie
+                        // FIX: Use WEBHOOK_URL env var instead of WEBSITE_HOSTNAME (which lacks https:// prefix)
+                        const webhookUrl = process.env.WEBHOOK_URL || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook';
 
-                    const mollieSubscription = await mollieService.createSubscription({
-                        customerId: payment.customerId,
-                        amount: {
-                            value: '19.99',
-                            currency: 'EUR'
-                        },
-                        interval: '1 month',
-                        description: 'Ouderschapsplan Basis Abonnement',
-                        webhookUrl,
-                        mandateId: validMandate.id,
-                        metadata: {
-                            subscriptionId: subscription.id.toString(),
-                            userId: subscription.gebruiker_id.toString()
-                        }
-                    });
+                        const mollieSubscription = await mollieService.createSubscription({
+                            customerId: payment.customerId,
+                            amount: {
+                                value: '19.99',
+                                currency: 'EUR'
+                            },
+                            interval: '1 month',
+                            description: 'Ouderschapsplan Basis Abonnement',
+                            webhookUrl,
+                            mandateId: validMandate.id,
+                            metadata: {
+                                subscriptionId: subscription.id.toString(),
+                                userId: subscription.gebruiker_id.toString()
+                            }
+                        });
 
-                    context.log('[SubscriptionWebhook] Mollie subscription created:', mollieSubscription.id);
+                        context.log('[SubscriptionWebhook] Mollie subscription created:', mollieSubscription.id);
 
-                    // Calculate next payment date (after 7 day trial)
-                    const nextPayment = new Date();
-                    nextPayment.setDate(nextPayment.getDate() + 7);
+                        // Calculate next payment date (after 7 day trial)
+                        const nextPayment = new Date();
+                        nextPayment.setDate(nextPayment.getDate() + 7);
 
-                    // Update subscription with Mollie IDs
-                    await subscriptionService.updateSubscription(subscription.id, {
-                        mollie_subscription_id: mollieSubscription.id,
-                        mollie_mandate_id: validMandate.id,
-                        status: 'active',
-                        volgende_betaling: nextPayment
-                    });
+                        // Update subscription with Mollie IDs
+                        await subscriptionService.updateSubscription(subscription.id, {
+                            mollie_subscription_id: mollieSubscription.id,
+                            mollie_mandate_id: validMandate.id,
+                            status: 'active',
+                            volgende_betaling: nextPayment
+                        });
 
-                    // Update user's subscription status
-                    await subscriptionService.updateUserSubscriptionStatus(subscription.gebruiker_id, true);
+                        // Update user's subscription status
+                        await subscriptionService.updateUserSubscriptionStatus(subscription.gebruiker_id, true);
 
-                    context.log('[SubscriptionWebhook] Recurring subscription activated for user:', subscription.gebruiker_id);
+                        context.log('[SubscriptionWebhook] Recurring subscription activated for user:', subscription.gebruiker_id);
+                    } catch (subscriptionError) {
+                        // FALLBACK: If creating Mollie subscription fails, still activate locally
+                        // This ensures users can use the app even if Mollie recurring setup fails
+                        context.error('[SubscriptionWebhook] Failed to create Mollie subscription:', subscriptionError);
+                        context.warn('[SubscriptionWebhook] FALLBACK: Activating subscription without Mollie recurring subscription');
+
+                        const nextPayment = new Date();
+                        nextPayment.setDate(nextPayment.getDate() + 30);
+
+                        await subscriptionService.updateSubscription(subscription.id, {
+                            mollie_mandate_id: validMandate.id,
+                            status: 'active',
+                            volgende_betaling: nextPayment
+                            // mollie_subscription_id stays NULL - will work as one-time payment model
+                        });
+
+                        await subscriptionService.updateUserSubscriptionStatus(subscription.gebruiker_id, true);
+
+                        context.log('[SubscriptionWebhook] FALLBACK: Subscription activated (one-time payment model) for user:', subscription.gebruiker_id);
+                    }
                 } else {
                     // ONE-TIME PAYMENT MODEL: No mandate (iDEAL, bancontact, etc.)
                     context.log('[SubscriptionWebhook] No mandate found - activating subscription with one-time payment model');
