@@ -2,7 +2,7 @@
 
 ## Overview
 
-Complete implementation of Mollie subscription system for Ouderschapsdesk with:
+Complete implementation of Mollie subscription system for Ouderschapsplan with:
 - €19.99/month subscription with 7-day free trial
 - Mollie payment integration
 - Database schema for subscriptions and payments

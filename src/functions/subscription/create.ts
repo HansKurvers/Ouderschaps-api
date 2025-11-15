@@ -42,7 +42,7 @@ export async function createSubscription(request: HttpRequest, context: Invocati
             locale: 'nl_NL',
             metadata: {
                 userId: userId.toString(),
-                source: 'ouderschapsdesk'
+                source: 'ouderschapsplan'
             }
         });
 
@@ -62,7 +62,7 @@ export async function createSubscription(request: HttpRequest, context: Invocati
         // Create first payment to establish mandate
         // Mollie requires a first payment before creating recurring subscriptions
         const webhookUrl = process.env.WEBHOOK_URL || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook';
-        const redirectUrl = process.env.REDIRECT_URL || 'https://app.scheidingsdesk.nl/subscription/return';
+        const redirectUrl = process.env.REDIRECT_URL || 'https://app.scheidingsdesk.nl/dossiers';
 
         const payment = await mollieService.createFirstPayment({
             customerId: customer.id,
@@ -70,8 +70,8 @@ export async function createSubscription(request: HttpRequest, context: Invocati
                 value: '19.99',
                 currency: 'EUR'
             },
-            description: 'Ouderschapsdesk Basis Abonnement - Eerste betaling',
-            redirectUrl: `${redirectUrl}?subscriptionId=${subscription.id}`,
+            description: 'Ouderschapsplan Basis Abonnement - Eerste betaling',
+            redirectUrl: `${redirectUrl}?subscriptionCreated=true`,
             webhookUrl,
             metadata: {
                 userId: userId.toString(),

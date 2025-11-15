@@ -80,7 +80,7 @@ export async function subscriptionWebhook(request: HttpRequest, context: Invocat
                             currency: 'EUR'
                         },
                         interval: '1 month',
-                        description: 'Ouderschapsdesk Basis Abonnement',
+                        description: 'Ouderschapsplan Basis Abonnement',
                         webhookUrl,
                         mandateId: validMandate.id,
                         metadata: {

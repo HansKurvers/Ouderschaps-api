@@ -1,10 +1,10 @@
-# Ouderschaps-Api
+# Ouderschapsplan API
 
-Dit is een api die data ophaalt.
+API voor het Ouderschapsplan platform - beheer van dossiers, partijen, kinderen en ouderschapsplannen.
 
 ## Azure Functions v4 Setup
 
-This project is built with Azure Functions v4, Node.js, and TypeScript for managing dossiers.
+This project is built with Azure Functions v4, Node.js, and TypeScript for the Ouderschapsplan platform.
 
 ### Prerequisites
 

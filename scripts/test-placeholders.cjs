@@ -153,7 +153,7 @@ console.log('');
 
 console.log('\n' + '='.repeat(80) + '\n');
 console.log('✅ Alle tests voltooid!\n');
-console.log('Deze zinnen kunnen nu als placeholders gebruikt worden in scheidingsdesk-document-generator');
+console.log('Deze zinnen kunnen nu als placeholders gebruikt worden in ouderschapsplan-document-generator');
 console.log('met de volgende placeholder namen:');
 console.log('  - [[GezagZin]]');
 console.log('  - [[RelatieAanvangZin]]');

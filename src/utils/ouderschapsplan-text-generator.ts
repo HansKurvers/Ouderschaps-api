@@ -2,7 +2,7 @@
  * Ouderschapsplan Text Generator
  *
  * Utility functions to generate readable text/sentences from ouderschapsplan_info fields
- * for use as placeholders in document generation (scheidingsdesk-document-generator).
+ * for use as placeholders in document generation (ouderschapsplan-document-generator).
  *
  * These functions convert database codes and separate fields into complete Dutch sentences
  * that can be inserted directly into legal documents.
