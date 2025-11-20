@@ -1,16 +1,19 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
 import { updateDossier } from '../../functions/dossiers/updateDossier';
 import { DossierDatabaseService } from '../../services/database-service';
+import { DossierRepository } from '../../repositories/DossierRepository';
 import { Dossier } from '../../models/Dossier';
 import * as authHelper from '../../utils/auth-helper';
 
-// Mock the database service and auth helper
+// Mock the database service, repository and auth helper
 jest.mock('../../services/database-service');
+jest.mock('../../repositories/DossierRepository');
 jest.mock('../../utils/auth-helper');
 
 describe('updateDossier', () => {
     let mockContext: InvocationContext;
     let mockService: jest.Mocked<DossierDatabaseService>;
+    let mockRepository: jest.Mocked<DossierRepository>;
 
     beforeEach(() => {
         mockContext = {
@@ -20,9 +23,14 @@ describe('updateDossier', () => {
 
         mockService = new DossierDatabaseService() as jest.Mocked<DossierDatabaseService>;
         (DossierDatabaseService as any).mockImplementation(() => mockService);
-        
+
         mockService.initialize = jest.fn().mockResolvedValue(undefined);
         mockService.close = jest.fn().mockResolvedValue(undefined);
+
+        // Mock DossierRepository
+        mockRepository = new DossierRepository() as jest.Mocked<DossierRepository>;
+        (DossierRepository as any).mockImplementation(() => mockRepository);
+        mockRepository.isOwner = jest.fn();
 
         // Mock requireAuthentication to return a user ID
         (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(123);
@@ -32,7 +40,7 @@ describe('updateDossier', () => {
         jest.clearAllMocks();
     });
 
-    it('should update dossier status when user has access', async () => {
+    it('should update dossier status when user is owner', async () => {
         // Arrange
         const updatedDossier: Dossier = {
             id: 1,
@@ -44,6 +52,7 @@ describe('updateDossier', () => {
         };
 
         mockService.checkDossierAccess = jest.fn().mockResolvedValue(true);
+        mockRepository.isOwner = jest.fn().mockResolvedValue(true);
         mockService.updateDossierStatus = jest.fn().mockResolvedValue(updatedDossier);
 
         const request = new HttpRequest({
@@ -66,9 +75,10 @@ describe('updateDossier', () => {
         // Assert
         expect(mockService.initialize).toHaveBeenCalled();
         expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
+        expect(mockRepository.isOwner).toHaveBeenCalledWith(1, 123);
         expect(mockService.updateDossierStatus).toHaveBeenCalledWith(1, false);
         expect(mockService.close).toHaveBeenCalled();
-        
+
         expect(response.status).toBe(200);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(true);
@@ -233,9 +243,45 @@ describe('updateDossier', () => {
         expect(body.error).toContain('Invalid body');
     });
 
+    it('should return 403 when shared user tries to change status', async () => {
+        // Arrange
+        mockService.checkDossierAccess = jest.fn().mockResolvedValue(true);
+        mockRepository.isOwner = jest.fn().mockResolvedValue(false);
+
+        const request = new HttpRequest({
+            url: 'http://localhost/api/dossiers/1',
+            method: 'PUT',
+            headers: {
+                'authorization': 'Bearer fake-token'
+            },
+            params: {
+                dossierId: '1'
+            },
+            body: {
+                string: JSON.stringify({ status: false })
+            }
+        });
+
+        // Act
+        const response = await updateDossier(request, mockContext);
+
+        // Assert
+        expect(mockService.initialize).toHaveBeenCalled();
+        expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
+        expect(mockRepository.isOwner).toHaveBeenCalledWith(1, 123);
+        expect(mockService.updateDossierStatus).not.toHaveBeenCalled();
+        expect(mockService.close).toHaveBeenCalled();
+
+        expect(response.status).toBe(403);
+        const body = JSON.parse(response.body as string);
+        expect(body.success).toBe(false);
+        expect(body.error).toBe('Alleen de eigenaar kan de status wijzigen');
+    });
+
     it('should handle database errors', async () => {
         // Arrange
         mockService.checkDossierAccess = jest.fn().mockResolvedValue(true);
+        mockRepository.isOwner = jest.fn().mockResolvedValue(true);
         mockService.updateDossierStatus = jest.fn().mockRejectedValue(new Error('Database error'));
 
         const request = new HttpRequest({
@@ -258,9 +304,10 @@ describe('updateDossier', () => {
         // Assert
         expect(mockService.initialize).toHaveBeenCalled();
         expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
+        expect(mockRepository.isOwner).toHaveBeenCalledWith(1, 123);
         expect(mockService.updateDossierStatus).toHaveBeenCalledWith(1, false);
         expect(mockService.close).toHaveBeenCalled();
-        
+
         expect(response.status).toBe(500);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);

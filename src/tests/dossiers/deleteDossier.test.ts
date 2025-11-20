@@ -1,15 +1,18 @@
 import { HttpRequest, InvocationContext } from '@azure/functions';
 import { deleteDossier } from '../../functions/dossiers/deleteDossier';
 import { DossierDatabaseService } from '../../services/database-service';
+import { DossierRepository } from '../../repositories/DossierRepository';
 import * as authHelper from '../../utils/auth-helper';
 
-// Mock the database service and auth helper
+// Mock the database service, repository and auth helper
 jest.mock('../../services/database-service');
+jest.mock('../../repositories/DossierRepository');
 jest.mock('../../utils/auth-helper');
 
 describe('deleteDossier', () => {
     let mockContext: InvocationContext;
     let mockService: jest.Mocked<DossierDatabaseService>;
+    let mockRepository: jest.Mocked<DossierRepository>;
 
     beforeEach(() => {
         mockContext = {
@@ -19,9 +22,14 @@ describe('deleteDossier', () => {
 
         mockService = new DossierDatabaseService() as jest.Mocked<DossierDatabaseService>;
         (DossierDatabaseService as any).mockImplementation(() => mockService);
-        
+
         mockService.initialize = jest.fn().mockResolvedValue(undefined);
         mockService.close = jest.fn().mockResolvedValue(undefined);
+
+        // Mock DossierRepository
+        mockRepository = new DossierRepository() as jest.Mocked<DossierRepository>;
+        (DossierRepository as any).mockImplementation(() => mockRepository);
+        mockRepository.isOwner = jest.fn();
 
         // Mock requireAuthentication to return a user ID
         (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(123);
@@ -31,9 +39,9 @@ describe('deleteDossier', () => {
         jest.clearAllMocks();
     });
 
-    it('should delete dossier when user has access', async () => {
+    it('should delete dossier when user is owner', async () => {
         // Arrange
-        mockService.checkDossierAccess = jest.fn().mockResolvedValue(true);
+        mockRepository.isOwner = jest.fn().mockResolvedValue(true);
         mockService.deleteDossier = jest.fn().mockResolvedValue(true);
 
         const request = new HttpRequest({
@@ -52,10 +60,10 @@ describe('deleteDossier', () => {
 
         // Assert
         expect(mockService.initialize).toHaveBeenCalled();
-        expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
+        expect(mockRepository.isOwner).toHaveBeenCalledWith(1, 123);
         expect(mockService.deleteDossier).toHaveBeenCalledWith(1);
         expect(mockService.close).toHaveBeenCalled();
-        
+
         expect(response.status).toBe(200);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(true);
@@ -108,10 +116,10 @@ describe('deleteDossier', () => {
         expect(body.error).toContain('Invalid parameters');
     });
 
-    it('should return 403 when user has no access', async () => {
+    it('should return 403 when user is not owner', async () => {
         // Arrange
         (authHelper.requireAuthentication as jest.Mock).mockResolvedValue(999);
-        mockService.checkDossierAccess = jest.fn().mockResolvedValue(false);
+        mockRepository.isOwner = jest.fn().mockResolvedValue(false);
 
         const request = new HttpRequest({
             url: 'http://localhost/api/dossiers/1',
@@ -129,10 +137,10 @@ describe('deleteDossier', () => {
 
         // Assert
         expect(mockService.initialize).toHaveBeenCalled();
-        expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 999);
+        expect(mockRepository.isOwner).toHaveBeenCalledWith(1, 999);
         expect(mockService.deleteDossier).not.toHaveBeenCalled();
         expect(mockService.close).toHaveBeenCalled();
-        
+
         expect(response.status).toBe(403);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
@@ -141,7 +149,7 @@ describe('deleteDossier', () => {
 
     it('should handle database errors', async () => {
         // Arrange
-        mockService.checkDossierAccess = jest.fn().mockResolvedValue(true);
+        mockRepository.isOwner = jest.fn().mockResolvedValue(true);
         mockService.deleteDossier = jest.fn().mockRejectedValue(new Error('Database error'));
 
         const request = new HttpRequest({
@@ -160,10 +168,10 @@ describe('deleteDossier', () => {
 
         // Assert
         expect(mockService.initialize).toHaveBeenCalled();
-        expect(mockService.checkDossierAccess).toHaveBeenCalledWith(1, 123);
+        expect(mockRepository.isOwner).toHaveBeenCalledWith(1, 123);
         expect(mockService.deleteDossier).toHaveBeenCalledWith(1);
         expect(mockService.close).toHaveBeenCalled();
-        
+
         expect(response.status).toBe(500);
         const body = JSON.parse(response.body as string);
         expect(body.success).toBe(false);
