@@ -56,6 +56,9 @@ import './functions/subscription/status';
 import './functions/user/getUserProfile';
 import './functions/user/updateUserProfile';
 
+// Sharing functions
+import './functions/sharing/shareDossier';
+
 // Omgang functions (FASE 4) - Migrated to repository pattern
 import './functions/omgang/createOmgang';
 import './functions/omgang/getDossierOmgang';

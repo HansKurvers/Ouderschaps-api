@@ -1,5 +1,6 @@
 import sql from 'mssql';
 import { DatabaseService } from '../database.service';
+import { GebruikerRepository } from '../../repositories/GebruikerRepository';
 
 export interface User {
     id: number;
@@ -18,13 +19,43 @@ export class UserService {
     constructor(private db: DatabaseService) {}
 
     async findOrCreateUser(auth0User: Auth0User): Promise<User> {
+        // Try to find by auth0_id first
         const existingUser = await this.getUserByAuth0Id(auth0User.sub);
-        
+
         if (existingUser) {
             return existingUser;
         }
 
+        // Check if user exists without auth0_id (invited but not logged in yet)
+        if (auth0User.email) {
+            const updated = await this.linkAuth0ToExistingUser(auth0User.sub, auth0User.email);
+            if (updated) {
+                return updated;
+            }
+        }
+
+        // Create new user
         return await this.createUser(auth0User);
+    }
+
+    /**
+     * Link auth0_id to existing user (for invited users logging in for first time)
+     */
+    private async linkAuth0ToExistingUser(auth0Id: string, email: string): Promise<User | null> {
+        try {
+            const repo = new GebruikerRepository();
+            const updated = await repo.updateAuth0Id(email, auth0Id);
+
+            if (updated) {
+                // Fetch the updated user
+                return await this.getUserByAuth0Id(auth0Id);
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Failed to link auth0_id to existing user:', error);
+            return null;
+        }
     }
 
     async getUserByAuth0Id(auth0Id: string): Promise<User | null> {
