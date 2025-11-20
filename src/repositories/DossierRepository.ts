@@ -71,13 +71,43 @@ export class DossierRepository extends BaseRepository {
     }
 
     /**
-     * Checks if a user has access to a dossier
+     * Checks if a user has access to a dossier (owner OR shared user)
+     *
+     * This method grants access to:
+     * - Users who own the dossier (gebruiker_id = userId)
+     * - Users who have the dossier shared with them (via gedeelde_dossiers table)
      *
      * @param dossierId - The dossier ID
      * @param userId - The user ID to check access for
-     * @returns True if user owns the dossier
+     * @returns True if user owns or has shared access to the dossier
      */
     async checkAccess(dossierId: number, userId: number): Promise<boolean> {
+        const query = `
+            SELECT COUNT(*) as count
+            FROM dbo.dossiers d
+            LEFT JOIN dbo.gedeelde_dossiers gd
+                ON d.id = gd.dossier_id AND gd.gebruiker_id = @userId
+            WHERE d.id = @dossierId
+                AND (d.gebruiker_id = @userId OR gd.id IS NOT NULL)
+        `;
+
+        return await this.exists(query, { dossierId, userId });
+    }
+
+    /**
+     * Checks if a user is the owner of a dossier
+     *
+     * This method should be used for operations that require ownership:
+     * - Deleting the dossier
+     * - Sharing the dossier with others
+     * - Revoking shares
+     * - Changing dossier status
+     *
+     * @param dossierId - The dossier ID
+     * @param userId - The user ID to check ownership for
+     * @returns True if user owns the dossier
+     */
+    async isOwner(dossierId: number, userId: number): Promise<boolean> {
         const query = `
             SELECT COUNT(*) as count
             FROM dbo.dossiers

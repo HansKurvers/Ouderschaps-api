@@ -78,18 +78,22 @@ export class GedeeldeDossierRepository extends BaseRepository {
 
     /**
      * Get all dossiers shared WITH a user (for frontend: "Gedeeld met mij")
+     * Returns full dossier information with owner details and isOwner flag
      */
     async findSharedWithUser(gebruikerId: number): Promise<any[]> {
         const query = `
             SELECT
                 d.id,
                 d.dossier_nummer,
+                d.gebruiker_id,
                 d.status,
+                d.is_anoniem,
                 d.aangemaakt_op,
                 d.gewijzigd_op,
                 g.naam as eigenaar_naam,
                 g.email as eigenaar_email,
-                gd.gedeeld_op
+                gd.gedeeld_op,
+                0 as is_owner
             FROM dbo.gedeelde_dossiers gd
             INNER JOIN dbo.dossiers d ON gd.dossier_id = d.id
             LEFT JOIN dbo.gebruikers g ON d.gebruiker_id = g.id
@@ -97,7 +101,13 @@ export class GedeeldeDossierRepository extends BaseRepository {
             ORDER BY gd.gedeeld_op DESC
         `;
 
-        return await this.queryMany(query, { gebruikerId });
+        const records = await this.queryMany(query, { gebruikerId });
+
+        // Transform to include isOwner as boolean
+        return records.map((record: any) => ({
+            ...record,
+            isOwner: record.is_owner === 1
+        }));
     }
 
     /**

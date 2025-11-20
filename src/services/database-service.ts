@@ -1,5 +1,6 @@
 import sql from 'mssql';
 import { initializeDatabase, getPool } from '../config/database';
+import { GedeeldeDossierRepository } from '../repositories/GedeeldeDossierRepository';
 import {
     CompleteDossierData,
     CreateOmgangDto,
@@ -44,6 +45,14 @@ export class DossierDatabaseService {
         return await getPool();
     }
 
+    /**
+     * Gets all dossiers accessible by the user (owned + shared)
+     *
+     * Returns dossiers with an additional isOwner flag to indicate ownership
+     *
+     * @param userID - The user ID
+     * @returns Array of dossiers with isOwner flag
+     */
     async getAllDossiers(userID: number): Promise<Dossier[]> {
         try {
             const pool = await this.getPool();
@@ -52,20 +61,27 @@ export class DossierDatabaseService {
             request.input('UserID', sql.Int, userID);
 
             const result = await request.query(`
-                SELECT 
-                    id,
-                    dossier_nummer,
-                    gebruiker_id,
-                    status,
-                    is_anoniem,
-                    aangemaakt_op,
-                    gewijzigd_op
-                FROM dbo.dossiers 
-                WHERE gebruiker_id = @UserID
-                ORDER BY gewijzigd_op DESC
+                SELECT DISTINCT
+                    d.id,
+                    d.dossier_nummer,
+                    d.gebruiker_id,
+                    d.status,
+                    d.is_anoniem,
+                    d.aangemaakt_op,
+                    d.gewijzigd_op,
+                    CASE WHEN d.gebruiker_id = @UserID THEN 1 ELSE 0 END as is_owner
+                FROM dbo.dossiers d
+                LEFT JOIN dbo.gedeelde_dossiers gd ON d.id = gd.dossier_id
+                WHERE d.gebruiker_id = @UserID OR gd.gebruiker_id = @UserID
+                ORDER BY d.gewijzigd_op DESC
             `);
 
-            return result.recordset.map(DbMappers.toDossier);
+            return result.recordset.map((record: any) => {
+                const dossier = DbMappers.toDossier(record);
+                // Add isOwner flag to the dossier object
+                (dossier as any).isOwner = record.is_owner === 1;
+                return dossier;
+            });
         } catch (error) {
             console.error('Error getting all dossiers:', error);
             throw error;
@@ -99,21 +115,20 @@ export class DossierDatabaseService {
         }
     }
 
+    /**
+     * Checks if a user has access to a dossier (owner OR shared user)
+     *
+     * This method now delegates to GedeeldeDossierRepository to support
+     * both owned and shared dossier access.
+     *
+     * @param dossierID - The dossier ID
+     * @param userID - The user ID to check access for
+     * @returns True if user owns or has shared access to the dossier
+     */
     async checkDossierAccess(dossierID: number, userID: number): Promise<boolean> {
         try {
-            const pool = await this.getPool();
-            const request = pool.request();
-
-            request.input('DossierID', sql.Int, dossierID);
-            request.input('UserID', sql.Int, userID);
-
-            const result = await request.query(`
-                SELECT COUNT(*) as count
-                FROM dbo.dossiers
-                WHERE id = @DossierID AND gebruiker_id = @UserID
-            `);
-
-            return result.recordset[0].count > 0;
+            const repository = new GedeeldeDossierRepository();
+            return await repository.checkAccess(dossierID, userID);
         } catch (error) {
             console.error('Error checking dossier access:', error);
             throw error;

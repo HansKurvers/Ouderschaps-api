@@ -1,5 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { DossierRepository } from '../../repositories/DossierRepository';
 import { requireAuthentication } from '../../utils/auth-helper';
 import {
     createSuccessResponse,
@@ -58,7 +59,7 @@ export async function updateDossier(
 
         await service.initialize();
 
-        // Check access
+        // Check access (owner or shared user)
         const hasAccess = await service.checkDossierAccess(dossierId, userID);
         if (!hasAccess) {
             return createForbiddenResponse();
@@ -66,6 +67,13 @@ export async function updateDossier(
 
         // Update dossier if status is provided
         if (value.status !== undefined) {
+            // Status changes require ownership
+            const repository = new DossierRepository();
+            const isOwner = await repository.isOwner(dossierId, userID);
+            if (!isOwner) {
+                return createErrorResponse('Alleen de eigenaar kan de status wijzigen', 403);
+            }
+
             const updatedDossier = await service.updateDossierStatus(dossierId, value.status);
             return createSuccessResponse(updatedDossier);
         } else {

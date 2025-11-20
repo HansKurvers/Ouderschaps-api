@@ -1,5 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { DossierDatabaseService } from '../../services/database-service';
+import { DossierRepository } from '../../repositories/DossierRepository';
 import { requireAuthentication } from '../../utils/auth-helper';
 import {
     createSuccessResponse,
@@ -40,9 +41,10 @@ export async function deleteDossier(
 
         await service.initialize();
 
-        // Check access
-        const hasAccess = await service.checkDossierAccess(dossierId, userID);
-        if (!hasAccess) {
+        // Check ownership (only owner can delete)
+        const repository = new DossierRepository();
+        const isOwner = await repository.isOwner(dossierId, userID);
+        if (!isOwner) {
             return createForbiddenResponse();
         }
 

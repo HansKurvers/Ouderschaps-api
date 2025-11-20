@@ -120,12 +120,23 @@ describe('DossierRepository', () => {
     });
 
     describe('checkAccess', () => {
-        it('should return true when user has access', async () => {
+        it('should return true when user is the owner', async () => {
             // Arrange
             mockRequest.query.mockResolvedValue({ recordset: [{ count: 1 }] });
 
             // Act
             const result = await repository.checkAccess(1, 123);
+
+            // Assert
+            expect(result).toBe(true);
+        });
+
+        it('should return true when user has shared access', async () => {
+            // Arrange
+            mockRequest.query.mockResolvedValue({ recordset: [{ count: 1 }] });
+
+            // Act
+            const result = await repository.checkAccess(1, 456);
 
             // Assert
             expect(result).toBe(true);
@@ -137,6 +148,41 @@ describe('DossierRepository', () => {
 
             // Act
             const result = await repository.checkAccess(1, 999);
+
+            // Assert
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('isOwner', () => {
+        it('should return true when user is the owner', async () => {
+            // Arrange
+            mockRequest.query.mockResolvedValue({ recordset: [{ count: 1 }] });
+
+            // Act
+            const result = await repository.isOwner(1, 123);
+
+            // Assert
+            expect(result).toBe(true);
+        });
+
+        it('should return false when user is not the owner', async () => {
+            // Arrange
+            mockRequest.query.mockResolvedValue({ recordset: [{ count: 0 }] });
+
+            // Act
+            const result = await repository.isOwner(1, 456);
+
+            // Assert
+            expect(result).toBe(false);
+        });
+
+        it('should return false when user has shared access but is not owner', async () => {
+            // Arrange
+            mockRequest.query.mockResolvedValue({ recordset: [{ count: 0 }] });
+
+            // Act
+            const result = await repository.isOwner(1, 456);
 
             // Assert
             expect(result).toBe(false);

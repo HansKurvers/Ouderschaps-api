@@ -143,6 +143,37 @@ await repository.findByIdForUser(id, userId);
 ```
 User-scoped methods automatically add `WHERE gebruiker_id = @userId` for data isolation and access control.
 
+**Shared Access Pattern**: Dossiers support sharing between users via `dbo.gedeelde_dossiers` table:
+
+```typescript
+import { DossierRepository } from '../../repositories/DossierRepository';
+import { GedeeldeDossierRepository } from '../../repositories/GedeeldeDossierRepository';
+
+const dossierRepo = new DossierRepository();
+const shareRepo = new GedeeldeDossierRepository();
+
+// Check if user has access (owner OR shared user)
+const hasAccess = await dossierRepo.checkAccess(dossierId, userId);
+// OR using legacy service:
+const hasAccess = await service.checkDossierAccess(dossierId, userId);
+
+// Check if user is the owner (required for delete, share, status changes)
+const isOwner = await dossierRepo.isOwner(dossierId, userId);
+// OR using GedeeldeDossierRepository:
+const isOwner = await shareRepo.isOwner(dossierId, userId);
+
+// Share a dossier (owner-only operation)
+await shareRepo.create(dossierId, targetUserId);
+
+// Revoke share (owner-only operation)
+await shareRepo.delete(dossierId, targetUserId);
+```
+
+**Access Control Rules**:
+- **Owner + Shared users**: View, modify dossier data (partijen, kinderen, omgang, zorg, alimentatie, etc.)
+- **Owner only**: Delete dossier, share dossier, revoke shares, change dossier status
+- **isOwner flag**: `GET /api/dossiers` returns `isOwner: boolean` field to indicate ownership
+
 #### Legacy Approach: DossierDatabaseService (DEPRECATED) ⚠️
 
 Existing code still uses monolithic service (2981 lines):
@@ -254,21 +285,38 @@ See `database-schema.md` for full schema documentation. Key tables:
 - Override fields for "Anders" (other) selections: `week_regeling_anders`, `situatie_anders`
 - Audit fields: `aangemaakt_op`, `gewijzigd_op`, `aangemaakt_door`, `gewijzigd_door`
 
-### User Data Isolation
+### User Data Isolation & Shared Access
 
-All user data must be isolated by `gebruiker_id`:
+All user data must be isolated, with support for sharing between users:
 
-1. **Dossiers**: Each dossier has a `gebruiker_id` (the mediator)
-2. **Access Control**: Functions must verify user owns the dossier before operations
-3. **Helper Pattern**: Many database services include ownership checks
+1. **Dossiers**: Each dossier has a `gebruiker_id` (the owner/mediator)
+2. **Shared Access**: Dossiers can be shared with other users via `dbo.gedeelde_dossiers` table
+3. **Access Control**: Functions use two levels of access control:
+   - `checkAccess()` - Grants access to owner OR shared users (for most operations)
+   - `isOwner()` - Grants access only to owner (for delete, share, status changes)
 
-Example:
+**Access Control Examples**:
+
 ```typescript
-const dossier = await service.getDossierById(dossierId, userId);
-if (!dossier) {
-    return createNotFoundResponse('Dossier');
+// Standard access check (owner OR shared user)
+const hasAccess = await service.checkDossierAccess(dossierId, userId);
+// OR using repository:
+const hasAccess = await dossierRepo.checkAccess(dossierId, userId);
+
+if (!hasAccess) {
+    return createForbiddenResponse();
+}
+
+// Owner-only check (for delete, share, status)
+const repository = new DossierRepository();
+const isOwner = await repository.isOwner(dossierId, userId);
+
+if (!isOwner) {
+    return createErrorResponse('Alleen de eigenaar kan deze actie uitvoeren', 403);
 }
 ```
+
+**Important**: Use `checkAccess()` for most operations, `isOwner()` only for owner-restricted operations.
 
 ### Lookup Tables & Caching
 
