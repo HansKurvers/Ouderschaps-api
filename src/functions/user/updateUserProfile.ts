@@ -31,7 +31,7 @@ export async function updateUserProfile(request: HttpRequest, context: Invocatio
         const pool = await getPool();
 
         // Update user billing profile
-        const result = await pool.request()
+        const dbRequest = pool.request()
             .input('userId', userId)
             .input('klantType', value.klant_type)
             .input('telefoon', value.telefoon || null)
@@ -43,24 +43,34 @@ export async function updateUserProfile(request: HttpRequest, context: Invocatio
             .input('bedrijfsnaam', value.bedrijfsnaam || null)
             .input('btwNummer', value.btw_nummer || null)
             .input('kvkNummer', value.kvk_nummer || null)
-            .input('isZakelijk', value.klant_type === 'zakelijk' ? 1 : 0)
-            .query(`
+            .input('isZakelijk', value.klant_type === 'zakelijk' ? 1 : 0);
+
+        // Only update naam if provided
+        if (value.naam) {
+            dbRequest.input('naam', value.naam);
+        }
+
+        const updateFields = `
+            klant_type = @klantType,
+            telefoon = @telefoon,
+            straat = @straat,
+            huisnummer = @huisnummer,
+            postcode = @postcode,
+            plaats = @plaats,
+            land = @land,
+            bedrijfsnaam = @bedrijfsnaam,
+            btw_nummer = @btwNummer,
+            kvk_nummer = @kvkNummer,
+            is_zakelijk = @isZakelijk,
+            profiel_compleet = 1,
+            profiel_ingevuld_op = GETDATE(),
+            gewijzigd_op = GETDATE()${value.naam ? ',\n                    naam = @naam' : ''}
+        `;
+
+        const result = await dbRequest.query(`
                 UPDATE dbo.gebruikers
                 SET
-                    klant_type = @klantType,
-                    telefoon = @telefoon,
-                    straat = @straat,
-                    huisnummer = @huisnummer,
-                    postcode = @postcode,
-                    plaats = @plaats,
-                    land = @land,
-                    bedrijfsnaam = @bedrijfsnaam,
-                    btw_nummer = @btwNummer,
-                    kvk_nummer = @kvkNummer,
-                    is_zakelijk = @isZakelijk,
-                    profiel_compleet = 1,
-                    profiel_ingevuld_op = GETDATE(),
-                    gewijzigd_op = GETDATE()
+                    ${updateFields}
                 WHERE id = @userId
             `);
 

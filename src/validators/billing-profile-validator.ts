@@ -29,6 +29,13 @@ const kvkNummerPattern = /^[0-9]{8}$/;
  * Validation schema for updating billing profile
  */
 export const updateBillingProfileSchema = Joi.object({
+    naam: Joi.string()
+        .max(255)
+        .optional()
+        .messages({
+            'string.max': 'Naam mag maximaal 255 tekens bevatten'
+        }),
+
     klant_type: Joi.string()
         .valid('particulier', 'zakelijk')
         .required()

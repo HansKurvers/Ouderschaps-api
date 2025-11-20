@@ -57,15 +57,19 @@ export class Auth0InviteService {
             throw new Error(`Missing Auth0 credentials: ${missing.join(', ')}`);
         }
 
+        const tokenPayload = {
+            client_id: this.mgmtClientId,
+            client_secret: this.mgmtClientSecret,
+            audience: `https://${this.domain}/api/v2/`,
+            grant_type: 'client_credentials'
+        };
+
+        console.log('🔐 Requesting Auth0 M2M token with audience:', tokenPayload.audience);
+
         const response = await fetch(`https://${this.domain}/oauth/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                client_id: this.mgmtClientId,
-                client_secret: this.mgmtClientSecret,
-                audience: `https://${this.domain}/api/v2/`,
-                grant_type: 'client_credentials'
-            })
+            body: JSON.stringify(tokenPayload)
         });
 
         if (!response.ok) {
@@ -76,6 +80,8 @@ export class Auth0InviteService {
         const data: ManagementToken = await response.json();
         this.cachedToken = data.access_token;
         this.tokenExpiry = Date.now() + (data.expires_in - 3600) * 1000;
+
+        console.log('✅ Got Auth0 M2M token, expires in', data.expires_in, 'seconds');
 
         return this.cachedToken;
     }

@@ -40,6 +40,7 @@ export interface Gebruiker {
  * Used for PUT /api/user/profile
  */
 export interface UpdateBillingProfileDTO {
+    naam?: string;
     klant_type: 'particulier' | 'zakelijk';
     telefoon?: string;
 
