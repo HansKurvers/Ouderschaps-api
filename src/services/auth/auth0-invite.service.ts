@@ -32,6 +32,12 @@ export class Auth0InviteService {
         this.mgmtClientId = process.env.AUTH0_MGMT_CLIENT_ID || '';
         this.mgmtClientSecret = process.env.AUTH0_MGMT_CLIENT_SECRET || '';
         this.appClientId = process.env.AUTH0_CLIENT_ID || '';
+
+        // Log missing credentials for debugging
+        if (!this.domain) console.warn('⚠️  AUTH0_DOMAIN not set');
+        if (!this.mgmtClientId) console.warn('⚠️  AUTH0_MGMT_CLIENT_ID not set');
+        if (!this.mgmtClientSecret) console.warn('⚠️  AUTH0_MGMT_CLIENT_SECRET not set');
+        if (!this.appClientId) console.warn('⚠️  AUTH0_CLIENT_ID not set');
     }
 
     /**
@@ -40,6 +46,15 @@ export class Auth0InviteService {
     private async getToken(): Promise<string> {
         if (this.cachedToken && Date.now() < this.tokenExpiry) {
             return this.cachedToken;
+        }
+
+        // Validate required credentials
+        if (!this.domain || !this.mgmtClientId || !this.mgmtClientSecret) {
+            const missing = [];
+            if (!this.domain) missing.push('AUTH0_DOMAIN');
+            if (!this.mgmtClientId) missing.push('AUTH0_MGMT_CLIENT_ID');
+            if (!this.mgmtClientSecret) missing.push('AUTH0_MGMT_CLIENT_SECRET');
+            throw new Error(`Missing Auth0 credentials: ${missing.join(', ')}`);
         }
 
         const response = await fetch(`https://${this.domain}/oauth/token`, {
@@ -53,7 +68,10 @@ export class Auth0InviteService {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to get Auth0 token');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to get Auth0 token: ${response.status} - ${errorText}`);
+        }
 
         const data: ManagementToken = await response.json();
         this.cachedToken = data.access_token;
