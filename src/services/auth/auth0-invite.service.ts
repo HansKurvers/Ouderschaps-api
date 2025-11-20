@@ -96,7 +96,10 @@ export class Auth0InviteService {
             }
         );
 
-        if (!response.ok) throw new Error('Failed to search Auth0 users');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to search Auth0 users: ${response.status} - ${errorText}`);
+        }
 
         const users: Auth0User[] = await response.json();
         return users.length > 0 ? users[0] : null;
@@ -128,7 +131,7 @@ export class Auth0InviteService {
 
         if (!createResp.ok) {
             const error = await createResp.text();
-            throw new Error(`Failed to create user: ${error}`);
+            throw new Error(`Failed to create Auth0 user: ${createResp.status} - ${error}`);
         }
 
         const user: Auth0User = await createResp.json();
@@ -151,7 +154,7 @@ export class Auth0InviteService {
 
         if (!ticketResp.ok) {
             const error = await ticketResp.text();
-            throw new Error(`Failed to create invite ticket: ${error}`);
+            throw new Error(`Failed to create password-change ticket: ${ticketResp.status} - ${error}`);
         }
 
         // Ticket created → Auth0 automatically sends email!
