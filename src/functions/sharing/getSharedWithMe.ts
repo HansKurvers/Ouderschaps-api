@@ -34,6 +34,6 @@ export async function getSharedWithMe(
 app.http('getSharedWithMe', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    route: 'dossiers/gedeeld-met-mij',
+    route: 'gedeeld',
     handler: getSharedWithMe
 });
