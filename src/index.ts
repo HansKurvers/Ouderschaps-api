@@ -58,6 +58,9 @@ import './functions/user/updateUserProfile';
 
 // Sharing functions
 import './functions/sharing/shareDossier';
+import './functions/sharing/getSharedWithMe';
+import './functions/sharing/listSharedUsers';
+import './functions/sharing/revokeShare';
 
 // Omgang functions (FASE 4) - Migrated to repository pattern
 import './functions/omgang/createOmgang';

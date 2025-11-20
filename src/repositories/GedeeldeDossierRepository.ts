@@ -75,4 +75,60 @@ export class GedeeldeDossierRepository extends BaseRepository {
 
         return await this.exists(query, { dossierId, gebruikerId });
     }
+
+    /**
+     * Get all dossiers shared WITH a user (for frontend: "Gedeeld met mij")
+     */
+    async findSharedWithUser(gebruikerId: number): Promise<any[]> {
+        const query = `
+            SELECT
+                d.id,
+                d.dossier_nummer,
+                d.status,
+                d.aangemaakt_op,
+                d.gewijzigd_op,
+                g.naam as eigenaar_naam,
+                g.email as eigenaar_email,
+                gd.gedeeld_op
+            FROM dbo.gedeelde_dossiers gd
+            INNER JOIN dbo.dossiers d ON gd.dossier_id = d.id
+            LEFT JOIN dbo.gebruikers g ON d.gebruiker_id = g.id
+            WHERE gd.gebruiker_id = @gebruikerId
+            ORDER BY gd.gedeeld_op DESC
+        `;
+
+        return await this.queryMany(query, { gebruikerId });
+    }
+
+    /**
+     * Get all users a dossier is shared with (for owner: "Gedeeld met")
+     */
+    async findUsersSharedWith(dossierId: number): Promise<any[]> {
+        const query = `
+            SELECT
+                g.id,
+                g.email,
+                g.naam,
+                gd.gedeeld_op
+            FROM dbo.gedeelde_dossiers gd
+            INNER JOIN dbo.gebruikers g ON gd.gebruiker_id = g.id
+            WHERE gd.dossier_id = @dossierId
+            ORDER BY gd.gedeeld_op DESC
+        `;
+
+        return await this.queryMany(query, { dossierId });
+    }
+
+    /**
+     * Delete a share (revoke access)
+     */
+    async delete(dossierId: number, gebruikerId: number): Promise<boolean> {
+        const query = `
+            DELETE FROM dbo.gedeelde_dossiers
+            WHERE dossier_id = @dossierId AND gebruiker_id = @gebruikerId
+        `;
+
+        const result = await this.executeQuery(query, { dossierId, gebruikerId });
+        return (result.rowsAffected[0] || 0) > 0;
+    }
 }
