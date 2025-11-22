@@ -2,7 +2,9 @@
 export interface CommunicatieAfspraken {
     id: number;
     dossierId: number;
-    villaPinedo?: boolean | null;
+    villaPinedo?: boolean | null; // @deprecated - Use villaPinedoKinderen instead
+    villaPinedoKinderen?: string | null; // "ja" | "nee"
+    kinderenBetrokkenheid?: string | null; // "samen" | "los_van_elkaar" | "jonge_leeftijd" | "niet_betrokken"
     kiesMethode?: string | null;
     omgangTekstOfSchema?: string | null;
     opvang?: string | null;
@@ -27,7 +29,9 @@ export interface CommunicatieAfspraken {
 // DTO for creating new communicatie afspraken
 export interface CreateCommunicatieAfsprakenDto {
     dossierId: number;
-    villaPinedo?: boolean;
+    villaPinedo?: boolean; // @deprecated - Use villaPinedoKinderen instead
+    villaPinedoKinderen?: string;
+    kinderenBetrokkenheid?: string;
     kiesMethode?: string;
     omgangTekstOfSchema?: string;
     opvang?: string;
@@ -49,7 +53,9 @@ export interface CreateCommunicatieAfsprakenDto {
 
 // DTO for updating existing communicatie afspraken
 export interface UpdateCommunicatieAfsprakenDto {
-    villaPinedo?: boolean;
+    villaPinedo?: boolean; // @deprecated - Use villaPinedoKinderen instead
+    villaPinedoKinderen?: string;
+    kinderenBetrokkenheid?: string;
     kiesMethode?: string;
     omgangTekstOfSchema?: string;
     opvang?: string;

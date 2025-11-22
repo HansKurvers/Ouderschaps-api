@@ -24,6 +24,8 @@ export class CommunicatieAfsprakenService {
                         id,
                         dossier_id as dossierId,
                         villa_pinedo as villaPinedo,
+                        villa_pinedo_kinderen as villaPinedoKinderen,
+                        kinderen_betrokkenheid as kinderenBetrokkenheid,
                         kies_methode as kiesMethode,
                         omgang_tekst_of_schema as omgangTekstOfSchema,
                         opvang,
@@ -71,6 +73,8 @@ export class CommunicatieAfsprakenService {
                         id,
                         dossier_id as dossierId,
                         villa_pinedo as villaPinedo,
+                        villa_pinedo_kinderen as villaPinedoKinderen,
+                        kinderen_betrokkenheid as kinderenBetrokkenheid,
                         kies_methode as kiesMethode,
                         omgang_tekst_of_schema as omgangTekstOfSchema,
                         opvang,
@@ -114,6 +118,8 @@ export class CommunicatieAfsprakenService {
             const result = await pool.request()
                 .input('DossierId', sql.Int, data.dossierId)
                 .input('VillaPinedo', sql.Bit, data.villaPinedo ?? null)
+                .input('VillaPinedoKinderen', sql.NVarChar(10), data.villaPinedoKinderen || null)
+                .input('KinderenBetrokkenheid', sql.NVarChar(50), data.kinderenBetrokkenheid || null)
                 .input('KiesMethode', sql.NVarChar(50), data.kiesMethode || null)
                 .input('OmgangTekstOfSchema', sql.NVarChar(50), data.omgangTekstOfSchema || null)
                 .input('Opvang', sql.NVarChar(100), data.opvang || null)
@@ -133,15 +139,18 @@ export class CommunicatieAfsprakenService {
                 .input('MediationClausule', sql.NVarChar(50), data.mediationClausule || null)
                 .query(`
                     INSERT INTO dbo.communicatie_afspraken
-                    (dossier_id, villa_pinedo, kies_methode, omgang_tekst_of_schema,
-                     opvang, informatie_uitwisseling, bijlage_beslissingen, social_media,
-                     mobiel_tablet, id_bewijzen, aansprakelijkheidsverzekering, ziektekostenverzekering,
-                     toestemming_reizen, jongmeerderjarige, studiekosten, bankrekening_kinderen,
-                     evaluatie, parenting_coordinator, mediation_clausule)
+                    (dossier_id, villa_pinedo, villa_pinedo_kinderen, kinderen_betrokkenheid,
+                     kies_methode, omgang_tekst_of_schema, opvang, informatie_uitwisseling,
+                     bijlage_beslissingen, social_media, mobiel_tablet, id_bewijzen,
+                     aansprakelijkheidsverzekering, ziektekostenverzekering, toestemming_reizen,
+                     jongmeerderjarige, studiekosten, bankrekening_kinderen, evaluatie,
+                     parenting_coordinator, mediation_clausule)
                     OUTPUT
                         inserted.id,
                         inserted.dossier_id as dossierId,
                         inserted.villa_pinedo as villaPinedo,
+                        inserted.villa_pinedo_kinderen as villaPinedoKinderen,
+                        inserted.kinderen_betrokkenheid as kinderenBetrokkenheid,
                         inserted.kies_methode as kiesMethode,
                         inserted.omgang_tekst_of_schema as omgangTekstOfSchema,
                         inserted.opvang,
@@ -161,11 +170,12 @@ export class CommunicatieAfsprakenService {
                         inserted.mediation_clausule as mediationClausule,
                         inserted.created_at as createdAt,
                         inserted.updated_at as updatedAt
-                    VALUES (@DossierId, @VillaPinedo, @KiesMethode, @OmgangTekstOfSchema,
-                            @Opvang, @InformatieUitwisseling, @BijlageBeslissingen, @SocialMedia,
-                            @MobielTablet, @IdBewijzen, @Aansprakelijkheidsverzekering, @Ziektekostenverzekering,
-                            @ToestemmingReizen, @Jongmeerderjarige, @Studiekosten, @BankrekeningKinderen,
-                            @Evaluatie, @ParentingCoordinator, @MediationClausule)
+                    VALUES (@DossierId, @VillaPinedo, @VillaPinedoKinderen, @KinderenBetrokkenheid,
+                            @KiesMethode, @OmgangTekstOfSchema, @Opvang, @InformatieUitwisseling,
+                            @BijlageBeslissingen, @SocialMedia, @MobielTablet, @IdBewijzen,
+                            @Aansprakelijkheidsverzekering, @Ziektekostenverzekering, @ToestemmingReizen,
+                            @Jongmeerderjarige, @Studiekosten, @BankrekeningKinderen, @Evaluatie,
+                            @ParentingCoordinator, @MediationClausule)
                 `);
 
             return result.recordset[0] as CommunicatieAfspraken;
@@ -190,6 +200,14 @@ export class CommunicatieAfsprakenService {
             if (data.villaPinedo !== undefined) {
                 updateFields.push('villa_pinedo = @VillaPinedo');
                 request.input('VillaPinedo', sql.Bit, data.villaPinedo);
+            }
+            if (data.villaPinedoKinderen !== undefined) {
+                updateFields.push('villa_pinedo_kinderen = @VillaPinedoKinderen');
+                request.input('VillaPinedoKinderen', sql.NVarChar(10), data.villaPinedoKinderen);
+            }
+            if (data.kinderenBetrokkenheid !== undefined) {
+                updateFields.push('kinderen_betrokkenheid = @KinderenBetrokkenheid');
+                request.input('KinderenBetrokkenheid', sql.NVarChar(50), data.kinderenBetrokkenheid);
             }
             if (data.kiesMethode !== undefined) {
                 updateFields.push('kies_methode = @KiesMethode');
@@ -274,6 +292,8 @@ export class CommunicatieAfsprakenService {
                     inserted.id,
                     inserted.dossier_id as dossierId,
                     inserted.villa_pinedo as villaPinedo,
+                    inserted.villa_pinedo_kinderen as villaPinedoKinderen,
+                    inserted.kinderen_betrokkenheid as kinderenBetrokkenheid,
                     inserted.kies_methode as kiesMethode,
                     inserted.omgang_tekst_of_schema as omgangTekstOfSchema,
                     inserted.opvang,
