@@ -20,7 +20,7 @@ const dbConfig: sql.config = {
     pool: {
         max: 10,
         min: 0,
-        idleTimeoutMillis: 300000, // 5 minutes
+        idleTimeoutMillis: 180000, // 3 minutes - optimized for Serverless auto-pause
         acquireTimeoutMillis: 60000,
         createTimeoutMillis: 60000,
         destroyTimeoutMillis: 5000,
