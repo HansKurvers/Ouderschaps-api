@@ -412,6 +412,13 @@ export interface PersoonDbDto {
     rol_naam?: string;
 }
 
+// Kinderrekening IBAN interface (V6)
+export interface KinderrekeningIBAN {
+    iban: string;
+    tenaamstelling: string;
+    bankNaam: string;
+}
+
 // Ouderschapsplan Info interfaces
 export interface OuderschapsplanInfo {
     id: number;
@@ -438,7 +445,7 @@ export interface OuderschapsplanInfo {
     hoofdverblijf?: string;
     zorgverdeling?: string;
     opvangKinderen?: string;
-    bankrekeningnummersOpNaamVanKind?: string;
+    bankrekeningnummersOpNaamVanKind?: KinderrekeningIBAN[];
     parentingCoordinator?: string;
     datumAanvangRelatie?: Date;
     overeenkomstGemaakt?: boolean;

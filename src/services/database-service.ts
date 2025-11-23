@@ -2686,7 +2686,7 @@ export class DossierDatabaseService {
             request.input('Hoofdverblijf', sql.NVarChar, dto.hoofdverblijf);
             request.input('Zorgverdeling', sql.NVarChar, dto.zorgverdeling);
             request.input('OpvangKinderen', sql.NVarChar, dto.opvangKinderen);
-            request.input('Bankrekeningnummers', sql.NVarChar, dto.bankrekeningnummersOpNaamVanKind);
+            request.input('Bankrekeningnummers', sql.NVarChar, dto.bankrekeningnummersOpNaamVanKind ? JSON.stringify(dto.bankrekeningnummersOpNaamVanKind) : null);
             request.input('ParentingCoordinator', sql.NVarChar, dto.parentingCoordinator);
             request.input('DatumAanvangRelatie', sql.Date, dto.datumAanvangRelatie);
             request.input('OvereenkomstGemaakt', sql.Bit, dto.overeenkomstGemaakt);
@@ -2955,7 +2955,7 @@ export class DossierDatabaseService {
                 updateFields.push('opvang_kinderen = @OpvangKinderen');
             }
             if (dto.bankrekeningnummersOpNaamVanKind !== undefined) {
-                request.input('Bankrekeningnummers', sql.NVarChar, dto.bankrekeningnummersOpNaamVanKind);
+                request.input('Bankrekeningnummers', sql.NVarChar, dto.bankrekeningnummersOpNaamVanKind ? JSON.stringify(dto.bankrekeningnummersOpNaamVanKind) : null);
                 updateFields.push('bankrekeningnummers_op_naam_van_kind = @Bankrekeningnummers');
             }
             if (dto.parentingCoordinator !== undefined) {

@@ -3,6 +3,7 @@ import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { requireAuthentication } from '../../utils/auth-helper';
 import { CreateOuderschapsplanInfoDto } from '../../models/Dossier';
+import { validateKinderrekeningArray } from '../../validators/kinderrekening-validator';
 
 export async function createOuderschapsplanInfo(
     request: HttpRequest,
@@ -25,6 +26,14 @@ export async function createOuderschapsplanInfo(
         // Validate required fields
         if (!body.dossierId || !body.partij1PersoonId || !body.partij2PersoonId) {
             return createErrorResponse('Dossier ID, Partij 1 and Partij 2 persoon IDs are required', 400);
+        }
+
+        // Validate kinderrekeningen array if provided
+        if (body.bankrekeningnummersOpNaamVanKind !== undefined) {
+            const { error } = validateKinderrekeningArray(body.bankrekeningnummersOpNaamVanKind);
+            if (error) {
+                return createErrorResponse('Validatie fout kinderrekeningen: ' + error.details.map(d => d.message).join(', '), 400);
+            }
         }
 
         // Create ouderschapsplan info in database

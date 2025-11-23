@@ -240,7 +240,7 @@ Comprehensive parenting plan information (31 columns).
 - **hoofdverblijf** (nvarchar(100), NULL) - Main residence
 - **zorgverdeling** (nvarchar(100), NULL) - Care distribution
 - **opvang_kinderen** (nvarchar(255), NULL) - Childcare
-- **bankrekeningnummers_op_naam_van_kind** (nvarchar(255), NULL) - Bank accounts in child's name
+- **bankrekeningnummers_op_naam_van_kind** (nvarchar(MAX), NULL) - Bank accounts in child's name (V6: JSON array of {iban, tenaamstelling, bankNaam})
 - **parenting_coordinator** (nvarchar(255), NULL) - Parenting coordinator
 - **overeenkomst_gemaakt** (bit, NULL) - Agreement made (yes/no)
 - **created_at** (datetime2, NULL) - Creation timestamp

@@ -3,6 +3,7 @@ import { DossierDatabaseService } from '../../services/database-service';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 import { requireAuthentication } from '../../utils/auth-helper';
 import { UpdateOuderschapsplanInfoDto } from '../../models/Dossier';
+import { validateKinderrekeningArray } from '../../validators/kinderrekening-validator';
 
 export async function updateOuderschapsplanInfo(
     request: HttpRequest,
@@ -27,6 +28,14 @@ export async function updateOuderschapsplanInfo(
 
         // Parse request body
         const body = await request.json() as UpdateOuderschapsplanInfoDto;
+
+        // Validate kinderrekeningen array if provided
+        if (body.bankrekeningnummersOpNaamVanKind !== undefined) {
+            const { error } = validateKinderrekeningArray(body.bankrekeningnummersOpNaamVanKind);
+            if (error) {
+                return createErrorResponse('Validatie fout kinderrekeningen: ' + error.details.map(d => d.message).join(', '), 400);
+            }
+        }
 
         // Update ouderschapsplan info in database
         await dbService.initialize();
