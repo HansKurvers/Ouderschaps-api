@@ -4,6 +4,7 @@ export interface Dossier {
     gebruikerId: number;
     status: boolean;
     isAnoniem?: boolean;
+    templateType?: string;
     aangemaaktOp: Date;
     gewijzigdOp: Date;
 }
@@ -386,6 +387,7 @@ export interface DossierDbDto {
     gebruiker_id: number;
     status: boolean;
     is_anoniem?: boolean;
+    template_type?: string;
     aangemaakt_op?: Date;
     gewijzigd_op?: Date;
 }

@@ -23,6 +23,7 @@ export class DbMappers {
             gebruikerId: dto.gebruiker_id,
             status: dto.status,
             isAnoniem: dto.is_anoniem,
+            templateType: dto.template_type,
             aangemaaktOp: dto.aangemaakt_op!,
             gewijzigdOp: dto.gewijzigd_op!,
         };
@@ -35,6 +36,7 @@ export class DbMappers {
             gebruiker_id: dossier.gebruikerId,
             status: dossier.status,
             is_anoniem: dossier.isAnoniem,
+            template_type: dossier.templateType,
             aangemaakt_op: dossier.aangemaaktOp,
             gewijzigd_op: dossier.gewijzigdOp,
         };

@@ -144,11 +144,12 @@ export class DossierDatabaseService {
             request.input('DossierNummer', sql.NVarChar, dossierNumber);
             request.input('GebruikerID', sql.Int, userID);
             request.input('Status', sql.Bit, false);
+            request.input('TemplateType', sql.NVarChar(50), 'default');
 
             const result = await request.query(`
-                INSERT INTO dbo.dossiers (dossier_nummer, gebruiker_id, status)
+                INSERT INTO dbo.dossiers (dossier_nummer, gebruiker_id, status, template_type)
                 OUTPUT INSERTED.*
-                VALUES (@DossierNummer, @GebruikerID, @Status)
+                VALUES (@DossierNummer, @GebruikerID, @Status, @TemplateType)
             `);
 
             return DbMappers.toDossier(result.recordset[0]);
@@ -530,11 +531,11 @@ export class DossierDatabaseService {
             request.input('IsAnoniem', sql.Bit, isAnoniem);
 
             const result = await request.query(`
-                UPDATE dbo.dossiers 
+                UPDATE dbo.dossiers
                 SET is_anoniem = @IsAnoniem, gewijzigd_op = GETDATE()
                 WHERE id = @DossierID AND gebruiker_id = @UserID;
-                
-                SELECT 
+
+                SELECT
                     id,
                     dossier_nummer,
                     gebruiker_id,
@@ -542,7 +543,7 @@ export class DossierDatabaseService {
                     is_anoniem,
                     aangemaakt_op,
                     gewijzigd_op
-                FROM dbo.dossiers 
+                FROM dbo.dossiers
                 WHERE id = @DossierID;
             `);
 
@@ -553,6 +554,44 @@ export class DossierDatabaseService {
             return DbMappers.toDossier(result.recordset[0]);
         } catch (error) {
             console.error('Error updating dossier anonymity:', error);
+            throw error;
+        }
+    }
+
+    async updateDossierTemplateType(dossierID: number, templateType: string, userID: number): Promise<Dossier> {
+        try {
+            const pool = await this.getPool();
+            const request = pool.request();
+
+            request.input('DossierID', sql.Int, dossierID);
+            request.input('UserID', sql.Int, userID);
+            request.input('TemplateType', sql.NVarChar(50), templateType);
+
+            const result = await request.query(`
+                UPDATE dbo.dossiers
+                SET template_type = @TemplateType, gewijzigd_op = GETDATE()
+                WHERE id = @DossierID AND gebruiker_id = @UserID;
+
+                SELECT
+                    id,
+                    dossier_nummer,
+                    gebruiker_id,
+                    status,
+                    is_anoniem,
+                    template_type,
+                    aangemaakt_op,
+                    gewijzigd_op
+                FROM dbo.dossiers
+                WHERE id = @DossierID;
+            `);
+
+            if (result.recordset.length === 0) {
+                throw new Error('Dossier not found or access denied');
+            }
+
+            return DbMappers.toDossier(result.recordset[0]);
+        } catch (error) {
+            console.error('Error updating dossier template type:', error);
             throw error;
         }
     }

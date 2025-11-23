@@ -13,6 +13,7 @@ import './functions/dossiers/getDossierById';
 import './functions/dossiers/updateDossier';
 import './functions/dossiers/deleteDossier';
 import './functions/dossiers/updateDossierAnonymity';
+import './functions/dossiers/updateDossierTemplateType';
 import './functions/dossiers/addPartijToDossier';
 import './functions/dossiers/removePartijFromDossier';
 import './functions/dossiers/updatePartijRol';
