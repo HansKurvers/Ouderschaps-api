@@ -27,7 +27,6 @@ export class CommunicatieAfsprakenService {
                         villa_pinedo_kinderen as villaPinedoKinderen,
                         kinderen_betrokkenheid as kinderenBetrokkenheid,
                         kies_methode as kiesMethode,
-                        omgang_tekst_of_schema as omgangTekstOfSchema,
                         opvang,
                         informatie_uitwisseling as informatieUitwisseling,
                         bijlage_beslissingen as bijlageBeslissingen,
@@ -76,7 +75,6 @@ export class CommunicatieAfsprakenService {
                         villa_pinedo_kinderen as villaPinedoKinderen,
                         kinderen_betrokkenheid as kinderenBetrokkenheid,
                         kies_methode as kiesMethode,
-                        omgang_tekst_of_schema as omgangTekstOfSchema,
                         opvang,
                         informatie_uitwisseling as informatieUitwisseling,
                         bijlage_beslissingen as bijlageBeslissingen,
@@ -121,7 +119,6 @@ export class CommunicatieAfsprakenService {
                 .input('VillaPinedoKinderen', sql.NVarChar(10), data.villaPinedoKinderen || null)
                 .input('KinderenBetrokkenheid', sql.NVarChar(50), data.kinderenBetrokkenheid || null)
                 .input('KiesMethode', sql.NVarChar(50), data.kiesMethode || null)
-                .input('OmgangTekstOfSchema', sql.NVarChar(50), data.omgangTekstOfSchema || null)
                 .input('Opvang', sql.NVarChar(100), data.opvang || null)
                 .input('InformatieUitwisseling', sql.NVarChar(100), data.informatieUitwisseling || null)
                 .input('BijlageBeslissingen', sql.NVarChar(50), data.bijlageBeslissingen || null)
@@ -140,7 +137,7 @@ export class CommunicatieAfsprakenService {
                 .query(`
                     INSERT INTO dbo.communicatie_afspraken
                     (dossier_id, villa_pinedo, villa_pinedo_kinderen, kinderen_betrokkenheid,
-                     kies_methode, omgang_tekst_of_schema, opvang, informatie_uitwisseling,
+                     kies_methode, opvang, informatie_uitwisseling,
                      bijlage_beslissingen, social_media, mobiel_tablet, id_bewijzen,
                      aansprakelijkheidsverzekering, ziektekostenverzekering, toestemming_reizen,
                      jongmeerderjarige, studiekosten, bankrekening_kinderen, evaluatie,
@@ -152,7 +149,6 @@ export class CommunicatieAfsprakenService {
                         inserted.villa_pinedo_kinderen as villaPinedoKinderen,
                         inserted.kinderen_betrokkenheid as kinderenBetrokkenheid,
                         inserted.kies_methode as kiesMethode,
-                        inserted.omgang_tekst_of_schema as omgangTekstOfSchema,
                         inserted.opvang,
                         inserted.informatie_uitwisseling as informatieUitwisseling,
                         inserted.bijlage_beslissingen as bijlageBeslissingen,
@@ -171,7 +167,7 @@ export class CommunicatieAfsprakenService {
                         inserted.created_at as createdAt,
                         inserted.updated_at as updatedAt
                     VALUES (@DossierId, @VillaPinedo, @VillaPinedoKinderen, @KinderenBetrokkenheid,
-                            @KiesMethode, @OmgangTekstOfSchema, @Opvang, @InformatieUitwisseling,
+                            @KiesMethode, @Opvang, @InformatieUitwisseling,
                             @BijlageBeslissingen, @SocialMedia, @MobielTablet, @IdBewijzen,
                             @Aansprakelijkheidsverzekering, @Ziektekostenverzekering, @ToestemmingReizen,
                             @Jongmeerderjarige, @Studiekosten, @BankrekeningKinderen, @Evaluatie,
@@ -212,10 +208,6 @@ export class CommunicatieAfsprakenService {
             if (data.kiesMethode !== undefined) {
                 updateFields.push('kies_methode = @KiesMethode');
                 request.input('KiesMethode', sql.NVarChar(50), data.kiesMethode);
-            }
-            if (data.omgangTekstOfSchema !== undefined) {
-                updateFields.push('omgang_tekst_of_schema = @OmgangTekstOfSchema');
-                request.input('OmgangTekstOfSchema', sql.NVarChar(50), data.omgangTekstOfSchema);
             }
             if (data.opvang !== undefined) {
                 updateFields.push('opvang = @Opvang');
@@ -295,7 +287,6 @@ export class CommunicatieAfsprakenService {
                     inserted.villa_pinedo_kinderen as villaPinedoKinderen,
                     inserted.kinderen_betrokkenheid as kinderenBetrokkenheid,
                     inserted.kies_methode as kiesMethode,
-                    inserted.omgang_tekst_of_schema as omgangTekstOfSchema,
                     inserted.opvang,
                     inserted.informatie_uitwisseling as informatieUitwisseling,
                     inserted.bijlage_beslissingen as bijlageBeslissingen,

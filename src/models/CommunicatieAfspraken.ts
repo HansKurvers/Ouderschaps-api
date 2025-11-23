@@ -6,7 +6,6 @@ export interface CommunicatieAfspraken {
     villaPinedoKinderen?: string | null; // "ja" | "nee"
     kinderenBetrokkenheid?: string | null; // "samen" | "los_van_elkaar" | "jonge_leeftijd" | "niet_betrokken"
     kiesMethode?: string | null;
-    omgangTekstOfSchema?: string | null;
     opvang?: string | null;
     informatieUitwisseling?: string | null;
     bijlageBeslissingen?: string | null;
@@ -33,7 +32,6 @@ export interface CreateCommunicatieAfsprakenDto {
     villaPinedoKinderen?: string;
     kinderenBetrokkenheid?: string;
     kiesMethode?: string;
-    omgangTekstOfSchema?: string;
     opvang?: string;
     informatieUitwisseling?: string;
     bijlageBeslissingen?: string;
@@ -57,7 +55,6 @@ export interface UpdateCommunicatieAfsprakenDto {
     villaPinedoKinderen?: string;
     kinderenBetrokkenheid?: string;
     kiesMethode?: string;
-    omgangTekstOfSchema?: string;
     opvang?: string;
     informatieUitwisseling?: string;
     bijlageBeslissingen?: string;
