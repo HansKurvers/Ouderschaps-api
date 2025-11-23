@@ -84,6 +84,6 @@ export async function upsertOuderschapsplanInfo(
 app.http('upsertOuderschapsplanInfo', {
     methods: ['PUT'],
     authLevel: 'anonymous',
-    route: 'dossiers/{dossierId}/ouderschapsplan',
+    route: 'dossiers/{dossierId}/ouderschapsplan-info',
     handler: upsertOuderschapsplanInfo,
 });

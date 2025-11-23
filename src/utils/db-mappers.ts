@@ -13,9 +13,49 @@ import {
     Dag,
     Dagdeel,
     WeekRegeling,
+    KinderrekeningIBAN,
 } from '../models/Dossier';
 
 export class DbMappers {
+    /**
+     * Safely parse JSON string with error handling
+     * Returns undefined if parsing fails instead of throwing
+     * @param json - JSON string to parse
+     * @param fieldName - Field name for logging purposes
+     * @returns Parsed object or undefined
+     */
+    private static parseJsonSafely<T>(json: string | null | undefined, fieldName: string = 'field'): T | undefined {
+        if (!json) return undefined;
+
+        // Handle empty strings
+        if (json.trim() === '') return undefined;
+
+        try {
+            return JSON.parse(json) as T;
+        } catch (error) {
+            console.warn(`Failed to parse ${fieldName} JSON, returning undefined. Value: "${json.substring(0, 100)}${json.length > 100 ? '...' : ''}"`, error);
+            return undefined;
+        }
+    }
+
+    /**
+     * Safely stringify value to JSON with error handling
+     * Returns undefined if stringification fails instead of throwing
+     * @param value - Value to stringify
+     * @param fieldName - Field name for logging purposes
+     * @returns JSON string or undefined
+     */
+    private static stringifyJsonSafely(value: any, fieldName: string = 'field'): string | undefined {
+        if (value === null || value === undefined) return undefined;
+
+        try {
+            return JSON.stringify(value);
+        } catch (error) {
+            console.warn(`Failed to stringify ${fieldName} JSON, returning undefined`, error);
+            return undefined;
+        }
+    }
+
     static toDossier(dto: DossierDbDto): Dossier {
         return {
             id: dto.id!,
@@ -131,14 +171,14 @@ export class DbMappers {
             keuzeDevices: dto.keuze_devices,
             zorgverzekeringOpNaamVanPartij: dto.zorgverzekering_op_naam_van_partij as 1 | 2 | undefined,
             kinderbijslagPartij: dto.kinderbijslag_partij as 1 | 2 | 3 | undefined,
-            brpPartij1: dto.brp_partij_1 ? JSON.parse(dto.brp_partij_1) as number[] : undefined,
-            brpPartij2: dto.brp_partij_2 ? JSON.parse(dto.brp_partij_2) as number[] : undefined,
-            kgbPartij1: dto.kgb_partij_1 ? JSON.parse(dto.kgb_partij_1) as number[] : undefined,
-            kgbPartij2: dto.kgb_partij_2 ? JSON.parse(dto.kgb_partij_2) as number[] : undefined,
+            brpPartij1: this.parseJsonSafely<number[]>(dto.brp_partij_1, 'brpPartij1'),
+            brpPartij2: this.parseJsonSafely<number[]>(dto.brp_partij_2, 'brpPartij2'),
+            kgbPartij1: this.parseJsonSafely<number[]>(dto.kgb_partij_1, 'kgbPartij1'),
+            kgbPartij2: this.parseJsonSafely<number[]>(dto.kgb_partij_2, 'kgbPartij2'),
             hoofdverblijf: dto.hoofdverblijf,
             zorgverdeling: dto.zorgverdeling,
             opvangKinderen: dto.opvang_kinderen,
-            bankrekeningnummersOpNaamVanKind: dto.bankrekeningnummers_op_naam_van_kind ? JSON.parse(dto.bankrekeningnummers_op_naam_van_kind) : undefined,
+            bankrekeningnummersOpNaamVanKind: this.parseJsonSafely<KinderrekeningIBAN[]>(dto.bankrekeningnummers_op_naam_van_kind, 'bankrekeningnummersOpNaamVanKind'),
             parentingCoordinator: dto.parenting_coordinator,
             datumAanvangRelatie: dto.datum_aanvang_relatie,
             overeenkomstGemaakt: dto.overeenkomst_gemaakt,
@@ -178,14 +218,14 @@ export class DbMappers {
             keuze_devices: info.keuzeDevices,
             zorgverzekering_op_naam_van_partij: info.zorgverzekeringOpNaamVanPartij,
             kinderbijslag_partij: info.kinderbijslagPartij,
-            brp_partij_1: info.brpPartij1 ? JSON.stringify(info.brpPartij1) : undefined,
-            brp_partij_2: info.brpPartij2 ? JSON.stringify(info.brpPartij2) : undefined,
-            kgb_partij_1: info.kgbPartij1 ? JSON.stringify(info.kgbPartij1) : undefined,
-            kgb_partij_2: info.kgbPartij2 ? JSON.stringify(info.kgbPartij2) : undefined,
+            brp_partij_1: this.stringifyJsonSafely(info.brpPartij1, 'brpPartij1'),
+            brp_partij_2: this.stringifyJsonSafely(info.brpPartij2, 'brpPartij2'),
+            kgb_partij_1: this.stringifyJsonSafely(info.kgbPartij1, 'kgbPartij1'),
+            kgb_partij_2: this.stringifyJsonSafely(info.kgbPartij2, 'kgbPartij2'),
             hoofdverblijf: info.hoofdverblijf,
             zorgverdeling: info.zorgverdeling,
             opvang_kinderen: info.opvangKinderen,
-            bankrekeningnummers_op_naam_van_kind: info.bankrekeningnummersOpNaamVanKind ? JSON.stringify(info.bankrekeningnummersOpNaamVanKind) : undefined,
+            bankrekeningnummers_op_naam_van_kind: this.stringifyJsonSafely(info.bankrekeningnummersOpNaamVanKind, 'bankrekeningnummersOpNaamVanKind'),
             parenting_coordinator: info.parentingCoordinator,
             datum_aanvang_relatie: info.datumAanvangRelatie,
             overeenkomst_gemaakt: info.overeenkomstGemaakt,
