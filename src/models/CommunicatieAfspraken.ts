@@ -10,6 +10,8 @@ export interface CommunicatieAfspraken {
     informatieUitwisseling?: string | null;
     bijlageBeslissingen?: string | null;
     socialMedia?: string | null;
+    ouderlijkToezichtApps?: string | null; // "wel" | "geen"
+    locatieDelen?: string | null; // "altijd" | "nooit" | "toestemming_beiden" | "overleg_kinderen"
     mobielTablet?: string | null;
     idBewijzen?: string | null;
     aansprakelijkheidsverzekering?: string | null;
@@ -36,6 +38,8 @@ export interface CreateCommunicatieAfsprakenDto {
     informatieUitwisseling?: string;
     bijlageBeslissingen?: string;
     socialMedia?: string;
+    ouderlijkToezichtApps?: string;
+    locatieDelen?: string;
     mobielTablet?: string;
     idBewijzen?: string;
     aansprakelijkheidsverzekering?: string;
@@ -59,6 +63,8 @@ export interface UpdateCommunicatieAfsprakenDto {
     informatieUitwisseling?: string;
     bijlageBeslissingen?: string;
     socialMedia?: string;
+    ouderlijkToezichtApps?: string;
+    locatieDelen?: string;
     mobielTablet?: string;
     idBewijzen?: string;
     aansprakelijkheidsverzekering?: string;

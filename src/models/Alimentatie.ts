@@ -25,6 +25,10 @@ export interface Alimentatie {
     inschrijvingAlleKinderen?: string | null;
     kinderbijslagOntvangerAlleKinderen?: string | null;
     kindgebondenBudgetAlleKinderen?: string | null;
+    // V5: Ingangsdatum fields - 3 velden
+    ingangsdatumOptie?: string | null;
+    ingangsdatum?: string | null;
+    ingangsdatumAnders?: string | null;
 }
 
 // Bijdrage templates
@@ -79,6 +83,10 @@ export interface CreateAlimentatieDto {
     inschrijvingAlleKinderen?: string;
     kinderbijslagOntvangerAlleKinderen?: string;
     kindgebondenBudgetAlleKinderen?: string;
+    // V5: Ingangsdatum fields
+    ingangsdatumOptie?: string;
+    ingangsdatum?: string;
+    ingangsdatumAnders?: string;
 }
 
 export interface UpdateAlimentatieDto {
@@ -104,6 +112,10 @@ export interface UpdateAlimentatieDto {
     inschrijvingAlleKinderen?: string;
     kinderbijslagOntvangerAlleKinderen?: string;
     kindgebondenBudgetAlleKinderen?: string;
+    // V5: Ingangsdatum fields
+    ingangsdatumOptie?: string;
+    ingangsdatum?: string;
+    ingangsdatumAnders?: string;
 }
 
 export interface CreateBijdrageKostenKinderenDto {

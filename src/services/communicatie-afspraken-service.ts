@@ -31,6 +31,8 @@ export class CommunicatieAfsprakenService {
                         informatie_uitwisseling as informatieUitwisseling,
                         bijlage_beslissingen as bijlageBeslissingen,
                         social_media as socialMedia,
+                        ouderlijk_toezicht_apps as ouderlijkToezichtApps,
+                        locatie_delen as locatieDelen,
                         mobiel_tablet as mobielTablet,
                         id_bewijzen as idBewijzen,
                         aansprakelijkheidsverzekering,
@@ -79,6 +81,8 @@ export class CommunicatieAfsprakenService {
                         informatie_uitwisseling as informatieUitwisseling,
                         bijlage_beslissingen as bijlageBeslissingen,
                         social_media as socialMedia,
+                        ouderlijk_toezicht_apps as ouderlijkToezichtApps,
+                        locatie_delen as locatieDelen,
                         mobiel_tablet as mobielTablet,
                         id_bewijzen as idBewijzen,
                         aansprakelijkheidsverzekering,
@@ -123,6 +127,8 @@ export class CommunicatieAfsprakenService {
                 .input('InformatieUitwisseling', sql.NVarChar(100), data.informatieUitwisseling || null)
                 .input('BijlageBeslissingen', sql.NVarChar(50), data.bijlageBeslissingen || null)
                 .input('SocialMedia', sql.NVarChar(100), data.socialMedia || null)
+                .input('OuderlijkToezichtApps', sql.NVarChar(10), data.ouderlijkToezichtApps || null)
+                .input('LocatieDelen', sql.NVarChar(50), data.locatieDelen || null)
                 .input('MobielTablet', sql.NVarChar(100), data.mobielTablet || null)
                 .input('IdBewijzen', sql.NVarChar(100), data.idBewijzen || null)
                 .input('Aansprakelijkheidsverzekering', sql.NVarChar(100), data.aansprakelijkheidsverzekering || null)
@@ -130,7 +136,7 @@ export class CommunicatieAfsprakenService {
                 .input('ToestemmingReizen', sql.NVarChar(100), data.toestemmingReizen || null)
                 .input('Jongmeerderjarige', sql.NVarChar(100), data.jongmeerderjarige || null)
                 .input('Studiekosten', sql.NVarChar(100), data.studiekosten || null)
-                .input('BankrekeningKinderen', sql.NVarChar(100), data.bankrekeningKinderen || null)
+                .input('BankrekeningKinderen', sql.NVarChar(sql.MAX), data.bankrekeningKinderen || null)
                 .input('Evaluatie', sql.NVarChar(50), data.evaluatie || null)
                 .input('ParentingCoordinator', sql.NVarChar(100), data.parentingCoordinator || null)
                 .input('MediationClausule', sql.NVarChar(50), data.mediationClausule || null)
@@ -138,7 +144,7 @@ export class CommunicatieAfsprakenService {
                     INSERT INTO dbo.communicatie_afspraken
                     (dossier_id, villa_pinedo, villa_pinedo_kinderen, kinderen_betrokkenheid,
                      kies_methode, opvang, informatie_uitwisseling,
-                     bijlage_beslissingen, social_media, mobiel_tablet, id_bewijzen,
+                     bijlage_beslissingen, social_media, ouderlijk_toezicht_apps, locatie_delen, mobiel_tablet, id_bewijzen,
                      aansprakelijkheidsverzekering, ziektekostenverzekering, toestemming_reizen,
                      jongmeerderjarige, studiekosten, bankrekening_kinderen, evaluatie,
                      parenting_coordinator, mediation_clausule)
@@ -168,7 +174,7 @@ export class CommunicatieAfsprakenService {
                         inserted.updated_at as updatedAt
                     VALUES (@DossierId, @VillaPinedo, @VillaPinedoKinderen, @KinderenBetrokkenheid,
                             @KiesMethode, @Opvang, @InformatieUitwisseling,
-                            @BijlageBeslissingen, @SocialMedia, @MobielTablet, @IdBewijzen,
+                            @BijlageBeslissingen, @SocialMedia, @OuderlijkToezichtApps, @LocatieDelen, @MobielTablet, @IdBewijzen,
                             @Aansprakelijkheidsverzekering, @Ziektekostenverzekering, @ToestemmingReizen,
                             @Jongmeerderjarige, @Studiekosten, @BankrekeningKinderen, @Evaluatie,
                             @ParentingCoordinator, @MediationClausule)
@@ -225,6 +231,14 @@ export class CommunicatieAfsprakenService {
                 updateFields.push('social_media = @SocialMedia');
                 request.input('SocialMedia', sql.NVarChar(100), data.socialMedia);
             }
+            if (data.ouderlijkToezichtApps !== undefined) {
+                updateFields.push('ouderlijk_toezicht_apps = @OuderlijkToezichtApps');
+                request.input('OuderlijkToezichtApps', sql.NVarChar(10), data.ouderlijkToezichtApps);
+            }
+            if (data.locatieDelen !== undefined) {
+                updateFields.push('locatie_delen = @LocatieDelen');
+                request.input('LocatieDelen', sql.NVarChar(50), data.locatieDelen);
+            }
             if (data.mobielTablet !== undefined) {
                 updateFields.push('mobiel_tablet = @MobielTablet');
                 request.input('MobielTablet', sql.NVarChar(100), data.mobielTablet);
@@ -255,7 +269,7 @@ export class CommunicatieAfsprakenService {
             }
             if (data.bankrekeningKinderen !== undefined) {
                 updateFields.push('bankrekening_kinderen = @BankrekeningKinderen');
-                request.input('BankrekeningKinderen', sql.NVarChar(100), data.bankrekeningKinderen);
+                request.input('BankrekeningKinderen', sql.NVarChar(sql.MAX), data.bankrekeningKinderen);
             }
             if (data.evaluatie !== undefined) {
                 updateFields.push('evaluatie = @Evaluatie');

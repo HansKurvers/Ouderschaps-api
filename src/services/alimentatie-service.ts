@@ -76,7 +76,10 @@ export class AlimentatieService {
                         hoofdverblijf_alle_kinderen as hoofdverblijfAlleKinderen,
                         inschrijving_alle_kinderen as inschrijvingAlleKinderen,
                         kinderbijslag_ontvanger_alle_kinderen as kinderbijslagOntvangerAlleKinderen,
-                        kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen
+                        kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen,
+                        ingangsdatum_optie as ingangsdatumOptie,
+                        ingangsdatum,
+                        ingangsdatum_anders as ingangsdatumAnders
                     FROM dbo.alimentaties
                     WHERE dossier_id = @DossierId
                 `);
@@ -173,6 +176,9 @@ export class AlimentatieService {
                 .input('InschrijvingAlle', sql.VarChar(255), data.inschrijvingAlleKinderen || null)
                 .input('KinderbijslagOntvangerAlle', sql.VarChar(255), data.kinderbijslagOntvangerAlleKinderen || null)
                 .input('KindgebondenBudgetAlle', sql.VarChar(255), data.kindgebondenBudgetAlleKinderen || null)
+                .input('IngangsdatumOptie', sql.VarChar(100), data.ingangsdatumOptie || null)
+                .input('Ingangsdatum', sql.Date, data.ingangsdatum || null)
+                .input('IngangsdatumAnders', sql.NVarChar(500), data.ingangsdatumAnders || null)
                 .query(`
                     INSERT INTO dbo.alimentaties
                     (dossier_id, netto_besteedbaar_gezinsinkomen, kosten_kinderen, bijdrage_template,
@@ -182,7 +188,8 @@ export class AlimentatieService {
                      bedragen_alle_kinderen_gelijk, alimentatiebedrag_per_kind,
                      zorgkorting_percentage_alle_kinderen, alimentatiegerechtigde,
                      afspraken_alle_kinderen_gelijk, hoofdverblijf_alle_kinderen,
-                     inschrijving_alle_kinderen, kinderbijslag_ontvanger_alle_kinderen, kindgebonden_budget_alle_kinderen)
+                     inschrijving_alle_kinderen, kinderbijslag_ontvanger_alle_kinderen, kindgebonden_budget_alle_kinderen,
+                     ingangsdatum_optie, ingangsdatum, ingangsdatum_anders)
                     OUTPUT
                         inserted.id,
                         inserted.dossier_id as dossierId,
@@ -205,12 +212,16 @@ export class AlimentatieService {
                         inserted.hoofdverblijf_alle_kinderen as hoofdverblijfAlleKinderen,
                         inserted.inschrijving_alle_kinderen as inschrijvingAlleKinderen,
                         inserted.kinderbijslag_ontvanger_alle_kinderen as kinderbijslagOntvangerAlleKinderen,
-                        inserted.kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen
+                        inserted.kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen,
+                        inserted.ingangsdatum_optie as ingangsdatumOptie,
+                        inserted.ingangsdatum,
+                        inserted.ingangsdatum_anders as ingangsdatumAnders
                     VALUES (@DossierId, @NettoInkomen, @KostenKinderen, @BijdrageTemplateId,
                             @StortingOuder1, @StortingOuder2, @Kostensoorten,
                             @MaximumOpname, @MaximumOpnameBedrag, @KinderbijslagStorten, @KindgebondenBudgetStorten,
                             @BedragenGelijk, @BedragPerKind, @ZorgkortingPercentage, @Alimentatiegerechtigde,
-                            @AfsprakenGelijk, @HoofdverblijfAlle, @InschrijvingAlle, @KinderbijslagOntvangerAlle, @KindgebondenBudgetAlle)
+                            @AfsprakenGelijk, @HoofdverblijfAlle, @InschrijvingAlle, @KinderbijslagOntvangerAlle, @KindgebondenBudgetAlle,
+                            @IngangsdatumOptie, @Ingangsdatum, @IngangsdatumAnders)
                 `);
 
             const newRecord = result.recordset[0];
@@ -314,6 +325,19 @@ export class AlimentatieService {
                 updateFields.push('kindgebonden_budget_alle_kinderen = @KindgebondenBudgetAlle');
                 request.input('KindgebondenBudgetAlle', sql.VarChar(255), data.kindgebondenBudgetAlleKinderen);
             }
+            // V5: Ingangsdatum fields
+            if (data.ingangsdatumOptie !== undefined) {
+                updateFields.push('ingangsdatum_optie = @IngangsdatumOptie');
+                request.input('IngangsdatumOptie', sql.VarChar(100), data.ingangsdatumOptie);
+            }
+            if (data.ingangsdatum !== undefined) {
+                updateFields.push('ingangsdatum = @Ingangsdatum');
+                request.input('Ingangsdatum', sql.Date, data.ingangsdatum);
+            }
+            if (data.ingangsdatumAnders !== undefined) {
+                updateFields.push('ingangsdatum_anders = @IngangsdatumAnders');
+                request.input('IngangsdatumAnders', sql.NVarChar(500), data.ingangsdatumAnders);
+            }
 
             if (updateFields.length === 0) {
                 throw new Error('No fields to update');
@@ -344,7 +368,10 @@ export class AlimentatieService {
                     inserted.hoofdverblijf_alle_kinderen as hoofdverblijfAlleKinderen,
                     inserted.inschrijving_alle_kinderen as inschrijvingAlleKinderen,
                     inserted.kinderbijslag_ontvanger_alle_kinderen as kinderbijslagOntvangerAlleKinderen,
-                    inserted.kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen
+                    inserted.kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen,
+                    inserted.ingangsdatum_optie as ingangsdatumOptie,
+                    inserted.ingangsdatum,
+                    inserted.ingangsdatum_anders as ingangsdatumAnders
                 WHERE id = @Id
             `);
 
