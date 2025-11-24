@@ -79,7 +79,9 @@ export class AlimentatieService {
                         kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen,
                         ingangsdatum_optie as ingangsdatumOptie,
                         ingangsdatum,
-                        ingangsdatum_anders as ingangsdatumAnders
+                        ingangsdatum_anders as ingangsdatumAnders,
+                        eerste_indexering_jaar as eersteIndexeringJaar,
+                        kinderrekening_opheffen as kinderrekeningOpheffen
                     FROM dbo.alimentaties
                     WHERE dossier_id = @DossierId
                 `);
@@ -179,6 +181,8 @@ export class AlimentatieService {
                 .input('IngangsdatumOptie', sql.VarChar(100), data.ingangsdatumOptie || null)
                 .input('Ingangsdatum', sql.Date, data.ingangsdatum || null)
                 .input('IngangsdatumAnders', sql.NVarChar(500), data.ingangsdatumAnders || null)
+                .input('EersteIndexeringJaar', sql.Int, data.eersteIndexeringJaar || null)
+                .input('KinderrekeningOpheffen', sql.NVarChar(50), data.kinderrekeningOpheffen || null)
                 .query(`
                     INSERT INTO dbo.alimentaties
                     (dossier_id, netto_besteedbaar_gezinsinkomen, kosten_kinderen, bijdrage_template,
@@ -189,7 +193,7 @@ export class AlimentatieService {
                      zorgkorting_percentage_alle_kinderen, alimentatiegerechtigde,
                      afspraken_alle_kinderen_gelijk, hoofdverblijf_alle_kinderen,
                      inschrijving_alle_kinderen, kinderbijslag_ontvanger_alle_kinderen, kindgebonden_budget_alle_kinderen,
-                     ingangsdatum_optie, ingangsdatum, ingangsdatum_anders)
+                     ingangsdatum_optie, ingangsdatum, ingangsdatum_anders, eerste_indexering_jaar, kinderrekening_opheffen)
                     OUTPUT
                         inserted.id,
                         inserted.dossier_id as dossierId,
@@ -215,13 +219,15 @@ export class AlimentatieService {
                         inserted.kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen,
                         inserted.ingangsdatum_optie as ingangsdatumOptie,
                         inserted.ingangsdatum,
-                        inserted.ingangsdatum_anders as ingangsdatumAnders
+                        inserted.ingangsdatum_anders as ingangsdatumAnders,
+                        inserted.eerste_indexering_jaar as eersteIndexeringJaar,
+                        inserted.kinderrekening_opheffen as kinderrekeningOpheffen
                     VALUES (@DossierId, @NettoInkomen, @KostenKinderen, @BijdrageTemplateId,
                             @StortingOuder1, @StortingOuder2, @Kostensoorten,
                             @MaximumOpname, @MaximumOpnameBedrag, @KinderbijslagStorten, @KindgebondenBudgetStorten,
                             @BedragenGelijk, @BedragPerKind, @ZorgkortingPercentage, @Alimentatiegerechtigde,
                             @AfsprakenGelijk, @HoofdverblijfAlle, @InschrijvingAlle, @KinderbijslagOntvangerAlle, @KindgebondenBudgetAlle,
-                            @IngangsdatumOptie, @Ingangsdatum, @IngangsdatumAnders)
+                            @IngangsdatumOptie, @Ingangsdatum, @IngangsdatumAnders, @EersteIndexeringJaar, @KinderrekeningOpheffen)
                 `);
 
             const newRecord = result.recordset[0];
@@ -338,6 +344,16 @@ export class AlimentatieService {
                 updateFields.push('ingangsdatum_anders = @IngangsdatumAnders');
                 request.input('IngangsdatumAnders', sql.NVarChar(500), data.ingangsdatumAnders);
             }
+            // V6: Indexering field
+            if (data.eersteIndexeringJaar !== undefined) {
+                updateFields.push('eerste_indexering_jaar = @EersteIndexeringJaar');
+                request.input('EersteIndexeringJaar', sql.Int, data.eersteIndexeringJaar);
+            }
+            // V7: Kinderrekening opheffing
+            if (data.kinderrekeningOpheffen !== undefined) {
+                updateFields.push('kinderrekening_opheffen = @KinderrekeningOpheffen');
+                request.input('KinderrekeningOpheffen', sql.NVarChar(50), data.kinderrekeningOpheffen);
+            }
 
             if (updateFields.length === 0) {
                 throw new Error('No fields to update');
@@ -371,7 +387,9 @@ export class AlimentatieService {
                     inserted.kindgebonden_budget_alle_kinderen as kindgebondenBudgetAlleKinderen,
                     inserted.ingangsdatum_optie as ingangsdatumOptie,
                     inserted.ingangsdatum,
-                    inserted.ingangsdatum_anders as ingangsdatumAnders
+                    inserted.ingangsdatum_anders as ingangsdatumAnders,
+                    inserted.eerste_indexering_jaar as eersteIndexeringJaar,
+                    inserted.kinderrekening_opheffen as kinderrekeningOpheffen
                 WHERE id = @Id
             `);
 

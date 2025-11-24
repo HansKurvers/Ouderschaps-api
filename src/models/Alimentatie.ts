@@ -29,6 +29,10 @@ export interface Alimentatie {
     ingangsdatumOptie?: string | null;
     ingangsdatum?: string | null;
     ingangsdatumAnders?: string | null;
+    // V6: Indexering field
+    eersteIndexeringJaar?: number | null;
+    // V7: Kinderrekening opheffing
+    kinderrekeningOpheffen?: string | null;
 }
 
 // Bijdrage templates
@@ -87,6 +91,10 @@ export interface CreateAlimentatieDto {
     ingangsdatumOptie?: string;
     ingangsdatum?: string;
     ingangsdatumAnders?: string;
+    // V6: Indexering field
+    eersteIndexeringJaar?: number;
+    // V7: Kinderrekening opheffing
+    kinderrekeningOpheffen?: string;
 }
 
 export interface UpdateAlimentatieDto {
@@ -116,6 +124,10 @@ export interface UpdateAlimentatieDto {
     ingangsdatumOptie?: string;
     ingangsdatum?: string;
     ingangsdatumAnders?: string;
+    // V6: Indexering field
+    eersteIndexeringJaar?: number;
+    // V7: Kinderrekening opheffing
+    kinderrekeningOpheffen?: string;
 }
 
 export interface CreateBijdrageKostenKinderenDto {
