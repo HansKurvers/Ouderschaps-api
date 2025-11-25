@@ -21,6 +21,10 @@ export interface Abonnement {
     volgende_betaling: Date | null;
     aangemaakt_op: Date;
     gewijzigd_op: Date;
+    // Voucher fields
+    voucher_id: number | null;
+    voucher_code: string | null;
+    is_gratis_via_voucher: boolean;
 }
 
 export interface Betaling {
@@ -82,6 +86,70 @@ export class SubscriptionService {
             return result.recordset[0] as Abonnement;
         } catch (error) {
             console.error('[SubscriptionService] Error creating subscription:', error);
+            throw new Error(`Failed to create subscription: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Create a new subscription with voucher support
+     * Includes voucher_id, voucher_code, and is_gratis_via_voucher fields
+     */
+    async createSubscriptionWithVoucher(params: {
+        gebruiker_id: number;
+        mollie_customer_id?: string;
+        mollie_subscription_id?: string;
+        mollie_mandate_id?: string;
+        plan_type?: string;
+        status?: string;
+        trial_eind_datum?: Date;
+        maandelijks_bedrag?: number;
+        voucher_id?: number;
+        voucher_code?: string;
+        is_gratis_via_voucher?: boolean;
+    }): Promise<Abonnement> {
+        const pool = await getPool();
+
+        try {
+            const startDatum = new Date();
+            // For gratis vouchers, don't set a default trial - it's always active
+            const trialEindDatum = params.is_gratis_via_voucher
+                ? null
+                : (params.trial_eind_datum || null);
+
+            const result = await pool.request()
+                .input('gebruiker_id', sql.Int, params.gebruiker_id)
+                .input('mollie_customer_id', sql.NVarChar(50), params.mollie_customer_id || null)
+                .input('mollie_subscription_id', sql.NVarChar(50), params.mollie_subscription_id || null)
+                .input('mollie_mandate_id', sql.NVarChar(50), params.mollie_mandate_id || null)
+                .input('plan_type', sql.NVarChar(20), params.plan_type || 'basic')
+                .input('status', sql.NVarChar(20), params.status || 'pending')
+                .input('start_datum', sql.Date, startDatum)
+                .input('trial_eind_datum', sql.Date, trialEindDatum)
+                .input('maandelijks_bedrag', sql.Decimal(10, 2), params.maandelijks_bedrag ?? 19.99)
+                .input('voucher_id', sql.Int, params.voucher_id || null)
+                .input('voucher_code', sql.NVarChar(50), params.voucher_code || null)
+                .input('is_gratis_via_voucher', sql.Bit, params.is_gratis_via_voucher || false)
+                .query(`
+                    INSERT INTO dbo.abonnementen (
+                        gebruiker_id, mollie_customer_id, mollie_subscription_id, mollie_mandate_id,
+                        plan_type, status, start_datum, trial_eind_datum, maandelijks_bedrag,
+                        voucher_id, voucher_code, is_gratis_via_voucher
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @gebruiker_id, @mollie_customer_id, @mollie_subscription_id, @mollie_mandate_id,
+                        @plan_type, @status, @start_datum, @trial_eind_datum, @maandelijks_bedrag,
+                        @voucher_id, @voucher_code, @is_gratis_via_voucher
+                    )
+                `);
+
+            console.log('[SubscriptionService] Subscription with voucher created for user:', params.gebruiker_id, {
+                voucherCode: params.voucher_code,
+                isGratis: params.is_gratis_via_voucher
+            });
+            return result.recordset[0] as Abonnement;
+        } catch (error) {
+            console.error('[SubscriptionService] Error creating subscription with voucher:', error);
             throw new Error(`Failed to create subscription: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }

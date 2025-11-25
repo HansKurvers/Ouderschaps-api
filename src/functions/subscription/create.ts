@@ -3,10 +3,11 @@
  * POST /api/subscription/create
  * Creates a new subscription with Mollie and initiates first payment
  *
- * TRIAL ABUSE PREVENTION:
- * - Users who have already used their trial get NO 7-day free period
+ * FEATURES:
+ * - Trial abuse prevention (users who used trial don't get another)
+ * - Voucher/discount code support
+ * - Gratis vouchers bypass Mollie entirely
  * - Mollie customers are reused per user to maintain history
- * - trial_used flag is checked before granting trial period
  */
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
@@ -16,12 +17,28 @@ import { MollieService } from '../../services/mollie.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { UserService } from '../../services/auth/user.service';
 import { DatabaseService } from '../../services/database.service';
+import voucherService, { Voucher, AppliedVoucher } from '../../services/voucher.service';
+
+interface CreateSubscriptionRequest {
+    voucherCode?: string;
+}
+
+const NORMALE_PRIJS = 19.99;
 
 export async function createSubscription(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
     try {
         // Authenticate user
         const userId = await requireAuthentication(request);
         context.log('[CreateSubscription] Request from user:', userId);
+
+        // Parse request body for optional voucher code
+        let voucherCode: string | undefined;
+        try {
+            const body = await request.json() as CreateSubscriptionRequest;
+            voucherCode = body?.voucherCode?.trim();
+        } catch {
+            // Empty body is OK
+        }
 
         const mollieService = new MollieService();
         const subscriptionService = new SubscriptionService();
@@ -40,7 +57,72 @@ export async function createSubscription(request: HttpRequest, context: Invocati
             return createErrorResponse('Gebruiker niet gevonden', 404);
         }
 
-        // ==== TRIAL ABUSE PREVENTION ====
+        // ==== VOUCHER VALIDATION ====
+        let validatedVoucher: Voucher | null = null;
+        let appliedVoucher: AppliedVoucher | null = null;
+
+        if (voucherCode) {
+            context.log('[CreateSubscription] Validating voucher:', voucherCode);
+            const voucherResult = await voucherService.validateVoucher(voucherCode, userId);
+
+            if (!voucherResult.valid) {
+                return createErrorResponse(`Ongeldige vouchercode: ${voucherResult.reden}`, 400);
+            }
+
+            validatedVoucher = voucherResult.voucher!;
+            appliedVoucher = voucherService.calculateAppliedVoucher(validatedVoucher);
+            context.log('[CreateSubscription] Voucher validated:', {
+                code: validatedVoucher.code,
+                type: validatedVoucher.type,
+                isGratis: appliedVoucher.is_volledig_gratis
+            });
+        }
+
+        // ==== GRATIS VOUCHER FLOW (skip Mollie entirely) ====
+        if (validatedVoucher && appliedVoucher?.is_volledig_gratis) {
+            context.log('[CreateSubscription] Creating FREE subscription via voucher');
+
+            // Create subscription directly as active (no Mollie)
+            const subscription = await subscriptionService.createSubscriptionWithVoucher({
+                gebruiker_id: userId,
+                plan_type: 'basic',
+                status: 'active',
+                maandelijks_bedrag: 0,
+                voucher_id: validatedVoucher.id,
+                voucher_code: validatedVoucher.code,
+                is_gratis_via_voucher: true
+            });
+
+            // Record voucher usage
+            await voucherService.applyVoucher(
+                validatedVoucher.id,
+                userId,
+                subscription.id,
+                NORMALE_PRIJS // Full discount
+            );
+
+            // Update user subscription status
+            await subscriptionService.updateUserSubscriptionStatus(userId, true);
+
+            context.log('[CreateSubscription] FREE subscription created:', subscription.id);
+
+            return createSuccessResponse({
+                subscriptionId: subscription.id,
+                checkoutUrl: null,
+                paymentId: null,
+                customer: null,
+                isGratis: true,
+                voucherToegepast: appliedVoucher,
+                trialInfo: {
+                    hasTrial: false,
+                    trialEndDate: null,
+                    message: 'Uw abonnement is direct actief via de vouchercode.'
+                }
+            }, 201);
+        }
+
+        // ==== NORMAL FLOW (with or without discount voucher) ====
+
         // Get trial info: check if user already used trial and get existing Mollie customer ID
         const trialInfo = await subscriptionService.getTrialInfo(userId);
         const hasUsedTrial = trialInfo.trialUsed;
@@ -76,57 +158,96 @@ export async function createSubscription(request: HttpRequest, context: Invocati
             await subscriptionService.saveMollieCustomerIdToUser(userId, customer.id);
         }
 
-        // Determine trial period based on usage
-        // If user has used trial before: NO trial period (null)
-        // If user is new: 7 day trial period
+        // Calculate price and trial period
+        let prijs = NORMALE_PRIJS;
         let trialEindDatum: Date | undefined;
         let description: string;
 
-        if (hasUsedTrial) {
-            // NO trial - user already had one
-            trialEindDatum = undefined; // No trial
-            description = 'Ouderschapsplan Basis Abonnement - Direct actief';
-            context.log('[CreateSubscription] User already used trial, no free period');
-        } else {
-            // Grant 7-day trial
-            trialEindDatum = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-            description = 'Ouderschapsplan Basis Abonnement - 7 dagen proefperiode';
-            // Mark trial as used BEFORE creating subscription
-            await subscriptionService.markTrialUsed(userId);
-            context.log('[CreateSubscription] Granting 7-day trial until:', trialEindDatum);
+        // Apply voucher discount if present
+        if (validatedVoucher && appliedVoucher) {
+            switch (validatedVoucher.type) {
+                case 'percentage':
+                    prijs = appliedVoucher.nieuwe_prijs || NORMALE_PRIJS;
+                    break;
+                case 'vast_bedrag':
+                    prijs = appliedVoucher.nieuwe_prijs || NORMALE_PRIJS;
+                    break;
+                case 'maanden_gratis':
+                    // First payment(s) are free, handled via trial period extension
+                    const gratisMaanden = validatedVoucher.waarde || 0;
+                    trialEindDatum = new Date(Date.now() + gratisMaanden * 30 * 24 * 60 * 60 * 1000);
+                    description = `Ouderschapsplan Basis Abonnement - ${gratisMaanden} maand${gratisMaanden > 1 ? 'en' : ''} gratis`;
+                    break;
+            }
+        }
+
+        // If no voucher-based trial, check normal trial eligibility
+        if (!trialEindDatum) {
+            if (hasUsedTrial) {
+                trialEindDatum = undefined;
+                description = validatedVoucher
+                    ? `Ouderschapsplan Basis Abonnement - ${appliedVoucher?.korting} korting`
+                    : 'Ouderschapsplan Basis Abonnement - Direct actief';
+                context.log('[CreateSubscription] User already used trial, no free period');
+            } else {
+                trialEindDatum = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                description = 'Ouderschapsplan Basis Abonnement - 7 dagen proefperiode';
+                await subscriptionService.markTrialUsed(userId);
+                context.log('[CreateSubscription] Granting 7-day trial until:', trialEindDatum);
+            }
         }
 
         // Create subscription record in database (pending status)
-        const subscription = await subscriptionService.createSubscription({
+        const subscriptionParams: any = {
             gebruiker_id: userId,
             mollie_customer_id: customer.id,
             plan_type: 'basic',
             status: 'pending',
             trial_eind_datum: trialEindDatum,
-            maandelijks_bedrag: 19.99
-        });
+            maandelijks_bedrag: prijs
+        };
+
+        if (validatedVoucher) {
+            subscriptionParams.voucher_id = validatedVoucher.id;
+            subscriptionParams.voucher_code = validatedVoucher.code;
+        }
+
+        const subscription = validatedVoucher
+            ? await subscriptionService.createSubscriptionWithVoucher(subscriptionParams)
+            : await subscriptionService.createSubscription(subscriptionParams);
 
         context.log('[CreateSubscription] Subscription record created:', subscription.id);
 
+        // Record voucher usage if applicable
+        if (validatedVoucher) {
+            const kortingToegepast = NORMALE_PRIJS - prijs;
+            await voucherService.applyVoucher(
+                validatedVoucher.id,
+                userId,
+                subscription.id,
+                kortingToegepast > 0 ? kortingToegepast : null
+            );
+        }
+
         // Create first payment to establish mandate
-        // Mollie requires a first payment before creating recurring subscriptions
         const webhookUrl = process.env.WEBHOOK_URL || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook';
         const redirectUrl = process.env.REDIRECT_URL || 'https://app.scheidingsdesk.nl/dossiers';
 
         const payment = await mollieService.createFirstPayment({
             customerId: customer.id,
             amount: {
-                value: '19.99',
+                value: prijs.toFixed(2),
                 currency: 'EUR'
             },
-            description,
+            description: description!,
             redirectUrl: `${redirectUrl}?subscriptionCreated=true`,
             webhookUrl,
             metadata: {
                 userId: userId.toString(),
                 subscriptionId: subscription.id.toString(),
                 type: 'first_payment',
-                hasTrial: (!hasUsedTrial).toString()
+                hasTrial: (trialEindDatum !== undefined).toString(),
+                voucherCode: validatedVoucher?.code || ''
             }
         });
 
@@ -136,10 +257,23 @@ export async function createSubscription(request: HttpRequest, context: Invocati
         await subscriptionService.createPayment({
             abonnement_id: subscription.id,
             mollie_payment_id: payment.id,
-            bedrag: 19.99,
-            btw_bedrag: 19.99 * 0.21, // 21% BTW
+            bedrag: prijs,
+            btw_bedrag: prijs * 0.21,
             status: 'pending'
         });
+
+        // Build trial message
+        let trialMessage: string;
+        if (validatedVoucher?.type === 'maanden_gratis') {
+            const maanden = validatedVoucher.waarde || 0;
+            trialMessage = `U krijgt ${maanden} maand${maanden > 1 ? 'en' : ''} gratis via uw vouchercode.`;
+        } else if (trialEindDatum && !hasUsedTrial) {
+            trialMessage = 'U krijgt 7 dagen gratis proefperiode.';
+        } else {
+            trialMessage = validatedVoucher
+                ? `${appliedVoucher?.korting} korting toegepast. Het abonnement wordt direct actief na betaling.`
+                : 'Uw proefperiode is al gebruikt. Het abonnement wordt direct actief na betaling.';
+        }
 
         // Return checkout URL to frontend
         return createSuccessResponse({
@@ -151,13 +285,12 @@ export async function createSubscription(request: HttpRequest, context: Invocati
                 name: customer.name,
                 email: customer.email
             },
-            // Inform frontend about trial status
+            isGratis: false,
+            voucherToegepast: appliedVoucher,
             trialInfo: {
-                hasTrial: !hasUsedTrial,
+                hasTrial: trialEindDatum !== undefined,
                 trialEndDate: trialEindDatum || null,
-                message: hasUsedTrial
-                    ? 'Uw proefperiode is al gebruikt. Het abonnement wordt direct actief na betaling.'
-                    : 'U krijgt 7 dagen gratis proefperiode.'
+                message: trialMessage
             }
         }, 201);
 

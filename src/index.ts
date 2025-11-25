@@ -53,6 +53,9 @@ import './functions/subscription/webhook';
 import './functions/subscription/cancel';
 import './functions/subscription/status';
 
+// Voucher functions
+import './functions/vouchers/validate';
+
 // User Profile functions
 import './functions/user/getUserProfile';
 import './functions/user/updateUserProfile';

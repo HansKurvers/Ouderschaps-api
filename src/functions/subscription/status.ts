@@ -38,8 +38,12 @@ export async function getSubscriptionStatus(request: HttpRequest, context: Invoc
         const trialEndDate = subscription.trial_eind_datum ? new Date(subscription.trial_eind_datum) : null;
         const inTrialPeriod = trialEndDate ? now < trialEndDate : false;
 
+        // Gratis via voucher = altijd actief (zolang abonnement bestaat en status = active)
+        const isGratisViaVoucher = subscription.is_gratis_via_voucher || false;
+        const hasActiveSubscription = subscription.status === 'active';
+
         return createSuccessResponse({
-            hasActiveSubscription: subscription.status === 'active',
+            hasActiveSubscription,
             subscription: {
                 id: subscription.id,
                 planType: subscription.plan_type,
@@ -49,7 +53,10 @@ export async function getSubscriptionStatus(request: HttpRequest, context: Invoc
                 trialEindDatum: subscription.trial_eind_datum,
                 inTrialPeriod,
                 maandelijksBedrag: subscription.maandelijks_bedrag,
-                volgendeBetaling: subscription.volgende_betaling
+                volgendeBetaling: subscription.volgende_betaling,
+                // Voucher info
+                isGratisViaVoucher,
+                voucherCode: subscription.voucher_code || null
             },
             recentPayments: recentPayments.map(p => ({
                 id: p.id,
