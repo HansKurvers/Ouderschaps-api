@@ -4,6 +4,7 @@ import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse,
 import { GedeeldeDossierRepository } from '../../repositories/GedeeldeDossierRepository';
 import { GebruikerRepository } from '../../repositories/GebruikerRepository';
 import { Auth0InviteService } from '../../services/auth/auth0-invite.service';
+import { getPool } from '../../config/database';
 import Joi from 'joi';
 
 const shareSchema = Joi.object({
@@ -44,14 +45,29 @@ export async function shareDossier(
 
         const { email } = value;
 
-        // 3. Check ownership
+        // 3. Check subscription - sharing requires Pro
+        const pool = await getPool();
+        const subscriptionResult = await pool.request()
+            .input('userId', userId)
+            .query(`
+                SELECT has_active_subscription
+                FROM dbo.gebruikers
+                WHERE id = @userId
+            `);
+
+        const hasSubscription = subscriptionResult.recordset[0]?.has_active_subscription;
+        if (!hasSubscription) {
+            return createErrorResponse('Dossiers delen is alleen beschikbaar met een Pro-abonnement', 403);
+        }
+
+        // 4. Check ownership
         const shareRepo = new GedeeldeDossierRepository();
         const isOwner = await shareRepo.isOwner(dossierId, userId);
         if (!isOwner) {
             return createForbiddenResponse();
         }
 
-        // 4. Find or create user in database
+        // 5. Find or create user in database
         const userRepo = new GebruikerRepository();
         let gebruiker = await userRepo.findByEmail(email);
         let isNewUser = false;
@@ -87,13 +103,13 @@ export async function shareDossier(
             }
         }
 
-        // 5. Check if already shared
+        // 6. Check if already shared
         const alreadyShared = await shareRepo.isAlreadyShared(dossierId, gebruiker.id);
         if (alreadyShared) {
             return createErrorResponse('Dossier is al gedeeld met deze gebruiker', 400);
         }
 
-        // 6. Share dossier
+        // 7. Share dossier
         await shareRepo.create(dossierId, gebruiker.id);
 
         return createSuccessResponse({
