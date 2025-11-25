@@ -13,6 +13,11 @@ export interface Gebruiker {
     gewijzigd_op: Date;
     has_active_subscription: boolean;
 
+    // Mollie & Trial Tracking
+    mollie_customer_id?: string;
+    trial_used: boolean;
+    eerste_subscription_datum?: Date;
+
     // Billing Profile Fields
     klant_type?: 'particulier' | 'zakelijk';
     telefoon?: string;

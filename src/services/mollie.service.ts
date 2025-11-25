@@ -60,6 +60,42 @@ export class MollieService {
     }
 
     /**
+     * Get existing customer or create a new one
+     * This is used for trial abuse prevention - reuses existing Mollie customers
+     *
+     * @param existingCustomerId - The stored Mollie customer ID (if user had subscription before)
+     * @param userData - User data for creating new customer (if needed)
+     * @returns The Mollie customer (existing or newly created)
+     */
+    async getOrCreateCustomer(
+        existingCustomerId: string | null,
+        userData: {
+            name: string;
+            email: string;
+            locale?: string;
+            metadata?: Record<string, any>;
+        }
+    ): Promise<{ customer: Customer; isExisting: boolean }> {
+        // If we have an existing customer ID, try to retrieve it
+        if (existingCustomerId) {
+            try {
+                console.log('[MollieService] Retrieving existing customer:', existingCustomerId);
+                const customer = await this.getCustomer(existingCustomerId);
+                console.log('[MollieService] Existing customer found:', customer.id);
+                return { customer, isExisting: true };
+            } catch (error) {
+                // Customer might have been deleted in Mollie - create new one
+                console.warn('[MollieService] Could not retrieve existing customer, creating new one:', error);
+            }
+        }
+
+        // Create new customer
+        console.log('[MollieService] Creating new customer for:', userData.email);
+        const customer = await this.createCustomer(userData);
+        return { customer, isExisting: false };
+    }
+
+    /**
      * Create a subscription for a customer
      * Note: Customer must have a valid mandate first (created via first payment)
      */

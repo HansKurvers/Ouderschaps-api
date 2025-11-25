@@ -366,4 +366,144 @@ export class SubscriptionService {
             throw new Error(`Failed to fetch payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
+
+    // ==========================================
+    // TRIAL TRACKING METHODS
+    // ==========================================
+
+    /**
+     * Check if user has already used their trial period
+     * Returns true if user has had any subscription before
+     */
+    async hasUserUsedTrial(userId: number): Promise<boolean> {
+        const pool = await getPool();
+
+        try {
+            const result = await pool.request()
+                .input('gebruiker_id', sql.Int, userId)
+                .query(`
+                    SELECT trial_used
+                    FROM dbo.gebruikers
+                    WHERE id = @gebruiker_id
+                `);
+
+            if (result.recordset.length === 0) {
+                return false;
+            }
+
+            return result.recordset[0].trial_used === true;
+        } catch (error) {
+            console.error('[SubscriptionService] Error checking trial status:', error);
+            throw new Error(`Failed to check trial status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Mark trial as used for a user
+     * Also sets eerste_subscription_datum if not already set
+     */
+    async markTrialUsed(userId: number): Promise<void> {
+        const pool = await getPool();
+
+        try {
+            await pool.request()
+                .input('gebruiker_id', sql.Int, userId)
+                .query(`
+                    UPDATE dbo.gebruikers
+                    SET
+                        trial_used = 1,
+                        eerste_subscription_datum = COALESCE(eerste_subscription_datum, GETDATE()),
+                        gewijzigd_op = GETDATE()
+                    WHERE id = @gebruiker_id
+                `);
+
+            console.log('[SubscriptionService] Trial marked as used for user:', userId);
+        } catch (error) {
+            console.error('[SubscriptionService] Error marking trial as used:', error);
+            throw new Error(`Failed to mark trial as used: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Get Mollie customer ID for user
+     * Returns the stored customer ID if user has had a subscription before
+     */
+    async getMollieCustomerIdForUser(userId: number): Promise<string | null> {
+        const pool = await getPool();
+
+        try {
+            const result = await pool.request()
+                .input('gebruiker_id', sql.Int, userId)
+                .query(`
+                    SELECT mollie_customer_id
+                    FROM dbo.gebruikers
+                    WHERE id = @gebruiker_id
+                `);
+
+            if (result.recordset.length === 0) {
+                return null;
+            }
+
+            return result.recordset[0].mollie_customer_id || null;
+        } catch (error) {
+            console.error('[SubscriptionService] Error fetching Mollie customer ID:', error);
+            throw new Error(`Failed to fetch Mollie customer ID: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Save Mollie customer ID to user record
+     * Links a Mollie customer to a user permanently
+     */
+    async saveMollieCustomerIdToUser(userId: number, customerId: string): Promise<void> {
+        const pool = await getPool();
+
+        try {
+            await pool.request()
+                .input('gebruiker_id', sql.Int, userId)
+                .input('mollie_customer_id', sql.NVarChar(50), customerId)
+                .query(`
+                    UPDATE dbo.gebruikers
+                    SET
+                        mollie_customer_id = @mollie_customer_id,
+                        gewijzigd_op = GETDATE()
+                    WHERE id = @gebruiker_id
+                `);
+
+            console.log('[SubscriptionService] Mollie customer ID saved for user:', userId, customerId);
+        } catch (error) {
+            console.error('[SubscriptionService] Error saving Mollie customer ID:', error);
+            throw new Error(`Failed to save Mollie customer ID: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Get trial info for user (combined query for efficiency)
+     * Returns both trial_used status and mollie_customer_id in one call
+     */
+    async getTrialInfo(userId: number): Promise<{ trialUsed: boolean; mollieCustomerId: string | null }> {
+        const pool = await getPool();
+
+        try {
+            const result = await pool.request()
+                .input('gebruiker_id', sql.Int, userId)
+                .query(`
+                    SELECT trial_used, mollie_customer_id
+                    FROM dbo.gebruikers
+                    WHERE id = @gebruiker_id
+                `);
+
+            if (result.recordset.length === 0) {
+                return { trialUsed: false, mollieCustomerId: null };
+            }
+
+            return {
+                trialUsed: result.recordset[0].trial_used === true,
+                mollieCustomerId: result.recordset[0].mollie_customer_id || null
+            };
+        } catch (error) {
+            console.error('[SubscriptionService] Error fetching trial info:', error);
+            throw new Error(`Failed to fetch trial info: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
 }
