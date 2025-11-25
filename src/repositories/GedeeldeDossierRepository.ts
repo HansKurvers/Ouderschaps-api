@@ -117,6 +117,7 @@ export class GedeeldeDossierRepository extends BaseRepository {
         const query = `
             SELECT
                 g.id,
+                g.id as gebruiker_id,
                 g.email,
                 g.naam,
                 gd.gedeeld_op

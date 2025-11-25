@@ -338,7 +338,9 @@ export class AlimentatieService {
             }
             if (data.ingangsdatum !== undefined) {
                 updateFields.push('ingangsdatum = @Ingangsdatum');
-                request.input('Ingangsdatum', sql.Date, data.ingangsdatum);
+                // Treat empty string as null for date fields
+                const ingangsdatumValue = data.ingangsdatum === '' ? null : data.ingangsdatum;
+                request.input('Ingangsdatum', sql.Date, ingangsdatumValue);
             }
             if (data.ingangsdatumAnders !== undefined) {
                 updateFields.push('ingangsdatum_anders = @IngangsdatumAnders');
