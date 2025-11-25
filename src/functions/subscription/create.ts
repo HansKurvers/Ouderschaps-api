@@ -51,9 +51,14 @@ export async function createSubscription(request: HttpRequest, context: Invocati
             return createErrorResponse('U heeft al een actief abonnement', 400);
         }
 
-        // Handle pending subscription (user abandoned previous checkout)
-        if (existingSubscription && existingSubscription.status === 'pending') {
-            context.log('[CreateSubscription] Found pending subscription, reusing:', existingSubscription.id);
+        // Handle existing subscription that needs reactivation (pending, canceled, or suspended)
+        // This covers: abandoned checkout (pending), canceled subscription, or failed payment (suspended)
+        if (existingSubscription && (existingSubscription.status === 'pending' || existingSubscription.status === 'canceled' || existingSubscription.status === 'suspended')) {
+            context.log('[CreateSubscription] Found existing subscription to reactivate:', {
+                id: existingSubscription.id,
+                status: existingSubscription.status,
+                mollieCustomerId: existingSubscription.mollie_customer_id
+            });
 
             const customerId = existingSubscription.mollie_customer_id;
 
@@ -146,13 +151,19 @@ export async function createSubscription(request: HttpRequest, context: Invocati
                     status: 'pending'
                 });
 
-                // Build trial message
+                // Build trial message based on subscription status and voucher
                 let trialMessage: string;
+                const isReactivation = existingSubscription.status === 'canceled' || existingSubscription.status === 'suspended';
+
                 if (effectiveVoucher?.type === 'maanden_gratis') {
                     const maanden = effectiveVoucher.waarde || 0;
                     trialMessage = `U krijgt ${maanden} maand${maanden > 1 ? 'en' : ''} gratis via uw vouchercode.`;
-                } else if (trialEindDatum) {
+                } else if (trialEindDatum && !isReactivation) {
                     trialMessage = 'Vervolg uw eerdere aanmelding met proefperiode.';
+                } else if (isReactivation) {
+                    trialMessage = effectiveAppliedVoucher
+                        ? `${effectiveAppliedVoucher.korting} korting toegepast. Uw abonnement wordt opnieuw geactiveerd na betaling.`
+                        : 'Uw abonnement wordt opnieuw geactiveerd na betaling.';
                 } else {
                     trialMessage = effectiveAppliedVoucher
                         ? `${effectiveAppliedVoucher.korting} korting toegepast. Het abonnement wordt direct actief na betaling.`
@@ -166,10 +177,12 @@ export async function createSubscription(request: HttpRequest, context: Invocati
                     customer: { id: customerId },
                     isGratis: false,
                     isRetry: true,
+                    isReactivation,
+                    previousStatus: existingSubscription.status,
                     voucherToegepast: effectiveAppliedVoucher,
                     trialInfo: {
-                        hasTrial: trialEindDatum !== undefined,
-                        trialEndDate: trialEindDatum || null,
+                        hasTrial: trialEindDatum !== undefined && !isReactivation,
+                        trialEndDate: (!isReactivation && trialEindDatum) || null,
                         message: trialMessage
                     }
                 }, 200);
