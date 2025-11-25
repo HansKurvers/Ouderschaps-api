@@ -51,6 +51,132 @@ export async function createSubscription(request: HttpRequest, context: Invocati
             return createErrorResponse('U heeft al een actief abonnement', 400);
         }
 
+        // Handle pending subscription (user abandoned previous checkout)
+        if (existingSubscription && existingSubscription.status === 'pending') {
+            context.log('[CreateSubscription] Found pending subscription, reusing:', existingSubscription.id);
+
+            const customerId = existingSubscription.mollie_customer_id;
+
+            if (!customerId) {
+                // Edge case: pending subscription without customer ID - should not happen, but handle gracefully
+                context.log('[CreateSubscription] Pending subscription has no Mollie customer, this is unexpected');
+                return createErrorResponse('Er is een probleem met uw eerdere aanmelding. Neem contact op met support.', 500);
+            }
+
+            {
+                // Reuse existing pending subscription
+                const mollieServiceRetry = new MollieService();
+                const dbServiceRetry = new DatabaseService();
+                const userServiceRetry = new UserService(dbServiceRetry);
+
+                // Get user details
+                const userRetry = await userServiceRetry.getUserById(userId);
+                if (!userRetry) {
+                    return createErrorResponse('Gebruiker niet gevonden', 404);
+                }
+
+                // Handle voucher: use new one from request, or fall back to existing on subscription
+                let effectiveVoucher: Voucher | null = null;
+                let effectiveAppliedVoucher: AppliedVoucher | null = null;
+
+                if (voucherCode) {
+                    // New voucher provided - validate and use it
+                    const voucherResult = await voucherService.validateVoucher(voucherCode, userId);
+                    if (!voucherResult.valid) {
+                        return createErrorResponse(`Ongeldige vouchercode: ${voucherResult.reden}`, 400);
+                    }
+                    effectiveVoucher = voucherResult.voucher!;
+                    effectiveAppliedVoucher = voucherService.calculateAppliedVoucher(effectiveVoucher);
+                    context.log('[CreateSubscription] Using new voucher for retry:', effectiveVoucher.code);
+                } else if (existingSubscription.voucher_id) {
+                    // No new voucher, but existing subscription has one - reuse it
+                    const existingVoucherInfo = await voucherService.getVoucherById(existingSubscription.voucher_id);
+                    if (existingVoucherInfo) {
+                        effectiveVoucher = existingVoucherInfo;
+                        effectiveAppliedVoucher = voucherService.calculateAppliedVoucher(existingVoucherInfo);
+                        context.log('[CreateSubscription] Reusing existing voucher:', effectiveVoucher.code);
+                    }
+                }
+
+                // Calculate price
+                const prijs = effectiveAppliedVoucher?.nieuwe_prijs ?? existingSubscription.maandelijks_bedrag ?? NORMALE_PRIJS;
+                const trialEindDatum = existingSubscription.trial_eind_datum;
+
+                // Build description
+                let description: string;
+                if (effectiveVoucher?.type === 'maanden_gratis') {
+                    const maanden = effectiveVoucher.waarde || 0;
+                    description = `Ouderschapsplan Basis Abonnement - ${maanden} maand${maanden > 1 ? 'en' : ''} gratis`;
+                } else if (trialEindDatum) {
+                    description = 'Ouderschapsplan Basis Abonnement - Proefperiode';
+                } else if (effectiveAppliedVoucher) {
+                    description = `Ouderschapsplan Basis Abonnement - ${effectiveAppliedVoucher.korting} korting`;
+                } else {
+                    description = 'Ouderschapsplan Basis Abonnement';
+                }
+
+                // Create new payment for existing subscription
+                const webhookUrl = process.env.WEBHOOK_URL || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook';
+                const redirectUrl = process.env.REDIRECT_URL || 'https://app.scheidingsdesk.nl/dossiers';
+
+                const payment = await mollieServiceRetry.createFirstPayment({
+                    customerId,
+                    amount: { value: prijs.toFixed(2), currency: 'EUR' },
+                    description,
+                    redirectUrl: `${redirectUrl}?subscriptionCreated=true`,
+                    webhookUrl,
+                    metadata: {
+                        userId: userId.toString(),
+                        subscriptionId: existingSubscription.id.toString(),
+                        type: 'first_payment',
+                        hasTrial: (trialEindDatum !== undefined).toString(),
+                        isRetry: 'true',
+                        voucherCode: effectiveVoucher?.code || ''
+                    }
+                });
+
+                context.log('[CreateSubscription] Retry payment created:', payment.id);
+
+                // Create new payment record
+                await subscriptionService.createPayment({
+                    abonnement_id: existingSubscription.id,
+                    mollie_payment_id: payment.id,
+                    bedrag: prijs,
+                    btw_bedrag: prijs * 0.21,
+                    status: 'pending'
+                });
+
+                // Build trial message
+                let trialMessage: string;
+                if (effectiveVoucher?.type === 'maanden_gratis') {
+                    const maanden = effectiveVoucher.waarde || 0;
+                    trialMessage = `U krijgt ${maanden} maand${maanden > 1 ? 'en' : ''} gratis via uw vouchercode.`;
+                } else if (trialEindDatum) {
+                    trialMessage = 'Vervolg uw eerdere aanmelding met proefperiode.';
+                } else {
+                    trialMessage = effectiveAppliedVoucher
+                        ? `${effectiveAppliedVoucher.korting} korting toegepast. Het abonnement wordt direct actief na betaling.`
+                        : 'Vervolg uw eerdere aanmelding.';
+                }
+
+                return createSuccessResponse({
+                    checkoutUrl: payment.getCheckoutUrl(),
+                    subscriptionId: existingSubscription.id,
+                    paymentId: payment.id,
+                    customer: { id: customerId },
+                    isGratis: false,
+                    isRetry: true,
+                    voucherToegepast: effectiveAppliedVoucher,
+                    trialInfo: {
+                        hasTrial: trialEindDatum !== undefined,
+                        trialEndDate: trialEindDatum || null,
+                        message: trialMessage
+                    }
+                }, 200);
+            }
+        }
+        // If we reach here, either no existing subscription or it was handled above
+
         // Get user details from database
         const user = await userService.getUserById(userId);
         if (!user) {

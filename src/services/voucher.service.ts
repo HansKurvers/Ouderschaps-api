@@ -84,6 +84,28 @@ export class VoucherService {
     }
 
     /**
+     * Get voucher by ID
+     */
+    async getVoucherById(voucherId: number): Promise<Voucher | null> {
+        const pool = await getPool();
+
+        try {
+            const result = await pool.request()
+                .input('id', sql.Int, voucherId)
+                .query(`
+                    SELECT *
+                    FROM dbo.vouchers
+                    WHERE id = @id
+                `);
+
+            return result.recordset[0] || null;
+        } catch (error) {
+            console.error('[VoucherService] Error fetching voucher by ID:', error);
+            throw new Error(`Failed to fetch voucher: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
      * Count how many times a user has used a specific voucher
      */
     async getUserVoucherUsageCount(voucherId: number, userId: number): Promise<number> {
