@@ -259,6 +259,7 @@ export class DbMappers {
             zorgSituatieId: row.zorg_situatie_id,
             overeenkomst: row.overeenkomst,
             situatieAnders: row.situatie_anders || undefined,
+            isCustomText: row.is_custom_text === true || row.is_custom_text === 1,
             aangemaaktOp: new Date(row.aangemaakt_op),
             aangemaaktDoor: row.aangemaakt_door,
             gewijzigdOp: new Date(row.gewijzigd_op),

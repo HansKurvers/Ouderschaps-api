@@ -170,6 +170,7 @@ export interface Zorg {
     zorgSituatieId: number;
     overeenkomst: string;
     situatieAnders?: string;
+    isCustomText?: boolean;
     aangemaaktOp: Date;
     aangemaaktDoor: number;
     gewijzigdOp: Date;
@@ -188,6 +189,7 @@ export interface ZorgLegacy {
     zorgCategorie: ZorgCategorie;
     zorgSituatie: ZorgSituatie;
     situatieAnders?: string;
+    isCustomText?: boolean;
     overeenkomst: string;
     aangemaaktOp: Date;
     aangemaaktDoor: number;
@@ -255,6 +257,7 @@ export interface CreateZorgDto {
     zorgSituatieId: number;
     overeenkomst: string;
     situatieAnders?: string;
+    isCustomText?: boolean;
     aangemaaktDoor: number;
 }
 
@@ -263,6 +266,7 @@ export interface UpdateZorgDto {
     zorgSituatieId?: number;
     overeenkomst?: string;
     situatieAnders?: string;
+    isCustomText?: boolean;
     gewijzigdDoor: number;
 }
 

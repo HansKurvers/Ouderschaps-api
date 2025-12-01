@@ -18,6 +18,7 @@ export interface CreateZorgDto {
     zorgSituatieId: number;
     overeenkomst: string;
     situatieAnders?: string;
+    isCustomText?: boolean;
     aangemaaktDoor: number;
 }
 
@@ -34,6 +35,7 @@ export interface UpdateZorgDto {
     zorgSituatieId?: number;
     overeenkomst?: string;
     situatieAnders?: string;
+    isCustomText?: boolean;
     gewijzigdDoor: number;
 }
 

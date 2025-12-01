@@ -52,6 +52,11 @@ export const createZorgSchema = Joi.object({
             'string.max': 'Situatie anders mag maximaal 500 karakters zijn'
         }),
 
+    isCustomText: Joi.boolean().optional()
+        .messages({
+            'boolean.base': 'Is custom text must be a boolean'
+        }),
+
     aangemaaktDoor: Joi.number().integer().positive().required()
         .messages({
             'number.base': 'Aangemaakt door must be a number',
@@ -97,6 +102,11 @@ export const updateZorgSchema = Joi.object({
         .messages({
             'string.base': 'Situatie anders must be a string',
             'string.max': 'Situatie anders mag maximaal 500 karakters zijn'
+        }),
+
+    isCustomText: Joi.boolean().optional()
+        .messages({
+            'boolean.base': 'Is custom text must be a boolean'
         }),
 
     gewijzigdDoor: Joi.number().integer().positive().required()

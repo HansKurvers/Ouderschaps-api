@@ -45,6 +45,7 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
                 z.zorg_situatie_id,
                 z.overeenkomst,
                 z.situatie_anders,
+                z.is_custom_text,
                 z.aangemaakt_op,
                 z.aangemaakt_door,
                 z.gewijzigd_op,
@@ -80,6 +81,7 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
                 z.zorg_situatie_id,
                 z.overeenkomst,
                 z.situatie_anders,
+                z.is_custom_text,
                 z.aangemaakt_op,
                 z.aangemaakt_door,
                 z.gewijzigd_op,
@@ -114,6 +116,7 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
                 z.zorg_situatie_id,
                 z.overeenkomst,
                 z.situatie_anders,
+                z.is_custom_text,
                 z.aangemaakt_op,
                 z.aangemaakt_door,
                 z.gewijzigd_op,
@@ -149,6 +152,7 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
                 zorg_situatie_id,
                 overeenkomst,
                 situatie_anders,
+                is_custom_text,
                 aangemaakt_door
             )
             OUTPUT INSERTED.*
@@ -158,6 +162,7 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
                 @zorgSituatieId,
                 @overeenkomst,
                 @situatieAnders,
+                @isCustomText,
                 @aangemaaktDoor
             )
         `;
@@ -168,6 +173,7 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
             zorgSituatieId: data.zorgSituatieId,
             overeenkomst: data.overeenkomst,
             situatieAnders: data.situatieAnders || null,
+            isCustomText: data.isCustomText || false,
             aangemaaktDoor: data.aangemaaktDoor
         };
 
@@ -208,6 +214,11 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
         if (data.situatieAnders !== undefined) {
             updates.push('situatie_anders = @situatieAnders');
             params.situatieAnders = data.situatieAnders;
+        }
+
+        if (data.isCustomText !== undefined) {
+            updates.push('is_custom_text = @isCustomText');
+            params.isCustomText = data.isCustomText;
         }
 
         // Always update gewijzigd_op and gewijzigd_door

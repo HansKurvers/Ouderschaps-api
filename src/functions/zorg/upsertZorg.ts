@@ -24,6 +24,7 @@ const upsertZorgSchema = Joi.object({
     zorgSituatieId: Joi.number().integer().positive().required(),
     overeenkomst: Joi.string().min(1).max(5000).required(),
     situatieAnders: Joi.string().max(500).optional().allow('', null),
+    isCustomText: Joi.boolean().optional(),
     _tempId: Joi.any().optional() // Accept but ignore _tempId from frontend
 });
 
@@ -86,6 +87,7 @@ export async function upsertZorg(
                         zorgSituatieId: zorgData.zorgSituatieId,
                         overeenkomst: zorgData.overeenkomst,
                         situatieAnders: zorgData.situatieAnders,
+                        isCustomText: zorgData.isCustomText,
                         gewijzigdDoor: userId
                     });
                     results.push(updated);
@@ -97,6 +99,7 @@ export async function upsertZorg(
                         zorgSituatieId: zorgData.zorgSituatieId,
                         overeenkomst: zorgData.overeenkomst,
                         situatieAnders: zorgData.situatieAnders,
+                        isCustomText: zorgData.isCustomText,
                         aangemaaktDoor: userId
                     });
                     results.push(created);
@@ -125,6 +128,7 @@ export async function upsertZorg(
                         zorgSituatieId: zorgData.zorgSituatieId,
                         overeenkomst: zorgData.overeenkomst,
                         situatieAnders: zorgData.situatieAnders,
+                        isCustomText: zorgData.isCustomText,
                         gewijzigdDoor: userId
                     });
                     results.push(updated);
@@ -136,6 +140,7 @@ export async function upsertZorg(
                         zorgSituatieId: zorgData.zorgSituatieId,
                         overeenkomst: zorgData.overeenkomst,
                         situatieAnders: zorgData.situatieAnders,
+                        isCustomText: zorgData.isCustomText,
                         aangemaaktDoor: userId
                     });
                     results.push(created);
