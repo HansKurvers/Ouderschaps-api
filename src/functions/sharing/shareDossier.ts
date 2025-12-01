@@ -77,11 +77,22 @@ export async function shareDossier(
             const auth0 = new Auth0InviteService();
             let auth0User;
 
+            context.log(`[ShareDossier] Looking up email in Auth0: ${email}`);
+            context.log(`[ShareDossier] Auth0 config - Domain: ${process.env.AUTH0_DOMAIN}, MGMT_CLIENT_ID set: ${!!process.env.AUTH0_MGMT_CLIENT_ID}, MGMT_SECRET set: ${!!process.env.AUTH0_MGMT_CLIENT_SECRET}`);
+
             try {
                 auth0User = await auth0.getUserByEmail(email);
+                context.log(`[ShareDossier] Auth0 lookup result: ${auth0User ? 'User found' : 'User not found'}`);
             } catch (err) {
-                context.error('Auth0 lookup failed:', err);
-                return createErrorResponse('Fout bij controleren gebruiker', 500);
+                const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+                const errorStack = err instanceof Error ? err.stack : undefined;
+                context.error('[ShareDossier] Auth0 lookup failed:', {
+                    message: errorMessage,
+                    stack: errorStack,
+                    email: email,
+                    domain: process.env.AUTH0_DOMAIN
+                });
+                return createErrorResponse(`Fout bij controleren gebruiker: ${errorMessage}`, 500);
             }
 
             // Create user in our DB (with or without auth0_id)

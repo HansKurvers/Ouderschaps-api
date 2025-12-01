@@ -45,6 +45,7 @@ export class Auth0InviteService {
      */
     private async getToken(): Promise<string> {
         if (this.cachedToken && Date.now() < this.tokenExpiry) {
+            console.log('[Auth0InviteService] Using cached token');
             return this.cachedToken;
         }
 
@@ -54,61 +55,98 @@ export class Auth0InviteService {
             if (!this.domain) missing.push('AUTH0_DOMAIN');
             if (!this.mgmtClientId) missing.push('AUTH0_MGMT_CLIENT_ID');
             if (!this.mgmtClientSecret) missing.push('AUTH0_MGMT_CLIENT_SECRET');
+            console.error('[Auth0InviteService] Missing credentials:', missing);
             throw new Error(`Missing Auth0 credentials: ${missing.join(', ')}`);
         }
+
+        const tokenUrl = `https://${this.domain}/oauth/token`;
+        const audience = `https://${this.domain}/api/v2/`;
+
+        console.log('[Auth0InviteService] Requesting M2M token:', {
+            url: tokenUrl,
+            audience: audience,
+            clientIdLength: this.mgmtClientId.length,
+            secretLength: this.mgmtClientSecret.length
+        });
 
         const tokenPayload = {
             client_id: this.mgmtClientId,
             client_secret: this.mgmtClientSecret,
-            audience: `https://${this.domain}/api/v2/`,
+            audience: audience,
             grant_type: 'client_credentials'
         };
 
-        console.log('🔐 Requesting Auth0 M2M token with audience:', tokenPayload.audience);
+        try {
+            const response = await fetch(tokenUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tokenPayload)
+            });
 
-        const response = await fetch(`https://${this.domain}/oauth/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tokenPayload)
-        });
+            const responseText = await response.text();
+            console.log('[Auth0InviteService] Token response status:', response.status);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to get Auth0 token: ${response.status} - ${errorText}`);
+            if (!response.ok) {
+                console.error('[Auth0InviteService] Token request failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: responseText
+                });
+                throw new Error(`Failed to get Auth0 token: ${response.status} - ${responseText}`);
+            }
+
+            const data: ManagementToken = JSON.parse(responseText);
+            this.cachedToken = data.access_token;
+            this.tokenExpiry = Date.now() + (data.expires_in - 3600) * 1000;
+
+            console.log('[Auth0InviteService] Got M2M token, expires in', data.expires_in, 'seconds');
+
+            return this.cachedToken;
+        } catch (error) {
+            console.error('[Auth0InviteService] Token request exception:', error);
+            throw error;
         }
-
-        const data: ManagementToken = await response.json();
-        this.cachedToken = data.access_token;
-        this.tokenExpiry = Date.now() + (data.expires_in - 3600) * 1000;
-
-        console.log('✅ Got Auth0 M2M token, expires in', data.expires_in, 'seconds');
-
-        return this.cachedToken;
     }
 
     /**
      * Check if user exists in Auth0
      */
     async getUserByEmail(email: string): Promise<Auth0User | null> {
+        console.log('[Auth0InviteService] getUserByEmail called for:', email);
+
         const token = await this.getToken();
 
-        const response = await fetch(
-            `https://${this.domain}/api/v2/users-by-email?email=${encodeURIComponent(email)}`,
-            {
+        const searchUrl = `https://${this.domain}/api/v2/users-by-email?email=${encodeURIComponent(email)}`;
+        console.log('[Auth0InviteService] Searching users at:', searchUrl);
+
+        try {
+            const response = await fetch(searchUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
+            });
+
+            const responseText = await response.text();
+            console.log('[Auth0InviteService] Search response status:', response.status);
+
+            if (!response.ok) {
+                console.error('[Auth0InviteService] Search failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: responseText
+                });
+                throw new Error(`Failed to search Auth0 users: ${response.status} - ${responseText}`);
             }
-        );
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to search Auth0 users: ${response.status} - ${errorText}`);
+            const users: Auth0User[] = JSON.parse(responseText);
+            console.log('[Auth0InviteService] Found', users.length, 'users');
+
+            return users.length > 0 ? users[0] : null;
+        } catch (error) {
+            console.error('[Auth0InviteService] getUserByEmail exception:', error);
+            throw error;
         }
-
-        const users: Auth0User[] = await response.json();
-        return users.length > 0 ? users[0] : null;
     }
 
     /**
