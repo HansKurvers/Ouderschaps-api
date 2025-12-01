@@ -70,62 +70,46 @@ export async function shareDossier(
         // 5. Find or create user in database
         context.log(`[ShareDossier] Step 5: Looking up user by email: ${email}`);
         const userRepo = new GebruikerRepository();
+        const auth0 = new Auth0InviteService();
         let gebruiker;
-        try {
-            gebruiker = await userRepo.findByEmail(email);
-            context.log(`[ShareDossier] findByEmail result: ${gebruiker ? `Found user ID ${gebruiker.id}` : 'User not found in DB'}`);
-        } catch (err) {
-            context.error('[ShareDossier] findByEmail failed:', err);
-            return createErrorResponse(`Fout bij zoeken gebruiker in database: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
-        }
         let isNewUser = false;
+        let needsAuth0Invite = false;
 
-        if (!gebruiker) {
-            // User doesn't exist in our DB - check Auth0 and create
-            const auth0 = new Auth0InviteService();
-            let auth0User;
+        // First check Auth0 to get the auth0_id if user exists there
+        context.log(`[ShareDossier] Checking Auth0 for email: ${email}`);
+        context.log(`[ShareDossier] Auth0 config - MGMT_DOMAIN: ${process.env.AUTH0_MGMT_DOMAIN || '(using AUTH0_DOMAIN: ' + process.env.AUTH0_DOMAIN + ')'}, MGMT_CLIENT_ID set: ${!!process.env.AUTH0_MGMT_CLIENT_ID}, MGMT_SECRET set: ${!!process.env.AUTH0_MGMT_CLIENT_SECRET}`);
 
-            context.log(`[ShareDossier] Looking up email in Auth0: ${email}`);
-            context.log(`[ShareDossier] Auth0 config - MGMT_DOMAIN: ${process.env.AUTH0_MGMT_DOMAIN || '(using AUTH0_DOMAIN: ' + process.env.AUTH0_DOMAIN + ')'}, MGMT_CLIENT_ID set: ${!!process.env.AUTH0_MGMT_CLIENT_ID}, MGMT_SECRET set: ${!!process.env.AUTH0_MGMT_CLIENT_SECRET}`);
+        let auth0User;
+        try {
+            auth0User = await auth0.getUserByEmail(email);
+            context.log(`[ShareDossier] Auth0 lookup result: ${auth0User ? `Found with ID ${auth0User.user_id}` : 'User not found in Auth0'}`);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            context.error('[ShareDossier] Auth0 lookup failed:', { message: errorMessage, email });
+            return createErrorResponse(`Fout bij controleren gebruiker in Auth0: ${errorMessage}`, 500);
+        }
 
+        // Now find or create user in our database
+        try {
+            const result = await userRepo.findOrCreate(email, auth0User?.user_id || null);
+            gebruiker = result.gebruiker;
+            isNewUser = result.isNew;
+            context.log(`[ShareDossier] findOrCreate result: ${isNewUser ? 'Created new' : 'Found existing'} user ID ${gebruiker.id}`);
+        } catch (err) {
+            context.error('[ShareDossier] findOrCreate failed:', err);
+            return createErrorResponse(`Fout bij zoeken/aanmaken gebruiker: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
+        }
+
+        // If user is new in our DB AND not in Auth0, we need to invite them
+        if (isNewUser && !auth0User) {
+            needsAuth0Invite = true;
+            context.log(`[ShareDossier] User needs Auth0 invite`);
             try {
-                auth0User = await auth0.getUserByEmail(email);
-                context.log(`[ShareDossier] Auth0 lookup result: ${auth0User ? 'User found' : 'User not found'}`);
+                await auth0.inviteUser(email);
+                context.log(`[ShareDossier] Invited new user: ${email}`);
             } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-                const errorStack = err instanceof Error ? err.stack : undefined;
-                context.error('[ShareDossier] Auth0 lookup failed:', {
-                    message: errorMessage,
-                    stack: errorStack,
-                    email: email,
-                    domain: process.env.AUTH0_DOMAIN
-                });
-                return createErrorResponse(`Fout bij controleren gebruiker: ${errorMessage}`, 500);
-            }
-
-            // Create user in our DB (with or without auth0_id)
-            context.log(`[ShareDossier] Creating user in DB with email: ${email}, auth0_id: ${auth0User?.user_id || 'null'}`);
-            try {
-                gebruiker = await userRepo.create(
-                    email,
-                    auth0User ? auth0User.user_id : null
-                );
-                context.log(`[ShareDossier] User created with ID: ${gebruiker.id}`);
-            } catch (err) {
-                context.error('[ShareDossier] userRepo.create failed:', err);
-                return createErrorResponse(`Fout bij aanmaken gebruiker: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
-            }
-
-            // If not in Auth0, invite them
-            if (!auth0User) {
-                try {
-                    await auth0.inviteUser(email);
-                    isNewUser = true;
-                    context.log(`Invited new user: ${email}`);
-                } catch (err) {
-                    context.error('Failed to invite user:', err);
-                    return createErrorResponse('Fout bij uitnodigen gebruiker', 500);
-                }
+                context.error('[ShareDossier] Failed to invite user:', err);
+                return createErrorResponse(`Fout bij uitnodigen gebruiker: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
             }
         }
 
@@ -154,7 +138,7 @@ export async function shareDossier(
         }
 
         return createSuccessResponse({
-            message: isNewUser
+            message: needsAuth0Invite
                 ? 'Uitnodiging verstuurd naar nieuwe gebruiker'
                 : 'Dossier gedeeld met gebruiker'
         }, 201);

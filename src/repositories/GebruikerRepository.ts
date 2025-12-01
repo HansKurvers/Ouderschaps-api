@@ -75,4 +75,41 @@ export class GebruikerRepository extends BaseRepository {
         const result = await this.executeQuery(query, { email, auth0Id });
         return (result.rowsAffected[0] || 0) > 0;
     }
+
+    /**
+     * Find or create user - handles the case where user exists by auth0_id but not by email
+     * This prevents duplicate key errors when sharing dossiers
+     */
+    async findOrCreate(email: string, auth0Id: string | null = null): Promise<{ gebruiker: Gebruiker; isNew: boolean }> {
+        // First try to find by email
+        let gebruiker = await this.findByEmail(email);
+        if (gebruiker) {
+            // If found by email but auth0_id is different/new, update it
+            if (auth0Id && !gebruiker.auth0_id) {
+                await this.updateAuth0Id(email, auth0Id);
+                gebruiker.auth0_id = auth0Id;
+            }
+            return { gebruiker, isNew: false };
+        }
+
+        // If auth0_id provided, try to find by auth0_id
+        if (auth0Id) {
+            gebruiker = await this.findByAuth0Id(auth0Id);
+            if (gebruiker) {
+                // User exists with this auth0_id but different/no email - update email
+                const updateQuery = `
+                    UPDATE dbo.gebruikers
+                    SET email = @email, gewijzigd_op = GETDATE()
+                    WHERE auth0_id = @auth0Id
+                `;
+                await this.executeQuery(updateQuery, { email, auth0Id });
+                gebruiker.email = email;
+                return { gebruiker, isNew: false };
+            }
+        }
+
+        // User doesn't exist - create new
+        gebruiker = await this.create(email, auth0Id);
+        return { gebruiker, isNew: true };
+    }
 }
