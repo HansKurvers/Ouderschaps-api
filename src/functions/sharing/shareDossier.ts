@@ -78,7 +78,7 @@ export async function shareDossier(
             let auth0User;
 
             context.log(`[ShareDossier] Looking up email in Auth0: ${email}`);
-            context.log(`[ShareDossier] Auth0 config - Domain: ${process.env.AUTH0_DOMAIN}, MGMT_CLIENT_ID set: ${!!process.env.AUTH0_MGMT_CLIENT_ID}, MGMT_SECRET set: ${!!process.env.AUTH0_MGMT_CLIENT_SECRET}`);
+            context.log(`[ShareDossier] Auth0 config - MGMT_DOMAIN: ${process.env.AUTH0_MGMT_DOMAIN || '(using AUTH0_DOMAIN: ' + process.env.AUTH0_DOMAIN + ')'}, MGMT_CLIENT_ID set: ${!!process.env.AUTH0_MGMT_CLIENT_ID}, MGMT_SECRET set: ${!!process.env.AUTH0_MGMT_CLIENT_SECRET}`);
 
             try {
                 auth0User = await auth0.getUserByEmail(email);

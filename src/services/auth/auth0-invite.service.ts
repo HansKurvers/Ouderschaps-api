@@ -20,7 +20,9 @@ interface ManagementToken {
 
 
 export class Auth0InviteService {
-    private domain: string;
+    // Management API domain - must be the tenant domain, NOT custom domain
+    // Custom domains (like login.scheidingsdesk.nl) don't work with Management API
+    private mgmtDomain: string;
     private mgmtClientId: string;
     private mgmtClientSecret: string;
     private appClientId: string;
@@ -28,13 +30,28 @@ export class Auth0InviteService {
     private tokenExpiry: number = 0;
 
     constructor() {
-        this.domain = process.env.AUTH0_DOMAIN || '';
+        // Use AUTH0_MGMT_DOMAIN for Management API, fallback to AUTH0_DOMAIN
+        // IMPORTANT: Management API requires the tenant domain (xxx.eu.auth0.com),
+        // not the custom domain (login.scheidingsdesk.nl)
+        this.mgmtDomain = process.env.AUTH0_MGMT_DOMAIN || process.env.AUTH0_DOMAIN || '';
         this.mgmtClientId = process.env.AUTH0_MGMT_CLIENT_ID || '';
         this.mgmtClientSecret = process.env.AUTH0_MGMT_CLIENT_SECRET || '';
         this.appClientId = process.env.AUTH0_CLIENT_ID || '';
 
-        // Log missing credentials for debugging
-        if (!this.domain) console.warn('⚠️  AUTH0_DOMAIN not set');
+        // Log configuration for debugging
+        console.log('[Auth0InviteService] Initialized with:', {
+            mgmtDomain: this.mgmtDomain,
+            mgmtClientIdSet: !!this.mgmtClientId,
+            mgmtSecretSet: !!this.mgmtClientSecret,
+            appClientIdSet: !!this.appClientId
+        });
+
+        // Warn if using custom domain for Management API (won't work!)
+        if (this.mgmtDomain && !this.mgmtDomain.includes('.auth0.com')) {
+            console.warn(`⚠️  AUTH0_MGMT_DOMAIN="${this.mgmtDomain}" looks like a custom domain. Management API requires tenant domain (xxx.auth0.com). Set AUTH0_MGMT_DOMAIN to your tenant domain.`);
+        }
+
+        if (!this.mgmtDomain) console.warn('⚠️  AUTH0_MGMT_DOMAIN not set');
         if (!this.mgmtClientId) console.warn('⚠️  AUTH0_MGMT_CLIENT_ID not set');
         if (!this.mgmtClientSecret) console.warn('⚠️  AUTH0_MGMT_CLIENT_SECRET not set');
         if (!this.appClientId) console.warn('⚠️  AUTH0_CLIENT_ID not set');
@@ -50,17 +67,17 @@ export class Auth0InviteService {
         }
 
         // Validate required credentials
-        if (!this.domain || !this.mgmtClientId || !this.mgmtClientSecret) {
+        if (!this.mgmtDomain || !this.mgmtClientId || !this.mgmtClientSecret) {
             const missing = [];
-            if (!this.domain) missing.push('AUTH0_DOMAIN');
+            if (!this.mgmtDomain) missing.push('AUTH0_MGMT_DOMAIN');
             if (!this.mgmtClientId) missing.push('AUTH0_MGMT_CLIENT_ID');
             if (!this.mgmtClientSecret) missing.push('AUTH0_MGMT_CLIENT_SECRET');
             console.error('[Auth0InviteService] Missing credentials:', missing);
             throw new Error(`Missing Auth0 credentials: ${missing.join(', ')}`);
         }
 
-        const tokenUrl = `https://${this.domain}/oauth/token`;
-        const audience = `https://${this.domain}/api/v2/`;
+        const tokenUrl = `https://${this.mgmtDomain}/oauth/token`;
+        const audience = `https://${this.mgmtDomain}/api/v2/`;
 
         console.log('[Auth0InviteService] Requesting M2M token:', {
             url: tokenUrl,
@@ -116,7 +133,7 @@ export class Auth0InviteService {
 
         const token = await this.getToken();
 
-        const searchUrl = `https://${this.domain}/api/v2/users-by-email?email=${encodeURIComponent(email)}`;
+        const searchUrl = `https://${this.mgmtDomain}/api/v2/users-by-email?email=${encodeURIComponent(email)}`;
         console.log('[Auth0InviteService] Searching users at:', searchUrl);
 
         try {
@@ -159,7 +176,7 @@ export class Auth0InviteService {
         // 1. Create user with random password (email_verified=false)
         const password = crypto.randomBytes(16).toString('base64');
 
-        const createResp = await fetch(`https://${this.domain}/api/v2/users`, {
+        const createResp = await fetch(`https://${this.mgmtDomain}/api/v2/users`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -181,7 +198,7 @@ export class Auth0InviteService {
         const user: Auth0User = await createResp.json();
 
         // 2. Create password-change ticket → Auth0 sends invite email!
-        const ticketResp = await fetch(`https://${this.domain}/api/v2/tickets/password-change`, {
+        const ticketResp = await fetch(`https://${this.mgmtDomain}/api/v2/tickets/password-change`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
