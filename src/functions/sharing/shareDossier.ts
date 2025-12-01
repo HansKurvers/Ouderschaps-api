@@ -68,8 +68,16 @@ export async function shareDossier(
         }
 
         // 5. Find or create user in database
+        context.log(`[ShareDossier] Step 5: Looking up user by email: ${email}`);
         const userRepo = new GebruikerRepository();
-        let gebruiker = await userRepo.findByEmail(email);
+        let gebruiker;
+        try {
+            gebruiker = await userRepo.findByEmail(email);
+            context.log(`[ShareDossier] findByEmail result: ${gebruiker ? `Found user ID ${gebruiker.id}` : 'User not found in DB'}`);
+        } catch (err) {
+            context.error('[ShareDossier] findByEmail failed:', err);
+            return createErrorResponse(`Fout bij zoeken gebruiker in database: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
+        }
         let isNewUser = false;
 
         if (!gebruiker) {
@@ -96,10 +104,17 @@ export async function shareDossier(
             }
 
             // Create user in our DB (with or without auth0_id)
-            gebruiker = await userRepo.create(
-                email,
-                auth0User ? auth0User.user_id : null
-            );
+            context.log(`[ShareDossier] Creating user in DB with email: ${email}, auth0_id: ${auth0User?.user_id || 'null'}`);
+            try {
+                gebruiker = await userRepo.create(
+                    email,
+                    auth0User ? auth0User.user_id : null
+                );
+                context.log(`[ShareDossier] User created with ID: ${gebruiker.id}`);
+            } catch (err) {
+                context.error('[ShareDossier] userRepo.create failed:', err);
+                return createErrorResponse(`Fout bij aanmaken gebruiker: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
+            }
 
             // If not in Auth0, invite them
             if (!auth0User) {
@@ -115,13 +130,28 @@ export async function shareDossier(
         }
 
         // 6. Check if already shared
-        const alreadyShared = await shareRepo.isAlreadyShared(dossierId, gebruiker.id);
+        context.log(`[ShareDossier] Step 6: Checking if already shared - dossierId: ${dossierId}, gebruikerId: ${gebruiker.id}`);
+        let alreadyShared;
+        try {
+            alreadyShared = await shareRepo.isAlreadyShared(dossierId, gebruiker.id);
+            context.log(`[ShareDossier] isAlreadyShared result: ${alreadyShared}`);
+        } catch (err) {
+            context.error('[ShareDossier] isAlreadyShared failed:', err);
+            return createErrorResponse(`Fout bij controleren bestaande deling: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
+        }
         if (alreadyShared) {
             return createErrorResponse('Dossier is al gedeeld met deze gebruiker', 400);
         }
 
         // 7. Share dossier
-        await shareRepo.create(dossierId, gebruiker.id);
+        context.log(`[ShareDossier] Step 7: Creating share - dossierId: ${dossierId}, gebruikerId: ${gebruiker.id}`);
+        try {
+            await shareRepo.create(dossierId, gebruiker.id);
+            context.log(`[ShareDossier] Share created successfully`);
+        } catch (err) {
+            context.error('[ShareDossier] shareRepo.create failed:', err);
+            return createErrorResponse(`Fout bij opslaan deling: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
+        }
 
         return createSuccessResponse({
             message: isNewUser
