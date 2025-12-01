@@ -4,8 +4,20 @@ import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse,
 import { GedeeldeDossierRepository } from '../../repositories/GedeeldeDossierRepository';
 import { GebruikerRepository } from '../../repositories/GebruikerRepository';
 import { Auth0InviteService } from '../../services/auth/auth0-invite.service';
+import { EmailService } from '../../services/email.service';
 import { getPool } from '../../config/database';
 import Joi from 'joi';
+
+/**
+ * Helper to get user info for email notifications
+ */
+async function getOwnerInfo(userId: number): Promise<{ naam: string | null; email: string | null }> {
+    const pool = await getPool();
+    const result = await pool.request()
+        .input('userId', userId)
+        .query('SELECT naam, email FROM dbo.gebruikers WHERE id = @userId');
+    return result.recordset[0] || { naam: null, email: null };
+}
 
 const shareSchema = Joi.object({
     email: Joi.string().email().required().messages({
@@ -135,6 +147,21 @@ export async function shareDossier(
         } catch (err) {
             context.error('[ShareDossier] shareRepo.create failed:', err);
             return createErrorResponse(`Fout bij opslaan deling: ${err instanceof Error ? err.message : 'Unknown'}`, 500);
+        }
+
+        // 8. Send email notification (non-blocking - soft fail)
+        try {
+            const ownerInfo = await getOwnerInfo(userId);
+            const emailService = new EmailService();
+            await emailService.sendDossierSharedEmail({
+                toEmail: email,
+                sharedByName: ownerInfo.naam || ownerInfo.email || 'Onbekend',
+                sharedByEmail: ownerInfo.email || ''
+            });
+            context.log(`[ShareDossier] Email notification sent to: ${email}`);
+        } catch (err) {
+            // Soft fail - log but don't block the operation
+            context.warn('[ShareDossier] Email notification failed (non-blocking):', err);
         }
 
         return createSuccessResponse({
