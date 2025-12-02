@@ -98,7 +98,7 @@ npm install
 ```bash
 # Mollie API Configuration
 MOLLIE_API_KEY=live_xxxxxxxxxxxxxxxxxxxxx  # Replace with LIVE key for production
-REDIRECT_URL=https://app.scheidingsdesk.nl/subscription/return
+REDIRECT_URL=https://app.idocx.nl/subscription/return
 WEBHOOK_URL=https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook
 
 # Database Configuration (already configured)
@@ -109,7 +109,7 @@ DB_PASSWORD=jrWDaVQe9S7s2cv
 
 # Auth0 Configuration (already configured)
 AUTH0_DOMAIN=dev-cqdk8rl0mh4xtez.eu.auth0.com
-AUTH0_AUDIENCE=https://api.scheidingsdesk.nl
+AUTH0_AUDIENCE=https://api.idocx.nl
 ```
 
 **Update via Azure CLI:**
@@ -119,7 +119,7 @@ az functionapp config appsettings set \
   --resource-group rg-ouderschapsplan \
   --settings \
     MOLLIE_API_KEY="live_xxxxxxxxxxxxxxxxxxxxx" \
-    REDIRECT_URL="https://app.scheidingsdesk.nl/subscription/return" \
+    REDIRECT_URL="https://app.idocx.nl/subscription/return" \
     WEBHOOK_URL="https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook"
 ```
 
@@ -210,12 +210,12 @@ swa deploy --app-name agreeable-grass-0622e6803
 ### Verification After Deployment
 
 **Frontend Routes:**
-- https://app.scheidingsdesk.nl/subscription - Subscription management page
-- https://app.scheidingsdesk.nl/subscription/return - Return page after payment
+- https://app.idocx.nl/subscription - Subscription management page
+- https://app.idocx.nl/subscription/return - Return page after payment
 
 **Protected Routes (require active subscription):**
-- https://app.scheidingsdesk.nl/dossiers
-- https://app.scheidingsdesk.nl/contacten
+- https://app.idocx.nl/dossiers
+- https://app.idocx.nl/contacten
 
 ## API Endpoints
 
