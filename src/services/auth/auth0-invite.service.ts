@@ -21,7 +21,7 @@ interface ManagementToken {
 
 export class Auth0InviteService {
     // Management API domain - must be the tenant domain, NOT custom domain
-    // Custom domains (like login.scheidingsdesk.nl) don't work with Management API
+    // Custom domains (like login.idocx.nl) don't work with Management API
     private mgmtDomain: string;
     private mgmtClientId: string;
     private mgmtClientSecret: string;
@@ -32,7 +32,7 @@ export class Auth0InviteService {
     constructor() {
         // Use AUTH0_MGMT_DOMAIN for Management API, fallback to AUTH0_DOMAIN
         // IMPORTANT: Management API requires the tenant domain (xxx.eu.auth0.com),
-        // not the custom domain (login.scheidingsdesk.nl)
+        // not the custom domain (login.idocx.nl)
         this.mgmtDomain = process.env.AUTH0_MGMT_DOMAIN || process.env.AUTH0_DOMAIN || '';
         this.mgmtClientId = process.env.AUTH0_MGMT_CLIENT_ID || '';
         this.mgmtClientSecret = process.env.AUTH0_MGMT_CLIENT_SECRET || '';

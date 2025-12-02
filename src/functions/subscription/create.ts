@@ -122,7 +122,7 @@ export async function createSubscription(request: HttpRequest, context: Invocati
 
                 // Create new payment for existing subscription
                 const webhookUrl = process.env.WEBHOOK_URL || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook';
-                const redirectUrl = process.env.REDIRECT_URL || 'https://app.scheidingsdesk.nl/dossiers';
+                const redirectUrl = process.env.REDIRECT_URL || 'https://app.idocx.nl/dossiers';
 
                 const payment = await mollieServiceRetry.createFirstPayment({
                     customerId,
@@ -370,7 +370,7 @@ export async function createSubscription(request: HttpRequest, context: Invocati
 
         // Create first payment to establish mandate
         const webhookUrl = process.env.WEBHOOK_URL || 'https://ouderschaps-api-fvgbfwachxabawgs.westeurope-01.azurewebsites.net/api/subscription/webhook';
-        const redirectUrl = process.env.REDIRECT_URL || 'https://app.scheidingsdesk.nl/dossiers';
+        const redirectUrl = process.env.REDIRECT_URL || 'https://app.idocx.nl/dossiers';
 
         const payment = await mollieService.createFirstPayment({
             customerId: customer.id,
