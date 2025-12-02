@@ -84,6 +84,8 @@ import './functions/zorg/updateZorg';
 import './functions/zorg/deleteZorg';
 import './functions/zorg/deleteZorgByCategory';
 import './functions/zorg/upsertZorg';
+// Legacy zorg delete endpoint (still used by frontend)
+import './functions/dossiers/deleteZorg';
 
 // Alimentatie functions (FASE 5)
 import './functions/alimentatie/getAlimentatieByDossierId';
