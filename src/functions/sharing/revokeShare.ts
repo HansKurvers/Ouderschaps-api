@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/fu
 import { requireAuthentication } from '../../utils/auth-helper';
 import { createSuccessResponse, createErrorResponse, createUnauthorizedResponse, createForbiddenResponse, createNotFoundResponse } from '../../utils/response-helper';
 import { GedeeldeDossierRepository } from '../../repositories/GedeeldeDossierRepository';
-// import { EmailService } from '../../services/email.service';
+import { EmailService } from '../../services/email.service';
 import { getPool } from '../../config/database';
 
 /**
@@ -57,8 +57,6 @@ export async function revokeShare(
 
         // Send email notification (non-blocking - soft fail)
         if (targetUser?.email) {
-            // TEMPORARILY DISABLED - Email causing deployment issues
-            /*
             try {
                 const ownerInfo = await getUserById(userId);
                 const emailService = new EmailService();
@@ -71,7 +69,6 @@ export async function revokeShare(
                 // Soft fail - log but don't block the operation
                 context.warn('[RevokeShare] Email notification failed (non-blocking):', err);
             }
-            */
         }
 
         return createSuccessResponse({ message: 'Toegang ingetrokken' }, 200);
