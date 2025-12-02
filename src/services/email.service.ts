@@ -27,8 +27,8 @@ export class EmailService {
 
     constructor() {
         const apiKey = process.env.SENDGRID_API_KEY;
-        this.fromEmail = process.env.EMAIL_FROM || 'noreply@scheidingsdesk.nl';
-        this.appUrl = process.env.APP_URL || 'https://app.scheidingsdesk.nl';
+        this.fromEmail = process.env.EMAIL_FROM || 'noreply@idocx.nl';
+        this.appUrl = process.env.APP_URL || 'https://app.idocx.nl';
 
         if (apiKey) {
             sgMail.setApiKey(apiKey);
@@ -70,17 +70,17 @@ export class EmailService {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Scheidingsdesk</h1>
+            <h1>i-docx</h1>
         </div>
         <div class="content">
             <h2>Een dossier is met je gedeeld</h2>
             <p>Beste gebruiker,</p>
             <p><strong>${sharedByName}</strong> (${sharedByEmail}) heeft een dossier met je gedeeld${dossierInfo}.</p>
-            <p>Je kunt het dossier bekijken door in te loggen op Scheidingsdesk:</p>
-            <p><a href="${this.appUrl}" class="button">Ga naar Scheidingsdesk</a></p>
+            <p>Je kunt het dossier bekijken door in te loggen op i-docx:</p>
+            <p><a href="${this.appUrl}" class="button">Ga naar i-docx</a></p>
         </div>
         <div class="footer">
-            <p>Met vriendelijke groet,<br>Scheidingsdesk</p>
+            <p>Met vriendelijke groet,<br>i-docx</p>
             <p>Dit is een automatisch gegenereerd bericht.</p>
         </div>
     </div>
@@ -97,7 +97,7 @@ Je kunt het dossier bekijken door in te loggen op:
 ${this.appUrl}
 
 Met vriendelijke groet,
-Scheidingsdesk
+i-docx
         `.trim();
 
         try {
@@ -107,9 +107,9 @@ Scheidingsdesk
                 to: toEmail,
                 from: {
                     email: this.fromEmail,
-                    name: 'Scheidingsdesk'
+                    name: 'i-docx'
                 },
-                subject: 'Een dossier is met je gedeeld op Scheidingsdesk',
+                subject: 'Een dossier is met je gedeeld op i-docx',
                 text: textContent,
                 html: htmlContent
             });
@@ -152,7 +152,7 @@ Scheidingsdesk
 <body>
     <div class="container">
         <div class="header">
-            <h1>Scheidingsdesk</h1>
+            <h1>i-docx</h1>
         </div>
         <div class="content">
             <h2>Toegang tot dossier ingetrokken</h2>
@@ -161,7 +161,7 @@ Scheidingsdesk
             <p>Je hebt geen toegang meer tot dit dossier.</p>
         </div>
         <div class="footer">
-            <p>Met vriendelijke groet,<br>Scheidingsdesk</p>
+            <p>Met vriendelijke groet,<br>i-docx</p>
             <p>Dit is een automatisch gegenereerd bericht.</p>
         </div>
     </div>
@@ -177,7 +177,7 @@ ${revokedByName} heeft je toegang tot een dossier ingetrokken${dossierInfo}.
 Je hebt geen toegang meer tot dit dossier.
 
 Met vriendelijke groet,
-Scheidingsdesk
+i-docx
         `.trim();
 
         try {
@@ -187,7 +187,7 @@ Scheidingsdesk
                 to: toEmail,
                 from: {
                     email: this.fromEmail,
-                    name: 'Scheidingsdesk'
+                    name: 'i-docx'
                 },
                 subject: 'Toegang tot dossier ingetrokken',
                 text: textContent,
