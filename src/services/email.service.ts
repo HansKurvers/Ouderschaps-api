@@ -5,7 +5,7 @@
  * Gracefully degrades if SENDGRID_API_KEY is not configured.
  */
 
-import sgMail from '@sendgrid/mail';
+let sgMail: any;
 
 export interface DossierSharedEmailParams {
     toEmail: string;
@@ -31,9 +31,16 @@ export class EmailService {
         this.appUrl = process.env.APP_URL || 'https://app.idocx.nl';
 
         if (apiKey) {
-            sgMail.setApiKey(apiKey);
-            this.initialized = true;
-            console.log('[EmailService] Initialized with SendGrid');
+            try {
+                // Dynamically import SendGrid only when API key is configured
+                sgMail = require('@sendgrid/mail');
+                sgMail.setApiKey(apiKey);
+                this.initialized = true;
+                console.log('[EmailService] Initialized with SendGrid');
+            } catch (error) {
+                console.error('[EmailService] Failed to load SendGrid module:', error);
+                console.warn('[EmailService] Emails disabled due to module loading error');
+            }
         } else {
             console.warn('[EmailService] SENDGRID_API_KEY not set - emails disabled');
         }
@@ -104,6 +111,11 @@ i-docx
 
         try {
             console.log(`[EmailService] Sending dossier-shared email to: ${toEmail}`);
+
+            if (!sgMail) {
+                console.error('[EmailService] SendGrid module not loaded');
+                return false;
+            }
 
             await sgMail.send({
                 to: toEmail,
@@ -184,6 +196,11 @@ i-docx
 
         try {
             console.log(`[EmailService] Sending access-revoked email to: ${toEmail}`);
+
+            if (!sgMail) {
+                console.error('[EmailService] SendGrid module not loaded');
+                return false;
+            }
 
             await sgMail.send({
                 to: toEmail,
