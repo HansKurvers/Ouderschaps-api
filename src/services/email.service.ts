@@ -52,6 +52,8 @@ export class EmailService {
         const { toEmail, sharedByName, sharedByEmail, dossierNummer } = params;
 
         const dossierInfo = dossierNummer ? ` (dossiernummer: ${dossierNummer})` : '';
+        const sharedByInfo = sharedByEmail ? `<strong>${sharedByName}</strong> (${sharedByEmail})` : `<strong>${sharedByName}</strong>`;
+        const sharedByInfoText = sharedByEmail ? `${sharedByName} (${sharedByEmail})` : sharedByName;
 
         const htmlContent = `
 <!DOCTYPE html>
@@ -63,7 +65,7 @@ export class EmailService {
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
         .content { padding: 20px; background-color: #f9fafb; }
-        .button { display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+        .button { display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
         .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
     </style>
 </head>
@@ -75,9 +77,9 @@ export class EmailService {
         <div class="content">
             <h2>Een dossier is met je gedeeld</h2>
             <p>Beste gebruiker,</p>
-            <p><strong>${sharedByName}</strong> (${sharedByEmail}) heeft een dossier met je gedeeld${dossierInfo}.</p>
+            <p>${sharedByInfo} heeft een dossier met je gedeeld${dossierInfo}.</p>
             <p>Je kunt het dossier bekijken door in te loggen op i-docx:</p>
-            <p><a href="${this.appUrl}" class="button">Ga naar i-docx</a></p>
+            <p><a href="${this.appUrl}" class="button" style="color: #ffffff;">Ga naar i-docx</a></p>
         </div>
         <div class="footer">
             <p>Met vriendelijke groet,<br>i-docx</p>
@@ -91,7 +93,7 @@ export class EmailService {
         const textContent = `
 Beste gebruiker,
 
-${sharedByName} (${sharedByEmail}) heeft een dossier met je gedeeld${dossierInfo}.
+${sharedByInfoText} heeft een dossier met je gedeeld${dossierInfo}.
 
 Je kunt het dossier bekijken door in te loggen op:
 ${this.appUrl}
