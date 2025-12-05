@@ -125,6 +125,9 @@ import './functions/ouderschapsplan/getPlanSummary';
 import './functions/ouderschapsplan/validatePlan';
 import './functions/ouderschapsplan/getPlanMetadata';
 
+// Split-Online integration functions
+import './functions/splitOnline/exportToSplitOnline';
+
 // Debug functions
 import './functions/debug/inspectDossier';
 import './functions/debug/debugOmgang';
