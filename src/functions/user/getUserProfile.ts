@@ -42,7 +42,7 @@ export async function getUserProfile(request: HttpRequest, context: InvocationCo
                     profiel_ingevuld_op,
                     laatste_login,
                     aangemaakt_op,
-                    splitonline_api_key
+                    apikey_splitonline
                 FROM dbo.gebruikers
                 WHERE id = @userId
             `);
@@ -60,7 +60,7 @@ export async function getUserProfile(request: HttpRequest, context: InvocationCo
             email: user.email,
             naam: user.naam,
             has_active_subscription: user.has_active_subscription || false,
-            splitonline_api_key: user.splitonline_api_key || null,
+            apikey_splitonline: user.apikey_splitonline || null,
             billing_profile: {
                 klant_type: user.klant_type,
                 telefoon: user.telefoon,

@@ -40,7 +40,7 @@ export interface Gebruiker {
     profiel_ingevuld_op?: Date;
 
     // External integrations
-    splitonline_api_key?: string;
+    apikey_splitonline?: string;
 }
 
 /**
@@ -65,7 +65,7 @@ export interface UpdateBillingProfileDTO {
     kvk_nummer?: string;
 
     // External integrations
-    splitonline_api_key?: string;
+    apikey_splitonline?: string;
 }
 
 /**
@@ -76,7 +76,7 @@ export interface UserProfileResponse {
     email: string;
     naam: string;
     has_active_subscription: boolean;
-    splitonline_api_key?: string | null;
+    apikey_splitonline?: string | null;
 
     // Billing Profile
     billing_profile: {

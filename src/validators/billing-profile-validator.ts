@@ -133,7 +133,7 @@ export const updateBillingProfileSchema = Joi.object({
     }),
 
     // External integrations
-    splitonline_api_key: Joi.string()
+    apikey_splitonline: Joi.string()
         .max(255)
         .optional()
         .allow('', null)

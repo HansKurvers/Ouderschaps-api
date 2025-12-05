@@ -44,7 +44,7 @@ export async function updateUserProfile(request: HttpRequest, context: Invocatio
             .input('btwNummer', value.btw_nummer || null)
             .input('kvkNummer', value.kvk_nummer || null)
             .input('isZakelijk', value.klant_type === 'zakelijk' ? 1 : 0)
-            .input('splitonlineApiKey', value.splitonline_api_key || null);
+            .input('apikeySplitonline', value.apikey_splitonline || null);
 
         // Only update naam if provided
         if (value.naam) {
@@ -63,7 +63,7 @@ export async function updateUserProfile(request: HttpRequest, context: Invocatio
             btw_nummer = @btwNummer,
             kvk_nummer = @kvkNummer,
             is_zakelijk = @isZakelijk,
-            splitonline_api_key = @splitonlineApiKey,
+            apikey_splitonline = @apikeySplitonline,
             profiel_compleet = 1,
             profiel_ingevuld_op = GETDATE(),
             gewijzigd_op = GETDATE()${value.naam ? ',\n                    naam = @naam' : ''}
@@ -102,7 +102,7 @@ export async function updateUserProfile(request: HttpRequest, context: Invocatio
                     kvk_nummer,
                     profiel_compleet,
                     profiel_ingevuld_op,
-                    splitonline_api_key
+                    apikey_splitonline
                 FROM dbo.gebruikers
                 WHERE id = @userId
             `);
@@ -118,7 +118,7 @@ export async function updateUserProfile(request: HttpRequest, context: Invocatio
                 email: user.email,
                 naam: user.naam,
                 has_active_subscription: user.has_active_subscription,
-                splitonline_api_key: user.splitonline_api_key || null,
+                apikey_splitonline: user.apikey_splitonline || null,
                 billing_profile: {
                     klant_type: user.klant_type,
                     telefoon: user.telefoon,
