@@ -129,22 +129,13 @@ function mapSamenwonendPartner(partij: PartijData | null): AfdSamenwonendPartner
 
 /**
  * Map KN - Kinderen
- * Each child needs two entries: one for relation to VP, one for relation to SP
+ * Each child gets one entry with relation to VP (alimentatieplichtige)
  */
 function mapKinderen(kinderen: KindData[]): AfdKind[] {
-    const result: AfdKind[] = [];
-
-    kinderen.forEach((kind, index) => {
+    return kinderen.map((kind, index) => {
         const volgnummer = String(index + 1);
-
-        // Create entry for relation to VP (Partij 1)
-        result.push(mapKind(kind, volgnummer, 'VP'));
-
-        // Create entry for relation to SP (Partij 2)
-        result.push(mapKind(kind, volgnummer, 'SP'));
+        return mapKind(kind, volgnummer, 'VP');
     });
-
-    return result;
 }
 
 /**
