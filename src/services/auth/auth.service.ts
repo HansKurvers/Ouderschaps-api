@@ -69,10 +69,16 @@ export class AuthService {
 
         
         try {
+            // Auth0 access tokens don't include email/name by default
+            // Check both standard claims and namespaced custom claims (from Auth0 Action)
+            const namespace = 'https://api.scheidingsdesk.nl';
+            const email = validation.payload.email || validation.payload[`${namespace}/email`];
+            const name = validation.payload.name || validation.payload[`${namespace}/name`];
+
             const user = await this.userService.findOrCreateUser({
                 sub: validation.userId!,
-                email: validation.payload.email,
-                name: validation.payload.name
+                email: email,
+                name: name
             });
 
             return {
