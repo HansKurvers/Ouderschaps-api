@@ -130,7 +130,16 @@ export const updateBillingProfileSchema = Joi.object({
                 'string.pattern.base': 'Ongeldig KvK-nummer (verwacht: 8 cijfers)'
             }),
         otherwise: Joi.string().optional().allow('', null)
-    })
+    }),
+
+    // External integrations
+    splitonline_api_key: Joi.string()
+        .max(255)
+        .optional()
+        .allow('', null)
+        .messages({
+            'string.max': 'SplitOnline API key mag maximaal 255 tekens bevatten'
+        })
 });
 
 /**

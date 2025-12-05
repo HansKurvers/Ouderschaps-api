@@ -38,6 +38,9 @@ export interface Gebruiker {
     // Profile completion tracking
     profiel_compleet: boolean;
     profiel_ingevuld_op?: Date;
+
+    // External integrations
+    splitonline_api_key?: string;
 }
 
 /**
@@ -60,6 +63,9 @@ export interface UpdateBillingProfileDTO {
     bedrijfsnaam?: string;
     btw_nummer?: string;
     kvk_nummer?: string;
+
+    // External integrations
+    splitonline_api_key?: string;
 }
 
 /**
@@ -70,6 +76,7 @@ export interface UserProfileResponse {
     email: string;
     naam: string;
     has_active_subscription: boolean;
+    splitonline_api_key?: string | null;
 
     // Billing Profile
     billing_profile: {
