@@ -96,14 +96,30 @@ export class UserService {
 
     private async createUser(auth0User: Auth0User): Promise<User> {
         await this.db.initialize();
+
+        // Determine correct email and name values
+        // Auth0 sometimes puts email in the name field for email/password accounts
+        let email = auth0User.email || null;
+        let name = auth0User.name || null;
+
+        // If name looks like an email address and we don't have an email, use name as email
+        if (name && name.includes('@') && !email) {
+            email = name;
+            name = null;
+        }
+        // If name looks like an email address and we already have an email, clear the name
+        else if (name && name.includes('@') && email) {
+            name = null;
+        }
+
         const result = await this.db.executeQuery(
             `INSERT INTO dbo.gebruikers (auth0_id, email, naam, aangemaakt_op, gewijzigd_op, laatste_login)
              OUTPUT INSERTED.*
              VALUES (@auth0Id, @email, @naam, GETDATE(), GETDATE(), GETDATE())`,
             {
                 auth0Id: { value: auth0User.sub, type: sql.NVarChar },
-                email: { value: auth0User.email || null, type: sql.NVarChar },
-                naam: { value: auth0User.name || null, type: sql.NVarChar }
+                email: { value: email, type: sql.NVarChar },
+                naam: { value: name, type: sql.NVarChar }
             }
         );
 
