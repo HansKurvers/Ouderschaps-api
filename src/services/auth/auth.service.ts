@@ -36,7 +36,7 @@ export class AuthService {
             };
         }
 
-        return this.handleBearerAuth(authHeader);
+        return this.handleBearerAuth(authHeader, request);
     }
 
     async requireAuthentication(request: HttpRequest): Promise<User> {
@@ -49,7 +49,7 @@ export class AuthService {
         return result.user;
     }
 
-    private async handleBearerAuth(authHeader: string): Promise<AuthResult> {
+    private async handleBearerAuth(authHeader: string, request: HttpRequest): Promise<AuthResult> {
         if (!authHeader.startsWith('Bearer ')) {
             return {
                 authenticated: false,
@@ -72,8 +72,17 @@ export class AuthService {
             // Auth0 access tokens don't include email/name by default
             // Check both standard claims and namespaced custom claims (from Auth0 Action)
             const namespace = 'https://api.scheidingsdesk.nl';
-            const email = validation.payload.email || validation.payload[`${namespace}/email`];
-            const name = validation.payload.name || validation.payload[`${namespace}/name`];
+            let email = validation.payload.email || validation.payload[`${namespace}/email`];
+            let name = validation.payload.name || validation.payload[`${namespace}/name`];
+
+            // Fallback: read from X-User-Info header (sent by frontend)
+            if (!email || !name) {
+                const userInfo = this.parseUserInfoHeader(request);
+                if (userInfo) {
+                    email = email || userInfo.email;
+                    name = name || userInfo.name;
+                }
+            }
 
             const user = await this.userService.findOrCreateUser({
                 sub: validation.userId!,
@@ -97,6 +106,24 @@ export class AuthService {
         }
     }
 
+
+    private parseUserInfoHeader(request: HttpRequest): { email?: string; name?: string } | null {
+        const userInfoHeader = request.headers.get('x-user-info');
+        if (!userInfoHeader) {
+            return null;
+        }
+
+        try {
+            const parsed = JSON.parse(userInfoHeader);
+            return {
+                email: parsed.email || undefined,
+                name: parsed.name || undefined
+            };
+        } catch (error) {
+            console.warn('Failed to parse X-User-Info header:', error);
+            return null;
+        }
+    }
 
     private async handleDevelopmentAuth(): Promise<AuthResult> {
         const user = await this.userService.getUserById(this.config.devUserId);
