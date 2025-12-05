@@ -57,7 +57,17 @@ export async function getDossierById(
             return createForbiddenResponse();
         }
 
-        return createSuccessResponse(dossier);
+        // Add isOwner flag to dossier
+        const isOwner = dossier.dossier.gebruikerId === userID;
+        const responseData = {
+            ...dossier,
+            dossier: {
+                ...dossier.dossier,
+                isOwner,
+            },
+        };
+
+        return createSuccessResponse(responseData);
     } catch (error) {
         context.error('Error fetching dossier:', error);
 
