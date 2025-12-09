@@ -278,7 +278,8 @@ export class DbMappers {
         return {
             id: row.id,
             naam: row.naam,
-            zorgCategorieId: row.zorg_categorie_id || undefined
+            zorgCategorieId: row.zorg_categorie_id || undefined,
+            defaultTemplateId: row.default_template_id ?? null
         };
     }
 

@@ -1443,8 +1443,8 @@ export class DossierDatabaseService {
             const request = pool.request();
 
             let query = `
-                SELECT id, naam, zorg_categorie_id 
-                FROM dbo.zorg_situaties 
+                SELECT id, naam, zorg_categorie_id, default_template_id
+                FROM dbo.zorg_situaties
             `;
 
             const conditions = [];
@@ -1476,7 +1476,8 @@ export class DossierDatabaseService {
             return result.recordset.map(row => ({
                 id: row.id,
                 naam: row.naam,
-                zorgCategorieId: row.zorg_categorie_id
+                zorgCategorieId: row.zorg_categorie_id,
+                defaultTemplateId: row.default_template_id ?? null
             }));
         } catch (error) {
             console.error('Error getting zorg situaties:', error);

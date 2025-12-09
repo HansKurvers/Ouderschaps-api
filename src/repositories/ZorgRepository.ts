@@ -358,7 +358,7 @@ export class ZorgRepository extends BaseRepository implements IZorgRepository {
      */
     async getSituatiesForCategorie(categorieId: number): Promise<ZorgSituatie[]> {
         const query = `
-            SELECT id, naam, zorg_categorie_id
+            SELECT id, naam, zorg_categorie_id, default_template_id
             FROM dbo.zorg_situaties
             WHERE zorg_categorie_id = @categorieId
                OR zorg_categorie_id IS NULL

@@ -107,6 +107,7 @@ export interface ZorgSituatie {
     id: number;
     naam: string;
     zorgCategorieId?: number;
+    defaultTemplateId?: number | null;
 }
 
 export interface Omgang {
