@@ -1509,7 +1509,7 @@ export class DossierDatabaseService {
             const request = pool.request();
             
             let query = `
-                SELECT id, template_naam, template_tekst, meervoud_kinderen, type, template_subtype, sort_order
+                SELECT id, template_naam, template_tekst, card_tekst, meervoud_kinderen, type, template_subtype, sort_order
                 FROM dbo.regelingen_templates
             `;
 
@@ -1541,6 +1541,7 @@ export class DossierDatabaseService {
                 id: row.id,
                 templateNaam: row.template_naam,
                 templateTekst: row.template_tekst,
+                cardTekst: row.card_tekst,
                 meervoudKinderen: row.meervoud_kinderen,
                 type: row.type,
                 templateSubtype: row.template_subtype,
