@@ -89,14 +89,14 @@ const templates = [
     {
         naam: 'vakantie_keuze_even_p1_oneven_p2',
         tekst: 'In de even jaren heeft {PARTIJ1} de eerste keuze of {KIND} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ1} verblijft en in de oneven jaren heeft {PARTIJ2} de eerste keuze of {KIND} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ2} verblijft.',
-        cardTekst: 'Even jaren: {PARTIJ1} kiest eerst 1e of 2e helft, oneven jaren: {PARTIJ2} kiest eerst',
+        cardTekst: 'Even jaren: {PARTIJ1} kiest eerst 1e of 2e helft van de {VAKANTIE}.\nOneven jaren: {PARTIJ2} kiest eerst 1e of 2e helft van de {VAKANTIE}.',
         meervoud: 0,
         sortOrder: 5
     },
     {
         naam: 'vakantie_keuze_even_p1_oneven_p2_meervoud',
         tekst: 'In de even jaren heeft {PARTIJ1} de eerste keuze of {KINDEREN} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ1} verblijven en in de oneven jaren heeft {PARTIJ2} de eerste keuze of {KINDEREN} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ2} verblijven.',
-        cardTekst: 'Even jaren: {PARTIJ1} kiest eerst 1e of 2e helft, oneven jaren: {PARTIJ2} kiest eerst',
+        cardTekst: 'Even jaren: {PARTIJ1} kiest eerst 1e of 2e helft van de {VAKANTIE}.\nOneven jaren: {PARTIJ2} kiest eerst 1e of 2e helft van de {VAKANTIE}.',
         meervoud: 1,
         sortOrder: 5
     },
@@ -105,14 +105,14 @@ const templates = [
     {
         naam: 'vakantie_keuze_oneven_p1_even_p2',
         tekst: 'In de oneven jaren heeft {PARTIJ1} de eerste keuze of {KIND} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ1} verblijft en in de even jaren heeft {PARTIJ2} de eerste keuze of {KIND} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ2} verblijft.',
-        cardTekst: 'Oneven jaren: {PARTIJ1} kiest eerst 1e of 2e helft, even jaren: {PARTIJ2} kiest eerst',
+        cardTekst: 'Oneven jaren: {PARTIJ1} kiest eerst 1e of 2e helft van de {VAKANTIE}.\nEven jaren: {PARTIJ2} kiest eerst 1e of 2e helft van de {VAKANTIE}.',
         meervoud: 0,
         sortOrder: 6
     },
     {
         naam: 'vakantie_keuze_oneven_p1_even_p2_meervoud',
         tekst: 'In de oneven jaren heeft {PARTIJ1} de eerste keuze of {KINDEREN} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ1} verblijven en in de even jaren heeft {PARTIJ2} de eerste keuze of {KINDEREN} voor de eerste of tweede helft van de {VAKANTIE} bij {PARTIJ2} verblijven.',
-        cardTekst: 'Oneven jaren: {PARTIJ1} kiest eerst 1e of 2e helft, even jaren: {PARTIJ2} kiest eerst',
+        cardTekst: 'Oneven jaren: {PARTIJ1} kiest eerst 1e of 2e helft van de {VAKANTIE}.\nEven jaren: {PARTIJ2} kiest eerst 1e of 2e helft van de {VAKANTIE}.',
         meervoud: 1,
         sortOrder: 6
     }
