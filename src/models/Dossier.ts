@@ -82,7 +82,7 @@ export interface RegelingTemplate {
     templateNaam: string;
     templateTekst: string;
     cardTekst?: string | null;
-    meervoudKinderen: boolean;
+    // Note: meervoudKinderen removed - templates now use dynamic placeholders like {KIND/KINDEREN}
     type: string;
     templateSubtype?: string | null;
     sortOrder: number;

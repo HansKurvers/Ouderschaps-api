@@ -21,18 +21,13 @@ export async function getRegelingenTemplates(
     context: InvocationContext
 ): Promise<HttpResponseInit> {
     // Parse query parameters
-    const meervoudKinderenParam = request.query.get('meervoudKinderen');
+    // Note: meervoudKinderen parameter removed - templates now use dynamic placeholders
     const typeParam = request.query.get('type');
     const subtypeParam = request.query.get('subtype');
-    
+
     // Convert string parameters to appropriate types
-    const filters: { meervoudKinderen?: boolean; type?: string; subtype?: string } = {};
-    
-    if (meervoudKinderenParam !== null) {
-        // Accept 'true', 'false', '1', '0'
-        filters.meervoudKinderen = meervoudKinderenParam === 'true' || meervoudKinderenParam === '1';
-    }
-    
+    const filters: { type?: string; subtype?: string } = {};
+
     if (typeParam) {
         // Validate type parameter
         const validTypes = ['Feestdag', 'Vakantie', 'Algemeen', 'Bijzondere dag'];
@@ -42,7 +37,7 @@ export async function getRegelingenTemplates(
             return createErrorResponse(`Invalid type parameter. Must be one of: ${validTypes.join(', ')}`, 400);
         }
     }
-    
+
     if (subtypeParam) {
         filters.subtype = subtypeParam;
     }

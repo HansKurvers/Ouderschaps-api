@@ -1504,22 +1504,18 @@ export class DossierDatabaseService {
         }
     }
 
-    async getRegelingenTemplates(filters?: { meervoudKinderen?: boolean; type?: string; subtype?: string }): Promise<RegelingTemplate[]> {
+    async getRegelingenTemplates(filters?: { type?: string; subtype?: string }): Promise<RegelingTemplate[]> {
         try {
             const pool = await this.getPool();
             const request = pool.request();
-            
+
+            // Note: meervoud_kinderen filter removed - templates now use dynamic placeholders
             let query = `
-                SELECT id, template_naam, template_tekst, card_tekst, meervoud_kinderen, type, template_subtype, sort_order
+                SELECT id, template_naam, template_tekst, card_tekst, type, template_subtype, sort_order
                 FROM dbo.regelingen_templates
             `;
 
             const whereClauses = [];
-
-            if (filters?.meervoudKinderen !== undefined) {
-                whereClauses.push('meervoud_kinderen = @MeervoudKinderen');
-                request.input('MeervoudKinderen', sql.Bit, filters.meervoudKinderen);
-            }
 
             if (filters?.type) {
                 whereClauses.push('type = @Type');
@@ -1536,14 +1532,13 @@ export class DossierDatabaseService {
             }
 
             query += ' ORDER BY sort_order ASC, template_naam ASC';
-            
+
             const result = await request.query(query);
             return result.recordset.map(row => ({
                 id: row.id,
                 templateNaam: row.template_naam,
                 templateTekst: row.template_tekst,
                 cardTekst: row.card_tekst,
-                meervoudKinderen: row.meervoud_kinderen,
                 type: row.type,
                 templateSubtype: row.template_subtype,
                 sortOrder: row.sort_order
