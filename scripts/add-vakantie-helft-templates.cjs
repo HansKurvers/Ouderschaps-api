@@ -19,8 +19,8 @@ const config = {
     }
 };
 
-// Template definitions - 12 templates (6 concepts x 2 meervoud variants)
-// Keuze templates eerst (sort 1-2), dan eerste helft templates (sort 3-6)
+// Template definitions - 8 templates (4 concepts x 2 meervoud variants)
+// Keuze templates eerst (sort 1-2), dan afwisselende helft templates (sort 3-4)
 const templates = [
     // Groep 1: Eerste keuze - Even PARTIJ1, Oneven PARTIJ2 (sort_order 1) - BOVENAAN
     {
@@ -54,68 +54,36 @@ const templates = [
         sortOrder: 2
     },
 
-    // Groep 3: Oneven jaren - PARTIJ1 eerste helft (sort_order 3)
+    // Groep 3: Afwisselend - Oneven P1 eerst, Even P2 eerst (sort_order 3)
     {
-        naam: 'vakantie_oneven_p1_eerste_helft',
-        tekst: 'In de oneven jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}.',
-        cardTekst: 'Oneven jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}',
+        naam: 'vakantie_afwisselend_oneven_p1',
+        tekst: 'In de oneven jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}. In de even jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}.',
+        cardTekst: 'Oneven jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}.\nEven jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}.',
         meervoud: 0,
         sortOrder: 3
     },
     {
-        naam: 'vakantie_oneven_p1_eerste_helft_meervoud',
-        tekst: 'In de oneven jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}.',
-        cardTekst: 'Oneven jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}',
+        naam: 'vakantie_afwisselend_oneven_p1_meervoud',
+        tekst: 'In de oneven jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}. In de even jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}.',
+        cardTekst: 'Oneven jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}.\nEven jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}.',
         meervoud: 1,
         sortOrder: 3
     },
 
-    // Groep 4: Even jaren - PARTIJ1 eerste helft (sort_order 4)
+    // Groep 4: Afwisselend - Oneven P2 eerst, Even P1 eerst (sort_order 4)
     {
-        naam: 'vakantie_even_p1_eerste_helft',
-        tekst: 'In de even jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}.',
-        cardTekst: 'Even jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}',
+        naam: 'vakantie_afwisselend_oneven_p2',
+        tekst: 'In de oneven jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}. In de even jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}.',
+        cardTekst: 'Oneven jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}.\nEven jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}.',
         meervoud: 0,
         sortOrder: 4
     },
     {
-        naam: 'vakantie_even_p1_eerste_helft_meervoud',
-        tekst: 'In de even jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}.',
-        cardTekst: 'Even jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}',
+        naam: 'vakantie_afwisselend_oneven_p2_meervoud',
+        tekst: 'In de oneven jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}. In de even jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ1} en de tweede helft bij {PARTIJ2}.',
+        cardTekst: 'Oneven jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}.\nEven jaren: 1e helft {PARTIJ1}, 2e helft {PARTIJ2}.',
         meervoud: 1,
         sortOrder: 4
-    },
-
-    // Groep 5: Oneven jaren - PARTIJ2 eerste helft (sort_order 5)
-    {
-        naam: 'vakantie_oneven_p2_eerste_helft',
-        tekst: 'In de oneven jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}.',
-        cardTekst: 'Oneven jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}',
-        meervoud: 0,
-        sortOrder: 5
-    },
-    {
-        naam: 'vakantie_oneven_p2_eerste_helft_meervoud',
-        tekst: 'In de oneven jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}.',
-        cardTekst: 'Oneven jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}',
-        meervoud: 1,
-        sortOrder: 5
-    },
-
-    // Groep 6: Even jaren - PARTIJ2 eerste helft (sort_order 6)
-    {
-        naam: 'vakantie_even_p2_eerste_helft',
-        tekst: 'In de even jaren verblijft {KIND} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}.',
-        cardTekst: 'Even jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}',
-        meervoud: 0,
-        sortOrder: 6
-    },
-    {
-        naam: 'vakantie_even_p2_eerste_helft_meervoud',
-        tekst: 'In de even jaren verblijven {KINDEREN} de eerste helft van de {VAKANTIE} bij {PARTIJ2} en de tweede helft bij {PARTIJ1}.',
-        cardTekst: 'Even jaren: 1e helft {PARTIJ2}, 2e helft {PARTIJ1}',
-        meervoud: 1,
-        sortOrder: 6
     }
 ];
 
