@@ -232,16 +232,18 @@ export class LookupRepository extends BaseRepository implements ILookupRepositor
     }
 
     /**
-     * Get all pension providers
+     * Get all pension providers / financial institutions
      * Table: dbo.pensioen_uitvoerders
+     * Extended with categorie and geschikt_voor for filtering
      */
     async getPensioenUitvoerders(options?: {
         type?: string;
         search?: string;
         includeInactive?: boolean;
-    }): Promise<Array<{ id: number; naam: string; type: string }>> {
+        geschiktVoor?: string;
+    }): Promise<Array<{ id: number; naam: string; type: string; categorie?: string; geschiktVoor?: string }>> {
         let query = `
-            SELECT id, naam, type
+            SELECT id, naam, type, categorie, geschikt_voor as geschiktVoor
             FROM dbo.pensioen_uitvoerders
             WHERE 1=1
         `;
@@ -257,6 +259,12 @@ export class LookupRepository extends BaseRepository implements ILookupRepositor
         if (options?.type) {
             query += ` AND type = @type`;
             params.type = options.type;
+        }
+
+        // Filter by geschikt_voor (comma-separated values, check if contains)
+        if (options?.geschiktVoor) {
+            query += ` AND (geschikt_voor LIKE @geschiktVoor OR naam = 'Anders')`;
+            params.geschiktVoor = `%${options.geschiktVoor}%`;
         }
 
         // Filter by search term

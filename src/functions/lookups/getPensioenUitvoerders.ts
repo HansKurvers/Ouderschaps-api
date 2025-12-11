@@ -2,15 +2,15 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/fu
 import { LookupRepository } from '../../repositories/LookupRepository';
 import { createErrorResponse, createSuccessResponse } from '../../utils/response-helper';
 
-// In-memory cache for pensioen uitvoerders
-let pensioenUitvoerdersCache: Array<{ id: number; naam: string; type: string }> | null = null;
-let cacheTimestamp: number | null = null;
+// In-memory cache for pensioen uitvoerders (keyed by geschiktVoor filter)
+const pensioenUitvoerdersCache: Map<string, Array<{ id: number; naam: string; type: string; categorie?: string; geschiktVoor?: string }>> = new Map();
+const cacheTimestamps: Map<string, number> = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Function to clear cache (for testing purposes or after sync)
 export function clearPensioenUitvoerdersCache(): void {
-    pensioenUitvoerdersCache = null;
-    cacheTimestamp = null;
+    pensioenUitvoerdersCache.clear();
+    cacheTimestamps.clear();
 }
 
 export async function getPensioenUitvoerders(
@@ -21,15 +21,22 @@ export async function getPensioenUitvoerders(
     const type = request.query.get('type') || undefined;
     const search = request.query.get('search') || undefined;
     const includeInactive = request.query.get('includeInactive') === 'true';
+    const geschiktVoor = request.query.get('geschiktVoor') || undefined;
 
-    // Only use cache for unfiltered requests
+    // Create cache key based on geschiktVoor filter (cache per filter value)
+    const cacheKey = geschiktVoor || '_all_';
+
+    // Only use cache for requests without type, search, or includeInactive filters
     const useCache = !type && !search && !includeInactive;
 
-    // Check if we have valid cached data (only for unfiltered requests)
+    // Check if we have valid cached data
     const now = Date.now();
-    if (useCache && pensioenUitvoerdersCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
-        context.log('Returning cached pensioen uitvoerders data');
-        return createSuccessResponse(pensioenUitvoerdersCache);
+    const cachedTimestamp = cacheTimestamps.get(cacheKey);
+    const cachedData = pensioenUitvoerdersCache.get(cacheKey);
+
+    if (useCache && cachedData && cachedTimestamp && (now - cachedTimestamp) < CACHE_DURATION) {
+        context.log(`Returning cached pensioen uitvoerders data for key: ${cacheKey}`);
+        return createSuccessResponse(cachedData);
     }
 
     try {
@@ -39,16 +46,17 @@ export async function getPensioenUitvoerders(
         const pensioenUitvoerders = await lookupRepository.getPensioenUitvoerders({
             type,
             search,
-            includeInactive
+            includeInactive,
+            geschiktVoor
         });
 
-        // Update cache only for unfiltered requests
+        // Update cache for this geschiktVoor filter
         if (useCache) {
-            pensioenUitvoerdersCache = pensioenUitvoerders;
-            cacheTimestamp = now;
+            pensioenUitvoerdersCache.set(cacheKey, pensioenUitvoerders);
+            cacheTimestamps.set(cacheKey, now);
         }
 
-        context.log(`Retrieved ${pensioenUitvoerders.length} pensioen uitvoerders from repository`);
+        context.log(`Retrieved ${pensioenUitvoerders.length} pensioen uitvoerders from repository (filter: ${geschiktVoor || 'none'})`);
         return createSuccessResponse(pensioenUitvoerders);
 
     } catch (error) {
