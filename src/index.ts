@@ -46,6 +46,7 @@ import './functions/lookups/getZorgCategorieen';
 import './functions/lookups/getZorgSituaties';
 import './functions/lookups/getSchoolvakanties';
 import './functions/lookups/getRegelingenTemplates';
+import './functions/lookups/getPensioenUitvoerders';
 
 // Subscription functions (Mollie)
 import './functions/subscription/create';
@@ -132,6 +133,9 @@ import './functions/splitOnline/exportToSplitOnline';
 import './functions/debug/inspectDossier';
 import './functions/debug/debugOmgang';
 import './functions/debug/checkDuplicateZorg';
+
+// Admin functions (DNB Sync)
+import './functions/syncPensioenUitvoerders';
 
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports

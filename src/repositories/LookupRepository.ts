@@ -230,4 +230,56 @@ export class LookupRepository extends BaseRepository implements ILookupRepositor
         `;
         return await this.querySingle(query, { situatieId });
     }
+
+    /**
+     * Get all pension providers
+     * Table: dbo.pensioen_uitvoerders
+     */
+    async getPensioenUitvoerders(options?: {
+        type?: string;
+        search?: string;
+        includeInactive?: boolean;
+    }): Promise<Array<{ id: number; naam: string; type: string }>> {
+        let query = `
+            SELECT id, naam, type
+            FROM dbo.pensioen_uitvoerders
+            WHERE 1=1
+        `;
+
+        const params: Record<string, any> = {};
+
+        // Filter by active status (default: only active)
+        if (!options?.includeInactive) {
+            query += ` AND is_actief = 1`;
+        }
+
+        // Filter by type
+        if (options?.type) {
+            query += ` AND type = @type`;
+            params.type = options.type;
+        }
+
+        // Filter by search term
+        if (options?.search) {
+            query += ` AND naam LIKE @search`;
+            params.search = `%${options.search}%`;
+        }
+
+        query += ` ORDER BY volgorde ASC, naam ASC`;
+
+        return await this.queryMany(query, Object.keys(params).length > 0 ? params : undefined);
+    }
+
+    /**
+     * Get a specific pension provider by ID
+     * Table: dbo.pensioen_uitvoerders
+     */
+    async getPensioenUitvoerderById(uitvoerderId: number): Promise<{ id: number; naam: string; type: string } | null> {
+        const query = `
+            SELECT id, naam, type
+            FROM dbo.pensioen_uitvoerders
+            WHERE id = @uitvoerderId
+        `;
+        return await this.querySingle(query, { uitvoerderId });
+    }
 }
