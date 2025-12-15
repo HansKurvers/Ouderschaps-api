@@ -158,4 +158,7 @@ local.settings.json
 .DS_Store
 Thumbs.db
 
+# Cleanup scripts (one-off migrations)
+scripts/cleanup-*.cjs
+
 .env
