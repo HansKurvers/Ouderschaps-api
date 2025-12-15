@@ -48,6 +48,7 @@ import './functions/lookups/getSchoolvakanties';
 import './functions/lookups/getRegelingenTemplates';
 import './functions/lookups/getPensioenUitvoerders';
 import './functions/lookups/getWozWaarde';
+import './functions/lookups/getVoertuig';
 
 // Subscription functions (Mollie)
 import './functions/subscription/create';
