@@ -7,14 +7,14 @@
  * API Endpoint:
  * - Basis voertuigdata: https://opendata.rdw.nl/resource/m9d7-ebf2.json
  *
- * Beschikbare velden: merk, handelsbenaming (type), voertuigsoort, kleur
- * Let op: catalogusprijs is niet publiek beschikbaar in RDW Open Data
+ * Beschikbare velden: merk, handelsbenaming (type), catalogusprijs, voertuigsoort, kleur
  */
 
 export interface RdwResult {
     kenteken: string;
     merk: string;
     handelsbenaming: string;
+    catalogusprijs?: number;
     voertuigsoort?: string;
     eersteTenaamstelling?: string;
     kleur?: string;
@@ -29,6 +29,7 @@ interface RdwVoertuigResponse {
     kenteken?: string;
     merk?: string;
     handelsbenaming?: string;
+    catalogusprijs?: string; // RDW returns as string, needs parseInt
     voertuigsoort?: string;
     datum_eerste_tenaamstelling_in_nederland?: string;
     eerste_kleur?: string;
@@ -67,6 +68,9 @@ export class RdwService {
             kenteken: normalizedKenteken,
             merk: voertuigData.merk || 'Onbekend',
             handelsbenaming: voertuigData.handelsbenaming || 'Onbekend',
+            catalogusprijs: voertuigData.catalogusprijs
+                ? parseInt(voertuigData.catalogusprijs, 10)
+                : undefined,
             voertuigsoort: voertuigData.voertuigsoort,
             eersteTenaamstelling:
                 voertuigData.datum_eerste_tenaamstelling_in_nederland,
