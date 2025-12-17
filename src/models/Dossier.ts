@@ -26,6 +26,7 @@ export interface Persoon {
     plaats?: string;
     geboorteplaats?: string;
     geboorteDatum?: Date;
+    geboorteland?: string;
     nationaliteit1?: string;
     nationaliteit2?: string;
     telefoon?: string;
@@ -411,6 +412,7 @@ export interface PersoonDbDto {
     plaats?: string;
     geboorteplaats?: string;
     geboorte_datum?: Date;
+    geboorteland?: string;
     nationaliteit_1?: string;
     nationaliteit_2?: string;
     telefoon?: string;

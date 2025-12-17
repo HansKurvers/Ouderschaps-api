@@ -189,13 +189,13 @@ export class PersoonRepository extends BaseRepository {
         const query = `
             INSERT INTO dbo.personen (
                 voorletters, voornamen, roepnaam, geslacht, tussenvoegsel, achternaam,
-                adres, postcode, plaats, geboorteplaats, geboorte_datum,
+                adres, postcode, plaats, geboorteplaats, geboorte_datum, geboorteland,
                 nationaliteit_1, nationaliteit_2, telefoon, email, beroep
             )
             OUTPUT INSERTED.*
             VALUES (
                 @voorletters, @voornamen, @roepnaam, @geslacht, @tussenvoegsel, @achternaam,
-                @adres, @postcode, @plaats, @geboorteplaats, @geboorteDatum,
+                @adres, @postcode, @plaats, @geboorteplaats, @geboorteDatum, @geboorteland,
                 @nationaliteit1, @nationaliteit2, @telefoon, @email, @beroep
             )
         `;
@@ -212,6 +212,7 @@ export class PersoonRepository extends BaseRepository {
             plaats: dto.plaats,
             geboorteplaats: dto.geboorteplaats,
             geboorteDatum: dto.geboorte_datum,
+            geboorteland: dto.geboorteland,
             nationaliteit1: dto.nationaliteit_1,
             nationaliteit2: dto.nationaliteit_2,
             telefoon: dto.telefoon,
@@ -267,6 +268,7 @@ export class PersoonRepository extends BaseRepository {
                 plaats = @plaats,
                 geboorteplaats = @geboorteplaats,
                 geboorte_datum = @geboorteDatum,
+                geboorteland = @geboorteland,
                 nationaliteit_1 = @nationaliteit1,
                 nationaliteit_2 = @nationaliteit2,
                 telefoon = @telefoon,
@@ -289,6 +291,7 @@ export class PersoonRepository extends BaseRepository {
             plaats: dto.plaats,
             geboorteplaats: dto.geboorteplaats,
             geboorteDatum: dto.geboorte_datum,
+            geboorteland: dto.geboorteland,
             nationaliteit1: dto.nationaliteit_1,
             nationaliteit2: dto.nationaliteit_2,
             telefoon: dto.telefoon,
@@ -406,13 +409,13 @@ export class PersoonRepository extends BaseRepository {
         const query = `
             INSERT INTO dbo.personen (
                 voorletters, voornamen, roepnaam, geslacht, tussenvoegsel, achternaam,
-                adres, postcode, plaats, geboorteplaats, geboorte_datum,
+                adres, postcode, plaats, geboorteplaats, geboorte_datum, geboorteland,
                 nationaliteit_1, nationaliteit_2, telefoon, email, beroep, gebruiker_id
             )
             OUTPUT INSERTED.*
             VALUES (
                 @voorletters, @voornamen, @roepnaam, @geslacht, @tussenvoegsel, @achternaam,
-                @adres, @postcode, @plaats, @geboorteplaats, @geboorteDatum,
+                @adres, @postcode, @plaats, @geboorteplaats, @geboorteDatum, @geboorteland,
                 @nationaliteit1, @nationaliteit2, @telefoon, @email, @beroep, @gebruikerId
             )
         `;
@@ -429,6 +432,7 @@ export class PersoonRepository extends BaseRepository {
             plaats: dto.plaats,
             geboorteplaats: dto.geboorteplaats,
             geboorteDatum: dto.geboorte_datum,
+            geboorteland: dto.geboorteland,
             nationaliteit1: dto.nationaliteit_1,
             nationaliteit2: dto.nationaliteit_2,
             telefoon: dto.telefoon,
@@ -483,6 +487,7 @@ export class PersoonRepository extends BaseRepository {
                 plaats = @plaats,
                 geboorteplaats = @geboorteplaats,
                 geboorte_datum = @geboorteDatum,
+                geboorteland = @geboorteland,
                 nationaliteit_1 = @nationaliteit1,
                 nationaliteit_2 = @nationaliteit2,
                 telefoon = @telefoon,
@@ -506,6 +511,7 @@ export class PersoonRepository extends BaseRepository {
             plaats: dto.plaats,
             geboorteplaats: dto.geboorteplaats,
             geboorteDatum: dto.geboorte_datum,
+            geboorteland: dto.geboorteland,
             nationaliteit1: dto.nationaliteit_1,
             nationaliteit2: dto.nationaliteit_2,
             telefoon: dto.telefoon,
