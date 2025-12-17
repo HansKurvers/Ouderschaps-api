@@ -751,6 +751,7 @@ export class DossierDatabaseService {
                 request.input('Plaats', sql.NVarChar, dto.plaats);
                 request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('GeboorteDatum', sql.Date, dto.geboorte_datum);
+                request.input('Geboorteland', sql.NVarChar, dto.geboorteland);
                 request.input('Nationaliteit1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit2', sql.NVarChar, dto.nationaliteit_2);
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
@@ -770,6 +771,7 @@ export class DossierDatabaseService {
                         plaats = @Plaats,
                         geboorteplaats = @GeboortePlaats,
                         geboorte_datum = @GeboorteDatum,
+                        geboorteland = @Geboorteland,
                         nationaliteit_1 = @Nationaliteit1,
                         nationaliteit_2 = @Nationaliteit2,
                         telefoon = @Telefoon,
@@ -794,6 +796,7 @@ export class DossierDatabaseService {
                 request.input('Plaats', sql.NVarChar, dto.plaats);
                 request.input('GeboortePlaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('GeboorteDatum', sql.Date, dto.geboorte_datum);
+                request.input('Geboorteland', sql.NVarChar, dto.geboorteland);
                 request.input('Nationaliteit1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit2', sql.NVarChar, dto.nationaliteit_2);
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
@@ -803,13 +806,13 @@ export class DossierDatabaseService {
                 const result = await request.query(`
                     INSERT INTO dbo.personen (
                         voorletters, voornamen, roepnaam, geslacht, tussenvoegsel, achternaam,
-                        adres, postcode, plaats, geboorteplaats, geboorte_datum,
+                        adres, postcode, plaats, geboorteplaats, geboorte_datum, geboorteland,
                         nationaliteit_1, nationaliteit_2, telefoon, email, beroep
                     )
                     OUTPUT INSERTED.*
                     VALUES (
                         @Voorletters, @Voornamen, @Roepnaam, @Geslacht, @Tussenvoegsel, @Achternaam,
-                        @Adres, @Postcode, @Plaats, @GeboortePlaats, @GeboorteDatum,
+                        @Adres, @Postcode, @Plaats, @GeboortePlaats, @GeboorteDatum, @Geboorteland,
                         @Nationaliteit1, @Nationaliteit2, @Telefoon, @Email, @Beroep
                     )
                 `);
@@ -2442,6 +2445,7 @@ export class DossierDatabaseService {
                 request.input('Plaats', sql.NVarChar, dto.plaats);
                 request.input('Geboorteplaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
+                request.input('Geboorteland', sql.NVarChar, dto.geboorteland);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
@@ -2463,6 +2467,7 @@ export class DossierDatabaseService {
                         plaats = @Plaats,
                         geboorteplaats = @Geboorteplaats,
                         geboorte_datum = @Geboortedatum,
+                        geboorteland = @Geboorteland,
                         nationaliteit_1 = @Nationaliteit_1,
                         nationaliteit_2 = @Nationaliteit_2,
                         telefoon = @Telefoon,
@@ -2493,6 +2498,7 @@ export class DossierDatabaseService {
                 request.input('Plaats', sql.NVarChar, dto.plaats);
                 request.input('Geboorteplaats', sql.NVarChar, dto.geboorteplaats);
                 request.input('Geboortedatum', sql.Date, dto.geboorte_datum ? new Date(dto.geboorte_datum) : null);
+                request.input('Geboorteland', sql.NVarChar, dto.geboorteland);
                 request.input('Nationaliteit_1', sql.NVarChar, dto.nationaliteit_1);
                 request.input('Nationaliteit_2', sql.NVarChar, dto.nationaliteit_2);
                 request.input('Telefoon', sql.NVarChar, dto.telefoon);
@@ -2514,6 +2520,7 @@ export class DossierDatabaseService {
                         plaats,
                         geboorteplaats,
                         geboorte_datum,
+                        geboorteland,
                         nationaliteit_1,
                         nationaliteit_2,
                         telefoon,
@@ -2535,6 +2542,7 @@ export class DossierDatabaseService {
                         @Plaats,
                         @Geboorteplaats,
                         @Geboortedatum,
+                        @Geboorteland,
                         @Nationaliteit_1,
                         @Nationaliteit_2,
                         @Telefoon,
