@@ -130,7 +130,7 @@ export class DbMappers {
     }
 
     static toPersoonDto(persoon: Persoon): PersoonDbDto {
-        // Support both camelCase and snake_case for compatibility
+        // Support both camelCase and snake_case for compatibility with frontend
         const persoonAny = persoon as any;
         return {
             id: persoon.id,
@@ -143,11 +143,11 @@ export class DbMappers {
             adres: persoon.adres,
             postcode: persoon.postcode,
             plaats: persoon.plaats,
-            geboorteplaats: persoon.geboorteplaats || persoonAny.geboorte_plaats,
+            geboorteplaats: persoon.geboorteplaats || persoonAny.geboorte_plaats || persoonAny.geboortePlaats,
             geboorte_datum: persoon.geboorteDatum || persoonAny.geboorte_datum,
-            geboorteland: persoon.geboorteland,
-            nationaliteit_1: persoon.nationaliteit1,
-            nationaliteit_2: persoon.nationaliteit2,
+            geboorteland: persoon.geboorteland || persoonAny.geboorteland,
+            nationaliteit_1: persoon.nationaliteit1 || persoonAny.nationaliteit_1,
+            nationaliteit_2: persoon.nationaliteit2 || persoonAny.nationaliteit_2,
             telefoon: persoon.telefoon,
             email: persoon.email,
             beroep: persoon.beroep,

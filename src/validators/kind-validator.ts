@@ -13,9 +13,14 @@ export const kindDataSchema = Joi.object({
     postcode: Joi.string().pattern(/^\d{4}\s?[A-Z]{2}$/).optional(),
     plaats: Joi.string().max(100).optional(),
     geboortePlaats: Joi.string().max(100).optional(),
-    geboorteDatum: Joi.date().iso().max('now').optional(), // not in future
+    geboorteplaats: Joi.string().max(100).optional(),
+    geboorteDatum: Joi.date().iso().max('now').optional(),
+    geboorte_datum: Joi.date().iso().max('now').optional(),
+    geboorteland: Joi.string().max(100).optional(),
     nationaliteit1: Joi.string().max(50).optional(),
+    nationaliteit_1: Joi.string().max(50).optional(),
     nationaliteit2: Joi.string().max(50).optional(),
+    nationaliteit_2: Joi.string().max(50).optional(),
     telefoon: Joi.string().max(20).optional(),
     email: Joi.string().email().max(100).optional(),
     beroep: Joi.string().max(100).optional()
