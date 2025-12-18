@@ -20,6 +20,14 @@ export interface DossierAccessRevokedEmailParams {
     dossierNummer?: string;
 }
 
+export interface GuestInvitationEmailParams {
+    toEmail: string;
+    guestName?: string;
+    inviterName: string;
+    portalUrl: string;
+    expiresAt: Date;
+}
+
 export class EmailService {
     private initialized: boolean = false;
     private fromEmail: string;
@@ -203,4 +211,118 @@ i-docx
             return false;
         }
     }
+
+    /**
+     * Send invitation email to a guest for document portal access
+     * Returns true if email was sent, false if skipped or failed
+     */
+    async sendGuestInvitationEmail(params: GuestInvitationEmailParams): Promise<boolean> {
+        if (!this.initialized) {
+            console.log('[EmailService] Skipping email - not initialized');
+            return false;
+        }
+
+        const { toEmail, guestName, inviterName, portalUrl, expiresAt } = params;
+
+        const formattedDate = new Intl.DateTimeFormat('nl-NL', {
+            dateStyle: 'long',
+            timeStyle: 'short',
+        }).format(expiresAt);
+
+        const greeting = guestName ? `Beste ${guestName}` : 'Beste';
+
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .button { display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+        .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+        .expiry { background-color: #fef3c7; padding: 12px; border-radius: 6px; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>i-docx</h1>
+        </div>
+        <div class="content">
+            <h2>U bent uitgenodigd om documenten toe te voegen</h2>
+            <p>${greeting},</p>
+            <p><strong>${inviterName}</strong> heeft u uitgenodigd om documenten toe te voegen aan een dossier in i-docx.</p>
+            <p>Klik op onderstaande knop om naar het document portaal te gaan:</p>
+            <p><a href="${portalUrl}" class="button" style="color: #ffffff;">Naar het document portaal</a></p>
+            <div class="expiry">
+                <strong>Let op:</strong> Deze link is geldig tot ${formattedDate}.
+            </div>
+        </div>
+        <div class="footer">
+            <p>Met vriendelijke groet,<br>i-docx</p>
+            <p>Dit is een automatisch gegenereerd bericht.</p>
+        </div>
+    </div>
+</body>
+</html>
+        `.trim();
+
+        const textContent = `
+${greeting},
+
+${inviterName} heeft u uitgenodigd om documenten toe te voegen aan een dossier in i-docx.
+
+Klik op onderstaande link om naar het document portaal te gaan:
+${portalUrl}
+
+Deze link is geldig tot ${formattedDate}.
+
+Met vriendelijke groet,
+i-docx
+        `.trim();
+
+        try {
+            console.log(`[EmailService] Sending guest-invitation email to: ${toEmail}`);
+
+            await sgMail.send({
+                to: toEmail,
+                from: {
+                    email: this.fromEmail,
+                    name: 'i-docx'
+                },
+                subject: 'U bent uitgenodigd om documenten toe te voegen',
+                text: textContent,
+                html: htmlContent
+            });
+
+            console.log(`[EmailService] Guest-invitation email sent successfully to: ${toEmail}`);
+            return true;
+        } catch (error) {
+            console.error('[EmailService] Failed to send guest-invitation email:', error);
+            return false;
+        }
+    }
+}
+
+/**
+ * Helper function for backwards compatibility
+ */
+export async function sendGuestInvitationEmail(params: {
+    to: string;
+    guestName?: string;
+    inviterName: string;
+    portalUrl: string;
+    expiresAt: Date;
+}): Promise<boolean> {
+    const emailService = new EmailService();
+    return emailService.sendGuestInvitationEmail({
+        toEmail: params.to,
+        guestName: params.guestName,
+        inviterName: params.inviterName,
+        portalUrl: params.portalUrl,
+        expiresAt: params.expiresAt,
+    });
 }

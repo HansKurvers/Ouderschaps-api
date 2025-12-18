@@ -14,6 +14,14 @@ import {
     Dagdeel,
     WeekRegeling,
     KinderrekeningIBAN,
+    DocumentCategorie,
+    DocumentCategorieDbDto,
+    DossierDocument,
+    DossierDocumentDbDto,
+    DossierGast,
+    DossierGastDbDto,
+    DocumentAuditLog,
+    DocumentAuditLogDbDto,
 } from '../models/Dossier';
 
 export class DbMappers {
@@ -318,6 +326,77 @@ export class DbMappers {
         return {
             id: row.id,
             omschrijving: row.omschrijving
+        };
+    }
+
+    // =====================================================
+    // Document Portal mappers
+    // =====================================================
+
+    static toDocumentCategorie(dto: DocumentCategorieDbDto): DocumentCategorie {
+        return {
+            id: dto.id!,
+            naam: dto.naam,
+            beschrijving: dto.beschrijving || undefined,
+            icoon: dto.icoon || undefined,
+            toegestaneExtensies: dto.toegestane_extensies || undefined,
+            maxBestandsgrootteMb: dto.max_bestandsgrootte_mb,
+            volgorde: dto.volgorde,
+            actief: dto.actief,
+            aangemaaktOp: dto.aangemaakt_op!,
+        };
+    }
+
+    static toDossierDocument(dto: DossierDocumentDbDto): DossierDocument {
+        return {
+            id: dto.id!,
+            dossierId: dto.dossier_id,
+            categorieId: dto.categorie_id,
+            blobContainer: dto.blob_container,
+            blobPath: dto.blob_path,
+            origineleBestandsnaam: dto.originele_bestandsnaam,
+            opgeslagenBestandsnaam: dto.opgeslagen_bestandsnaam,
+            bestandsgrootte: dto.bestandsgrootte,
+            mimeType: dto.mime_type,
+            geuploadDoorGebruikerId: dto.geupload_door_gebruiker_id || undefined,
+            geuploadDoorGastId: dto.geupload_door_gast_id || undefined,
+            uploadIp: dto.upload_ip || undefined,
+            aangemaaktOp: dto.aangemaakt_op!,
+            verwijderdOp: dto.verwijderd_op || undefined,
+        };
+    }
+
+    static toDossierGast(dto: DossierGastDbDto): DossierGast {
+        return {
+            id: dto.id!,
+            dossierId: dto.dossier_id,
+            email: dto.email,
+            naam: dto.naam || undefined,
+            tokenHash: dto.token_hash,
+            tokenVerlooptOp: dto.token_verloopt_op,
+            rechten: dto.rechten as 'upload' | 'view' | 'upload_view',
+            uitgenodigdDoorGebruikerId: dto.uitgenodigd_door_gebruiker_id,
+            uitnodigingVerzondenOp: dto.uitnodiging_verzonden_op || undefined,
+            eersteToegangOp: dto.eerste_toegang_op || undefined,
+            laatsteToegangOp: dto.laatste_toegang_op || undefined,
+            ingetrokken: dto.ingetrokken,
+            ingetrokkenOp: dto.ingetrokken_op || undefined,
+            aangemaaktOp: dto.aangemaakt_op!,
+        };
+    }
+
+    static toDocumentAuditLog(dto: DocumentAuditLogDbDto): DocumentAuditLog {
+        return {
+            id: dto.id!,
+            dossierId: dto.dossier_id || undefined,
+            documentId: dto.document_id || undefined,
+            gebruikerId: dto.gebruiker_id || undefined,
+            gastId: dto.gast_id || undefined,
+            ipAdres: dto.ip_adres || undefined,
+            userAgent: dto.user_agent || undefined,
+            actie: dto.actie as DocumentAuditLog['actie'],
+            details: dto.details || undefined,
+            tijdstip: dto.tijdstip!,
         };
     }
 

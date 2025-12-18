@@ -139,6 +139,20 @@ import './functions/debug/checkDuplicateZorg';
 // Admin functions (DNB Sync)
 import './functions/syncPensioenUitvoerders';
 
+// Document Portal functions
+import './functions/documenten/getDocumentCategories';
+import './functions/documenten/getDocuments';
+import './functions/documenten/uploadDocument';
+import './functions/documenten/downloadDocument';
+import './functions/documenten/deleteDocument';
+
+// Guest functions
+import './functions/gasten/getGuests';
+import './functions/gasten/inviteGuest';
+import './functions/gasten/revokeGuest';
+import './functions/gasten/regenerateGuestToken';
+import './functions/gasten/validateGuestToken';
+
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
 

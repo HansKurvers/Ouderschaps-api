@@ -378,6 +378,200 @@ export type PersoonId = number;
 export type RolId = number;
 export type RelatieTypeId = number;
 
+// =====================================================
+// Document Portal interfaces
+// =====================================================
+
+/**
+ * Document category for organizing uploaded documents
+ */
+export interface DocumentCategorie {
+    id: number;
+    naam: string;
+    beschrijving?: string;
+    icoon?: string;
+    toegestaneExtensies?: string;
+    maxBestandsgrootteMb: number;
+    volgorde: number;
+    actief: boolean;
+    aangemaaktOp: Date;
+}
+
+/**
+ * Document metadata (file stored in Azure Blob Storage)
+ */
+export interface DossierDocument {
+    id: number;
+    dossierId: number;
+    categorieId: number;
+    blobContainer: string;
+    blobPath: string;
+    origineleBestandsnaam: string;
+    opgeslagenBestandsnaam: string;
+    bestandsgrootte: number;
+    mimeType: string;
+    geuploadDoorGebruikerId?: number;
+    geuploadDoorGastId?: number;
+    uploadIp?: string;
+    aangemaaktOp: Date;
+    verwijderdOp?: Date;
+}
+
+/**
+ * Document with category info for display
+ */
+export interface DossierDocumentWithCategorie {
+    document: DossierDocument;
+    categorie: DocumentCategorie;
+    uploaderNaam?: string;
+    uploaderType: 'gebruiker' | 'gast';
+}
+
+/**
+ * Guest invitation for document portal access
+ */
+export interface DossierGast {
+    id: number;
+    dossierId: number;
+    email: string;
+    naam?: string;
+    tokenHash: string;
+    tokenVerlooptOp: Date;
+    rechten: 'upload' | 'view' | 'upload_view';
+    uitgenodigdDoorGebruikerId: number;
+    uitnodigingVerzondenOp?: Date;
+    eersteToegangOp?: Date;
+    laatsteToegangOp?: Date;
+    ingetrokken: boolean;
+    ingetrokkenOp?: Date;
+    aangemaaktOp: Date;
+}
+
+/**
+ * Guest with dossier info for display
+ */
+export interface DossierGastWithDossier {
+    gast: DossierGast;
+    dossierNummer: string;
+    uitnodigerNaam?: string;
+}
+
+/**
+ * Audit log entry for document operations
+ */
+export interface DocumentAuditLog {
+    id: number;
+    dossierId?: number;
+    documentId?: number;
+    gebruikerId?: number;
+    gastId?: number;
+    ipAdres?: string;
+    userAgent?: string;
+    actie: 'upload' | 'download' | 'delete' | 'view' | 'access_denied' | 'guest_invited' | 'guest_revoked' | 'guest_access';
+    details?: string;
+    tijdstip: Date;
+}
+
+/**
+ * DTO for creating a guest invitation
+ */
+export interface CreateDossierGastDto {
+    dossierId: number;
+    email: string;
+    naam?: string;
+    rechten?: 'upload' | 'view' | 'upload_view';
+    tokenVerlooptOp?: Date;
+}
+
+/**
+ * DTO for uploading a document
+ */
+export interface CreateDossierDocumentDto {
+    dossierId: number;
+    categorieId: number;
+    origineleBestandsnaam: string;
+    opgeslagenBestandsnaam: string;
+    bestandsgrootte: number;
+    mimeType: string;
+    blobContainer: string;
+    blobPath: string;
+    uploadIp?: string;
+}
+
+/**
+ * DTO for creating an audit log entry
+ */
+export interface CreateDocumentAuditLogDto {
+    dossierId?: number;
+    documentId?: number;
+    gebruikerId?: number;
+    gastId?: number;
+    ipAdres?: string;
+    userAgent?: string;
+    actie: DocumentAuditLog['actie'];
+    details?: Record<string, any>;
+}
+
+// Database DTOs (snake_case to match DB schema)
+export interface DocumentCategorieDbDto {
+    id?: number;
+    naam: string;
+    beschrijving?: string;
+    icoon?: string;
+    toegestane_extensies?: string;
+    max_bestandsgrootte_mb: number;
+    volgorde: number;
+    actief: boolean;
+    aangemaakt_op?: Date;
+}
+
+export interface DossierDocumentDbDto {
+    id?: number;
+    dossier_id: number;
+    categorie_id: number;
+    blob_container: string;
+    blob_path: string;
+    originele_bestandsnaam: string;
+    opgeslagen_bestandsnaam: string;
+    bestandsgrootte: number;
+    mime_type: string;
+    geupload_door_gebruiker_id?: number;
+    geupload_door_gast_id?: number;
+    upload_ip?: string;
+    aangemaakt_op?: Date;
+    verwijderd_op?: Date;
+}
+
+export interface DossierGastDbDto {
+    id?: number;
+    dossier_id: number;
+    email: string;
+    naam?: string;
+    token_hash: string;
+    token_verloopt_op: Date;
+    rechten: string;
+    uitgenodigd_door_gebruiker_id: number;
+    uitnodiging_verzonden_op?: Date;
+    eerste_toegang_op?: Date;
+    laatste_toegang_op?: Date;
+    ingetrokken: boolean;
+    ingetrokken_op?: Date;
+    aangemaakt_op?: Date;
+}
+
+export interface DocumentAuditLogDbDto {
+    id?: number;
+    dossier_id?: number;
+    document_id?: number;
+    gebruiker_id?: number;
+    gast_id?: number;
+    ip_adres?: string;
+    user_agent?: string;
+    actie: string;
+    details?: string;
+    tijdstip?: Date;
+}
+
 // Enums for common values
 
 export enum Geslacht {
