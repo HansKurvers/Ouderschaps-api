@@ -153,6 +153,16 @@ import './functions/gasten/revokeGuest';
 import './functions/gasten/regenerateGuestToken';
 import './functions/gasten/validateGuestToken';
 
+// Checklist functions (Document Checklist feature)
+import './functions/checklist/getChecklistTemplates';
+import './functions/checklist/getChecklistTemplateItems';
+import './functions/checklist/getDossierChecklist';
+import './functions/checklist/createDossierChecklist';
+import './functions/checklist/deleteDossierChecklist';
+import './functions/checklist/addChecklistItem';
+import './functions/checklist/updateChecklistItem';
+import './functions/checklist/deleteChecklistItem';
+
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
 
