@@ -38,3 +38,4 @@ export type { ILookupRepository } from './interfaces/ILookupRepository';
 export { OuderschapsplanRepository } from './OuderschapsplanRepository';
 export type { IOuderschapsplanRepository } from './interfaces/IOuderschapsplanRepository';
 export { ChecklistRepository } from './ChecklistRepository';
+export { BerichtenRepository } from './BerichtenRepository';

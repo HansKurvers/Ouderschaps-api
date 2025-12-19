@@ -163,6 +163,19 @@ import './functions/checklist/addChecklistItem';
 import './functions/checklist/updateChecklistItem';
 import './functions/checklist/deleteChecklistItem';
 
+// Berichten functions (Messaging & Communication feature)
+import './functions/berichten/getBerichtTemplates';
+import './functions/berichten/createBerichtTemplate';
+import './functions/berichten/deleteBerichtTemplate';
+import './functions/berichten/getDossierBerichten';
+import './functions/berichten/createDossierBericht';
+import './functions/berichten/deleteDossierBericht';
+import './functions/berichten/toggleVastpinnen';
+import './functions/berichten/markeerGelezen';
+import './functions/berichten/markeerAllesGelezen';
+import './functions/berichten/createReactie';
+import './functions/berichten/deleteReactie';
+
 // This file serves as the main entry point for Azure Functions
 // All functions are registered through their respective imports
 
