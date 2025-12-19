@@ -32,6 +32,6 @@ export async function getDocumentCategories(
 app.http('getDocumentCategories', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    route: 'document-categorieen',
+    route: 'lookup/document-categorieen',
     handler: getDocumentCategories,
 });
