@@ -34,12 +34,15 @@ export async function getDocuments(
     try {
         // Parse dossier ID from route
         const dossierId = parseInt(request.params.dossierId as string);
+        context.log(`Fetching documents for dossier ID: ${dossierId}`);
         if (isNaN(dossierId)) {
             return createErrorResponse('Invalid dossier ID', 400);
         }
 
         // Authenticate user or guest
+        context.log('Starting authentication...');
         const authResult = await authenticateUserOrGuest(request);
+        context.log(`Auth result: type=${authResult.type}, authenticated=${authResult.authenticated}, userId=${authResult.userId}, error=${authResult.error}`);
 
         if (!authResult.authenticated) {
             return createUnauthorizedResponse();
@@ -62,8 +65,10 @@ export async function getDocuments(
         }
 
         // Fetch documents with category info
+        context.log(`Fetching documents from database for dossier ${dossierId}...`);
         const documentRepo = new DossierDocumentRepository();
         const documents = await documentRepo.findByDossierIdWithCategorie(dossierId);
+        context.log(`Found ${documents.length} documents for dossier ${dossierId}`);
 
         // Log view action for audit
         const auditRepo = new DocumentAuditLogRepository();

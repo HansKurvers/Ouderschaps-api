@@ -215,22 +215,31 @@ export interface CombinedAuthResult {
 export async function authenticateUserOrGuest(request: HttpRequest): Promise<CombinedAuthResult> {
     // First, try to check for guest token (cheaper, no external calls)
     const guestToken = extractGuestToken(request);
+    console.log(`[Auth] Guest token extracted: ${guestToken ? 'yes (length: ' + guestToken.length + ')' : 'no'}`);
 
     if (guestToken) {
-        const guestResult = await authenticateGuest(request);
-        if (guestResult.authenticated && guestResult.gast) {
-            return {
-                authenticated: true,
-                type: 'guest',
-                gast: guestResult.gast,
-            };
+        // Check if it looks like a JWT (starts with eyJ) - if so, skip guest auth
+        if (guestToken.startsWith('eyJ')) {
+            console.log('[Auth] Token looks like JWT, skipping guest auth');
+        } else {
+            const guestResult = await authenticateGuest(request);
+            console.log(`[Auth] Guest auth result: authenticated=${guestResult.authenticated}, error=${guestResult.error}`);
+            if (guestResult.authenticated && guestResult.gast) {
+                return {
+                    authenticated: true,
+                    type: 'guest',
+                    gast: guestResult.gast,
+                };
+            }
         }
     }
 
     // If no guest token or guest auth failed, try user auth
+    console.log('[Auth] Trying user authentication...');
     const { getAuthService } = await import('../services/auth');
     const authService = getAuthService();
     const userResult = await authService.authenticateRequest(request);
+    console.log(`[Auth] User auth result: authenticated=${userResult.authenticated}, userId=${userResult.userId}, error=${userResult.error}`);
 
     if (userResult.authenticated && userResult.userId) {
         return {
@@ -243,7 +252,7 @@ export async function authenticateUserOrGuest(request: HttpRequest): Promise<Com
     return {
         authenticated: false,
         type: 'none',
-        error: 'No valid authentication provided',
+        error: userResult.error || 'No valid authentication provided',
     };
 }
 
